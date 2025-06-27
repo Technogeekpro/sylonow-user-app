@@ -1,0 +1,442 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../features/auth/providers/auth_providers.dart';
+
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildProfileCard(context),
+              const SizedBox(height: 24),
+              _buildPersonalSection(context, ref),
+              const SizedBox(height: 16),
+              _buildUtilitySection(context, ref),
+              const SizedBox(height: 16),
+              _buildLegalSection(context, ref),
+              const SizedBox(height: 24),
+              _buildSignOutSection(context, ref),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: AppTheme.primaryColor,
+            child: const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'John Doe',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Okra',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'john.doe@email.com',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontFamily: 'Okra',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Premium Member',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              context.push('/profile/edit');
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text(
+              'Edit',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalSection(BuildContext context, WidgetRef ref) {
+    return _buildSection(
+      context: context,
+      title: 'Personal',
+      items: [
+        {
+          'icon': Icons.person_outline,
+          'title': 'Edit Profile',
+          'subtitle': 'Update your personal information',
+          'route': '/profile/edit',
+        },
+        {
+          'icon': Icons.history,
+          'title': 'Booking History',
+          'subtitle': 'View your past bookings',
+          'route': '/profile/bookings',
+        },
+        {
+          'icon': Icons.location_on_outlined,
+          'title': 'My Addresses',
+          'subtitle': 'Manage delivery addresses',
+          'route': '/profile/addresses',
+        },
+        {
+          'icon': Icons.payment_outlined,
+          'title': 'Payment Methods',
+          'subtitle': 'Manage your payment options',
+          'route': '/profile/payments',
+        },
+      ],
+    );
+  }
+
+  Widget _buildUtilitySection(BuildContext context, WidgetRef ref) {
+    return _buildSection(
+      context: context,
+      title: 'Utility',
+      items: [
+        {
+          'icon': Icons.notifications_outlined,
+          'title': 'Notifications',
+          'subtitle': 'Manage notification preferences',
+          'route': '/profile/notifications',
+        },
+        {
+          'icon': Icons.settings_outlined,
+          'title': 'Settings',
+          'subtitle': 'App preferences and security',
+          'route': '/profile/settings',
+        },
+        {
+          'icon': Icons.help_outline,
+          'title': 'Help & Support',
+          'subtitle': 'Get help and contact support',
+          'route': '/profile/support',
+        },
+      ],
+    );
+  }
+
+  Widget _buildLegalSection(BuildContext context, WidgetRef ref) {
+    return _buildSection(
+      context: context,
+      title: 'Legal',
+      items: [
+        {
+          'icon': Icons.privacy_tip_outlined,
+          'title': 'Privacy Policy',
+          'subtitle': 'Read our privacy policy',
+          'route': '/profile/privacy',
+        },
+        {
+          'icon': Icons.description_outlined,
+          'title': 'Terms of Service',
+          'subtitle': 'Read our terms and conditions',
+          'route': '/profile/terms',
+        },
+        {
+          'icon': Icons.info_outline,
+          'title': 'About',
+          'subtitle': 'App version and information',
+          'route': '/profile/about',
+        },
+      ],
+    );
+  }
+
+  Widget _buildSection({
+    required BuildContext context,
+    required String title,
+    required List<Map<String, dynamic>> items,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+              fontFamily: 'Okra',
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.grey[300]!,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return Column(
+                children: [
+                  _buildMenuTile(
+                    icon: item['icon'] as IconData,
+                    title: item['title'] as String,
+                    subtitle: item['subtitle'] as String,
+                    onTap: () => context.push(item['route'] as String),
+                  ),
+                  if (index < items.length - 1)
+                    Divider(
+                      height: 1,
+                      color: Colors.grey[200],
+                      indent: 60,
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppTheme.primaryColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppTheme.primaryColor,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignOutSection(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showSignOutDialog(context, ref),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.logout,
+                  color: AppTheme.primaryColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Sign Out',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryColor,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Sign Out',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Okra',
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to sign out of your account?',
+            style: TextStyle(
+              fontFamily: 'Okra',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                try {
+                  await ref.read(authControllerProvider.notifier).signOut();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error signing out: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+} 
