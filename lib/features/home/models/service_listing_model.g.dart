@@ -16,10 +16,19 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
       rating: (json['rating'] as num?)?.toDouble(),
       reviewsCount: (json['reviews_count'] as num?)?.toInt(),
       offersCount: (json['offers_count'] as num?)?.toInt(),
+      vendor: json['vendor'] == null
+          ? null
+          : VendorModel.fromJson(json['vendor'] as Map<String, dynamic>),
+      promotionalTag: json['promotional_tag'] as String?,
+      inclusions: (json['inclusions'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      originalPrice: (json['original_price'] as num?)?.toDouble(),
+      offerPrice: (json['offer_price'] as num?)?.toDouble(),
+      isFeatured: json['is_featured'] as bool?,
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
-      isFeatured: json['is_featured'] as bool?,
       isActive: json['is_active'] as bool?,
     );
 
@@ -33,7 +42,12 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'rating': instance.rating,
       'reviews_count': instance.reviewsCount,
       'offers_count': instance.offersCount,
-      'created_at': instance.createdAt?.toIso8601String(),
+      'vendor': instance.vendor,
+      'promotional_tag': instance.promotionalTag,
+      'inclusions': instance.inclusions,
+      'original_price': instance.originalPrice,
+      'offer_price': instance.offerPrice,
       'is_featured': instance.isFeatured,
+      'created_at': instance.createdAt?.toIso8601String(),
       'is_active': instance.isActive,
     };

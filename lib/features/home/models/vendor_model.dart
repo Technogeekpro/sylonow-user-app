@@ -76,33 +76,4 @@ class VendorModel with _$VendorModel {
 
   /// Creates a VendorModel from JSON
   factory VendorModel.fromJson(Map<String, dynamic> json) => _$VendorModelFromJson(json);
-  
-  /// Creates a VendorModel from vendors table data
-  factory VendorModel.fromVendorsTable(Map<String, dynamic> vendorData) {
-    return VendorModel(
-      id: vendorData['id'] as String,
-      email: vendorData['email'] as String,
-      phone: vendorData['phone'] as String?,
-      fullName: vendorData['full_name'] as String?,
-      businessName: vendorData['business_name'] as String?,
-      businessType: vendorData['business_type'] as String?,
-      experienceYears: (vendorData['experience_years'] as int?) ?? 0,
-      location: vendorData['location'] as Map<String, dynamic>?,
-      profileImageUrl: vendorData['profile_image_url'] as String?,
-      portfolioImages: vendorData['portfolio_images'] != null
-          ? List<String>.from(vendorData['portfolio_images'] as List)
-          : [],
-      bio: vendorData['bio'] as String?,
-      availabilitySchedule: vendorData['availability_schedule'] as Map<String, dynamic>?,
-      rating: double.tryParse(vendorData['rating']?.toString() ?? '0') ?? 0.0,
-      totalReviews: (vendorData['total_reviews'] as int?) ?? 0,
-      totalJobsCompleted: (vendorData['total_jobs_completed'] as int?) ?? 0,
-      verificationStatus: vendorData['verification_status'] as String? ?? 'pending',
-      isActive: (vendorData['is_active'] as bool?) ?? true,
-      isVerified: (vendorData['is_verified'] as bool?) ?? false,
-      fcmToken: vendorData['fcm_token'] as String?,
-      createdAt: DateTime.parse(vendorData['created_at'] as String),
-      updatedAt: DateTime.parse(vendorData['updated_at'] as String),
-    );
-  }
 } 

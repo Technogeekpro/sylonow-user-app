@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/home/repositories/home_repository.dart';
+import 'package:sylonow_user/features/home/repositories/quote_repository.dart';
 import 'package:sylonow_user/features/home/models/quote_model.dart';
 import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
@@ -17,10 +18,15 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   return HomeRepository(supabase);
 });
 
+/// Provider for quote repository
+final quoteRepositoryProvider = Provider<QuoteRepository>((ref) {
+  return QuoteRepository();
+});
+
 /// Provider for daily quote
 final dailyQuoteProvider = FutureProvider<QuoteModel?>((ref) async {
-  final repository = ref.watch(homeRepositoryProvider);
-  return repository.getDailyQuote();
+  final repository = ref.watch(quoteRepositoryProvider);
+  return repository.getTrulyRandomQuote();
 });
 
 /// Provider for featured partners

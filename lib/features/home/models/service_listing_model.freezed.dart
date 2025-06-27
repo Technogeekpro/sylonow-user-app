@@ -20,40 +20,29 @@ ServiceListingModel _$ServiceListingModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$ServiceListingModel {
-  /// Unique identifier for the service listing
   String get id => throw _privateConstructorUsedError;
-
-  /// Name of the service listing (maps to 'title' in database)
   @JsonKey(name: 'title')
   String get name => throw _privateConstructorUsedError;
-
-  /// Image URL for the service (maps to 'cover_photo' in database)
   @JsonKey(name: 'cover_photo')
   String get image => throw _privateConstructorUsedError;
-
-  /// Description of the service
   String? get description => throw _privateConstructorUsedError;
-
-  /// Rating of the service
   double? get rating => throw _privateConstructorUsedError;
-
-  /// Number of reviews
   @JsonKey(name: 'reviews_count')
   int? get reviewsCount => throw _privateConstructorUsedError;
-
-  /// Number of offers available
   @JsonKey(name: 'offers_count')
   int? get offersCount => throw _privateConstructorUsedError;
-
-  /// Timestamp when created
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt => throw _privateConstructorUsedError;
-
-  /// Whether this is a featured service
+  VendorModel? get vendor => throw _privateConstructorUsedError;
+  @JsonKey(name: 'promotional_tag')
+  String? get promotionalTag => throw _privateConstructorUsedError;
+  List<String>? get inclusions => throw _privateConstructorUsedError;
+  @JsonKey(name: 'original_price')
+  double? get originalPrice => throw _privateConstructorUsedError;
+  @JsonKey(name: 'offer_price')
+  double? get offerPrice => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_featured')
   bool? get isFeatured => throw _privateConstructorUsedError;
-
-  /// Whether the service is active
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool? get isActive => throw _privateConstructorUsedError;
 
@@ -81,9 +70,16 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       double? rating,
       @JsonKey(name: 'reviews_count') int? reviewsCount,
       @JsonKey(name: 'offers_count') int? offersCount,
-      @JsonKey(name: 'created_at') DateTime? createdAt,
+      VendorModel? vendor,
+      @JsonKey(name: 'promotional_tag') String? promotionalTag,
+      List<String>? inclusions,
+      @JsonKey(name: 'original_price') double? originalPrice,
+      @JsonKey(name: 'offer_price') double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive});
+
+  $VendorModelCopyWith<$Res>? get vendor;
 }
 
 /// @nodoc
@@ -108,8 +104,13 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? rating = freezed,
     Object? reviewsCount = freezed,
     Object? offersCount = freezed,
-    Object? createdAt = freezed,
+    Object? vendor = freezed,
+    Object? promotionalTag = freezed,
+    Object? inclusions = freezed,
+    Object? originalPrice = freezed,
+    Object? offerPrice = freezed,
     Object? isFeatured = freezed,
+    Object? createdAt = freezed,
     Object? isActive = freezed,
   }) {
     return _then(_value.copyWith(
@@ -141,19 +142,53 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.offersCount
           : offersCount // ignore: cast_nullable_to_non_nullable
               as int?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      vendor: freezed == vendor
+          ? _value.vendor
+          : vendor // ignore: cast_nullable_to_non_nullable
+              as VendorModel?,
+      promotionalTag: freezed == promotionalTag
+          ? _value.promotionalTag
+          : promotionalTag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      inclusions: freezed == inclusions
+          ? _value.inclusions
+          : inclusions // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      originalPrice: freezed == originalPrice
+          ? _value.originalPrice
+          : originalPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
+      offerPrice: freezed == offerPrice
+          ? _value.offerPrice
+          : offerPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
       isFeatured: freezed == isFeatured
           ? _value.isFeatured
           : isFeatured // ignore: cast_nullable_to_non_nullable
               as bool?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
     ) as $Val);
+  }
+
+  /// Create a copy of ServiceListingModel
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $VendorModelCopyWith<$Res>? get vendor {
+    if (_value.vendor == null) {
+      return null;
+    }
+
+    return $VendorModelCopyWith<$Res>(_value.vendor!, (value) {
+      return _then(_value.copyWith(vendor: value) as $Val);
+    });
   }
 }
 
@@ -173,9 +208,17 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       double? rating,
       @JsonKey(name: 'reviews_count') int? reviewsCount,
       @JsonKey(name: 'offers_count') int? offersCount,
-      @JsonKey(name: 'created_at') DateTime? createdAt,
+      VendorModel? vendor,
+      @JsonKey(name: 'promotional_tag') String? promotionalTag,
+      List<String>? inclusions,
+      @JsonKey(name: 'original_price') double? originalPrice,
+      @JsonKey(name: 'offer_price') double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive});
+
+  @override
+  $VendorModelCopyWith<$Res>? get vendor;
 }
 
 /// @nodoc
@@ -198,8 +241,13 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? rating = freezed,
     Object? reviewsCount = freezed,
     Object? offersCount = freezed,
-    Object? createdAt = freezed,
+    Object? vendor = freezed,
+    Object? promotionalTag = freezed,
+    Object? inclusions = freezed,
+    Object? originalPrice = freezed,
+    Object? offerPrice = freezed,
     Object? isFeatured = freezed,
+    Object? createdAt = freezed,
     Object? isActive = freezed,
   }) {
     return _then(_$ServiceListingModelImpl(
@@ -231,14 +279,34 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.offersCount
           : offersCount // ignore: cast_nullable_to_non_nullable
               as int?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      vendor: freezed == vendor
+          ? _value.vendor
+          : vendor // ignore: cast_nullable_to_non_nullable
+              as VendorModel?,
+      promotionalTag: freezed == promotionalTag
+          ? _value.promotionalTag
+          : promotionalTag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      inclusions: freezed == inclusions
+          ? _value._inclusions
+          : inclusions // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      originalPrice: freezed == originalPrice
+          ? _value.originalPrice
+          : originalPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
+      offerPrice: freezed == offerPrice
+          ? _value.offerPrice
+          : offerPrice // ignore: cast_nullable_to_non_nullable
+              as double?,
       isFeatured: freezed == isFeatured
           ? _value.isFeatured
           : isFeatured // ignore: cast_nullable_to_non_nullable
               as bool?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
@@ -258,63 +326,71 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       this.rating,
       @JsonKey(name: 'reviews_count') this.reviewsCount,
       @JsonKey(name: 'offers_count') this.offersCount,
-      @JsonKey(name: 'created_at') this.createdAt,
+      this.vendor,
+      @JsonKey(name: 'promotional_tag') this.promotionalTag,
+      final List<String>? inclusions,
+      @JsonKey(name: 'original_price') this.originalPrice,
+      @JsonKey(name: 'offer_price') this.offerPrice,
       @JsonKey(name: 'is_featured') this.isFeatured,
-      @JsonKey(name: 'is_active') this.isActive});
+      @JsonKey(name: 'created_at') this.createdAt,
+      @JsonKey(name: 'is_active') this.isActive})
+      : _inclusions = inclusions;
 
   factory _$ServiceListingModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ServiceListingModelImplFromJson(json);
 
-  /// Unique identifier for the service listing
   @override
   final String id;
-
-  /// Name of the service listing (maps to 'title' in database)
   @override
   @JsonKey(name: 'title')
   final String name;
-
-  /// Image URL for the service (maps to 'cover_photo' in database)
   @override
   @JsonKey(name: 'cover_photo')
   final String image;
-
-  /// Description of the service
   @override
   final String? description;
-
-  /// Rating of the service
   @override
   final double? rating;
-
-  /// Number of reviews
   @override
   @JsonKey(name: 'reviews_count')
   final int? reviewsCount;
-
-  /// Number of offers available
   @override
   @JsonKey(name: 'offers_count')
   final int? offersCount;
-
-  /// Timestamp when created
   @override
-  @JsonKey(name: 'created_at')
-  final DateTime? createdAt;
+  final VendorModel? vendor;
+  @override
+  @JsonKey(name: 'promotional_tag')
+  final String? promotionalTag;
+  final List<String>? _inclusions;
+  @override
+  List<String>? get inclusions {
+    final value = _inclusions;
+    if (value == null) return null;
+    if (_inclusions is EqualUnmodifiableListView) return _inclusions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
-  /// Whether this is a featured service
+  @override
+  @JsonKey(name: 'original_price')
+  final double? originalPrice;
+  @override
+  @JsonKey(name: 'offer_price')
+  final double? offerPrice;
   @override
   @JsonKey(name: 'is_featured')
   final bool? isFeatured;
-
-  /// Whether the service is active
+  @override
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
   @override
   @JsonKey(name: 'is_active')
   final bool? isActive;
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, createdAt: $createdAt, isFeatured: $isFeatured, isActive: $isActive)';
+    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive)';
   }
 
   @override
@@ -332,18 +408,42 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.reviewsCount == reviewsCount) &&
             (identical(other.offersCount, offersCount) ||
                 other.offersCount == offersCount) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
+            (identical(other.vendor, vendor) || other.vendor == vendor) &&
+            (identical(other.promotionalTag, promotionalTag) ||
+                other.promotionalTag == promotionalTag) &&
+            const DeepCollectionEquality()
+                .equals(other._inclusions, _inclusions) &&
+            (identical(other.originalPrice, originalPrice) ||
+                other.originalPrice == originalPrice) &&
+            (identical(other.offerPrice, offerPrice) ||
+                other.offerPrice == offerPrice) &&
             (identical(other.isFeatured, isFeatured) ||
                 other.isFeatured == isFeatured) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, image, description,
-      rating, reviewsCount, offersCount, createdAt, isFeatured, isActive);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      image,
+      description,
+      rating,
+      reviewsCount,
+      offersCount,
+      vendor,
+      promotionalTag,
+      const DeepCollectionEquality().hash(_inclusions),
+      originalPrice,
+      offerPrice,
+      isFeatured,
+      createdAt,
+      isActive);
 
   /// Create a copy of ServiceListingModel
   /// with the given fields replaced by the non-null parameter values.
@@ -371,57 +471,56 @@ abstract class _ServiceListingModel implements ServiceListingModel {
           final double? rating,
           @JsonKey(name: 'reviews_count') final int? reviewsCount,
           @JsonKey(name: 'offers_count') final int? offersCount,
-          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          final VendorModel? vendor,
+          @JsonKey(name: 'promotional_tag') final String? promotionalTag,
+          final List<String>? inclusions,
+          @JsonKey(name: 'original_price') final double? originalPrice,
+          @JsonKey(name: 'offer_price') final double? offerPrice,
           @JsonKey(name: 'is_featured') final bool? isFeatured,
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'is_active') final bool? isActive}) =
       _$ServiceListingModelImpl;
 
   factory _ServiceListingModel.fromJson(Map<String, dynamic> json) =
       _$ServiceListingModelImpl.fromJson;
 
-  /// Unique identifier for the service listing
   @override
   String get id;
-
-  /// Name of the service listing (maps to 'title' in database)
   @override
   @JsonKey(name: 'title')
   String get name;
-
-  /// Image URL for the service (maps to 'cover_photo' in database)
   @override
   @JsonKey(name: 'cover_photo')
   String get image;
-
-  /// Description of the service
   @override
   String? get description;
-
-  /// Rating of the service
   @override
   double? get rating;
-
-  /// Number of reviews
   @override
   @JsonKey(name: 'reviews_count')
   int? get reviewsCount;
-
-  /// Number of offers available
   @override
   @JsonKey(name: 'offers_count')
   int? get offersCount;
-
-  /// Timestamp when created
   @override
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
-
-  /// Whether this is a featured service
+  VendorModel? get vendor;
+  @override
+  @JsonKey(name: 'promotional_tag')
+  String? get promotionalTag;
+  @override
+  List<String>? get inclusions;
+  @override
+  @JsonKey(name: 'original_price')
+  double? get originalPrice;
+  @override
+  @JsonKey(name: 'offer_price')
+  double? get offerPrice;
   @override
   @JsonKey(name: 'is_featured')
   bool? get isFeatured;
-
-  /// Whether the service is active
+  @override
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt;
   @override
   @JsonKey(name: 'is_active')
   bool? get isActive;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
 import 'package:sylonow_user/features/home/models/quote_model.dart';
@@ -108,18 +109,33 @@ class QuoteSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-         borderRadius: BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topRight: Radius.circular(30),
           bottomLeft: Radius.circular(30),
         ),
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryColor.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        image: quote.imageUrl != null
+            ? DecorationImage(
+                image: CachedNetworkImageProvider(quote.imageUrl!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.4),
+                  BlendMode.darken,
+                ),
+                onError: (exception, stackTrace) {
+                  // Fallback to gradient background on image load error
+                },
+              )
+            : null,
+        gradient: quote.imageUrl == null
+            ? LinearGradient(
+                colors: [
+                  AppTheme.primaryColor,
+                  AppTheme.primaryColor.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryColor.withOpacity(0.3),
@@ -142,7 +158,7 @@ class QuoteSection extends ConsumerWidget {
 
           // Quote text
           Text(
-            quote.text,
+            quote.quote,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -154,29 +170,28 @@ class QuoteSection extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
 
-          if (quote.author != null) ...[
-            const SizedBox(height: 12),
-            // Author attribution
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 1,
-                  color: Colors.white.withOpacity(0.6),
+          const SizedBox(height: 12),
+          
+          // Attribution line
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 1,
+                color: Colors.white.withOpacity(0.6),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Daily Inspiration',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Okra',
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  quote.author!,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -259,3 +274,4 @@ class QuoteSection extends ConsumerWidget {
     );
   }
 }
+ 

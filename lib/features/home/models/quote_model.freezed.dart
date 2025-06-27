@@ -23,29 +23,23 @@ mixin _$QuoteModel {
   /// Unique identifier for the quote
   String get id => throw _privateConstructorUsedError;
 
-  /// The quote text content
-  String get text => throw _privateConstructorUsedError;
+  /// The quote text
+  String get quote => throw _privateConstructorUsedError;
 
-  /// Author of the quote (optional)
-  String? get author => throw _privateConstructorUsedError;
+  /// Optional image URL for the quote background
+  @JsonKey(name: 'image_url')
+  String? get imageUrl => throw _privateConstructorUsedError;
 
-  /// Category or theme of the quote (optional)
-  String? get category => throw _privateConstructorUsedError;
+  /// Sex category for the quote (male, female, neutral)
+  String? get sex => throw _privateConstructorUsedError;
 
-  /// Background image URL for the quote (optional)
-  String? get backgroundUrl => throw _privateConstructorUsedError;
+  /// Timestamp when created
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt => throw _privateConstructorUsedError;
 
-  /// Text color for better contrast (optional)
-  String? get textColor => throw _privateConstructorUsedError;
-
-  /// Whether this quote is currently active
-  bool get isActive => throw _privateConstructorUsedError;
-
-  /// Timestamp when the quote was created
-  DateTime get createdAt => throw _privateConstructorUsedError;
-
-  /// Timestamp when the quote was last updated
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  /// Timestamp when last updated
+  @JsonKey(name: 'updated_at')
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this QuoteModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -65,14 +59,11 @@ abstract class $QuoteModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String text,
-      String? author,
-      String? category,
-      String? backgroundUrl,
-      String? textColor,
-      bool isActive,
-      DateTime createdAt,
-      DateTime updatedAt});
+      String quote,
+      @JsonKey(name: 'image_url') String? imageUrl,
+      String? sex,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -91,52 +82,37 @@ class _$QuoteModelCopyWithImpl<$Res, $Val extends QuoteModel>
   @override
   $Res call({
     Object? id = null,
-    Object? text = null,
-    Object? author = freezed,
-    Object? category = freezed,
-    Object? backgroundUrl = freezed,
-    Object? textColor = freezed,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? quote = null,
+    Object? imageUrl = freezed,
+    Object? sex = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      text: null == text
-          ? _value.text
-          : text // ignore: cast_nullable_to_non_nullable
+      quote: null == quote
+          ? _value.quote
+          : quote // ignore: cast_nullable_to_non_nullable
               as String,
-      author: freezed == author
-          ? _value.author
-          : author // ignore: cast_nullable_to_non_nullable
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      category: freezed == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
+      sex: freezed == sex
+          ? _value.sex
+          : sex // ignore: cast_nullable_to_non_nullable
               as String?,
-      backgroundUrl: freezed == backgroundUrl
-          ? _value.backgroundUrl
-          : backgroundUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      textColor: freezed == textColor
-          ? _value.textColor
-          : textColor // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isActive: null == isActive
-          ? _value.isActive
-          : isActive // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -151,14 +127,11 @@ abstract class _$$QuoteModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String text,
-      String? author,
-      String? category,
-      String? backgroundUrl,
-      String? textColor,
-      bool isActive,
-      DateTime createdAt,
-      DateTime updatedAt});
+      String quote,
+      @JsonKey(name: 'image_url') String? imageUrl,
+      String? sex,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -175,52 +148,37 @@ class __$$QuoteModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? text = null,
-    Object? author = freezed,
-    Object? category = freezed,
-    Object? backgroundUrl = freezed,
-    Object? textColor = freezed,
-    Object? isActive = null,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? quote = null,
+    Object? imageUrl = freezed,
+    Object? sex = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_$QuoteModelImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      text: null == text
-          ? _value.text
-          : text // ignore: cast_nullable_to_non_nullable
+      quote: null == quote
+          ? _value.quote
+          : quote // ignore: cast_nullable_to_non_nullable
               as String,
-      author: freezed == author
-          ? _value.author
-          : author // ignore: cast_nullable_to_non_nullable
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      category: freezed == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
+      sex: freezed == sex
+          ? _value.sex
+          : sex // ignore: cast_nullable_to_non_nullable
               as String?,
-      backgroundUrl: freezed == backgroundUrl
-          ? _value.backgroundUrl
-          : backgroundUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      textColor: freezed == textColor
-          ? _value.textColor
-          : textColor // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isActive: null == isActive
-          ? _value.isActive
-          : isActive // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
     ));
   }
 }
@@ -230,14 +188,11 @@ class __$$QuoteModelImplCopyWithImpl<$Res>
 class _$QuoteModelImpl implements _QuoteModel {
   const _$QuoteModelImpl(
       {required this.id,
-      required this.text,
-      this.author,
-      this.category,
-      this.backgroundUrl,
-      this.textColor,
-      this.isActive = true,
-      required this.createdAt,
-      required this.updatedAt});
+      required this.quote,
+      @JsonKey(name: 'image_url') this.imageUrl,
+      this.sex,
+      @JsonKey(name: 'created_at') this.createdAt,
+      @JsonKey(name: 'updated_at') this.updatedAt});
 
   factory _$QuoteModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$QuoteModelImplFromJson(json);
@@ -246,42 +201,32 @@ class _$QuoteModelImpl implements _QuoteModel {
   @override
   final String id;
 
-  /// The quote text content
+  /// The quote text
   @override
-  final String text;
+  final String quote;
 
-  /// Author of the quote (optional)
+  /// Optional image URL for the quote background
   @override
-  final String? author;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
 
-  /// Category or theme of the quote (optional)
+  /// Sex category for the quote (male, female, neutral)
   @override
-  final String? category;
+  final String? sex;
 
-  /// Background image URL for the quote (optional)
+  /// Timestamp when created
   @override
-  final String? backgroundUrl;
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
 
-  /// Text color for better contrast (optional)
+  /// Timestamp when last updated
   @override
-  final String? textColor;
-
-  /// Whether this quote is currently active
-  @override
-  @JsonKey()
-  final bool isActive;
-
-  /// Timestamp when the quote was created
-  @override
-  final DateTime createdAt;
-
-  /// Timestamp when the quote was last updated
-  @override
-  final DateTime updatedAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'QuoteModel(id: $id, text: $text, author: $author, category: $category, backgroundUrl: $backgroundUrl, textColor: $textColor, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'QuoteModel(id: $id, quote: $quote, imageUrl: $imageUrl, sex: $sex, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -290,16 +235,10 @@ class _$QuoteModelImpl implements _QuoteModel {
         (other.runtimeType == runtimeType &&
             other is _$QuoteModelImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.text, text) || other.text == text) &&
-            (identical(other.author, author) || other.author == author) &&
-            (identical(other.category, category) ||
-                other.category == category) &&
-            (identical(other.backgroundUrl, backgroundUrl) ||
-                other.backgroundUrl == backgroundUrl) &&
-            (identical(other.textColor, textColor) ||
-                other.textColor == textColor) &&
-            (identical(other.isActive, isActive) ||
-                other.isActive == isActive) &&
+            (identical(other.quote, quote) || other.quote == quote) &&
+            (identical(other.imageUrl, imageUrl) ||
+                other.imageUrl == imageUrl) &&
+            (identical(other.sex, sex) || other.sex == sex) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -308,8 +247,8 @@ class _$QuoteModelImpl implements _QuoteModel {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, text, author, category,
-      backgroundUrl, textColor, isActive, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(runtimeType, id, quote, imageUrl, sex, createdAt, updatedAt);
 
   /// Create a copy of QuoteModel
   /// with the given fields replaced by the non-null parameter values.
@@ -329,15 +268,13 @@ class _$QuoteModelImpl implements _QuoteModel {
 
 abstract class _QuoteModel implements QuoteModel {
   const factory _QuoteModel(
-      {required final String id,
-      required final String text,
-      final String? author,
-      final String? category,
-      final String? backgroundUrl,
-      final String? textColor,
-      final bool isActive,
-      required final DateTime createdAt,
-      required final DateTime updatedAt}) = _$QuoteModelImpl;
+          {required final String id,
+          required final String quote,
+          @JsonKey(name: 'image_url') final String? imageUrl,
+          final String? sex,
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
+      _$QuoteModelImpl;
 
   factory _QuoteModel.fromJson(Map<String, dynamic> json) =
       _$QuoteModelImpl.fromJson;
@@ -346,37 +283,28 @@ abstract class _QuoteModel implements QuoteModel {
   @override
   String get id;
 
-  /// The quote text content
+  /// The quote text
   @override
-  String get text;
+  String get quote;
 
-  /// Author of the quote (optional)
+  /// Optional image URL for the quote background
   @override
-  String? get author;
+  @JsonKey(name: 'image_url')
+  String? get imageUrl;
 
-  /// Category or theme of the quote (optional)
+  /// Sex category for the quote (male, female, neutral)
   @override
-  String? get category;
+  String? get sex;
 
-  /// Background image URL for the quote (optional)
+  /// Timestamp when created
   @override
-  String? get backgroundUrl;
+  @JsonKey(name: 'created_at')
+  DateTime? get createdAt;
 
-  /// Text color for better contrast (optional)
+  /// Timestamp when last updated
   @override
-  String? get textColor;
-
-  /// Whether this quote is currently active
-  @override
-  bool get isActive;
-
-  /// Timestamp when the quote was created
-  @override
-  DateTime get createdAt;
-
-  /// Timestamp when the quote was last updated
-  @override
-  DateTime get updatedAt;
+  @JsonKey(name: 'updated_at')
+  DateTime? get updatedAt;
 
   /// Create a copy of QuoteModel
   /// with the given fields replaced by the non-null parameter values.

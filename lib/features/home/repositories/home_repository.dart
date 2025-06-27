@@ -15,20 +15,16 @@ class HomeRepository {
   /// Creates a new HomeRepository instance
   const HomeRepository(this._supabase);
 
-  /// Fetches daily quote from app_settings table
+  /// Fetches a random daily quote from the quotes table
   /// 
-  /// Returns the daily motivational quote or null if not found
+  /// Returns a random motivational quote or null if not found
   Future<QuoteModel?> getDailyQuote() async {
     try {
       final response = await _supabase
-          .from('app_settings')
-          .select()
-          .eq('setting_key', 'daily_quote')
-          .eq('is_public', true)
-          .maybeSingle();
+          .rpc('get_random_quote');
 
       if (response != null) {
-        return QuoteModel.fromAppSettings(response);
+        return QuoteModel.fromJson(response);
       }
       return null;
     } catch (e) {
@@ -52,7 +48,7 @@ class HomeRepository {
           .limit(limit);
 
       return response
-          .map<VendorModel>((data) => VendorModel.fromVendorsTable(data))
+          .map<VendorModel>((data) => VendorModel.fromJson(data))
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch featured partners: $e');
@@ -73,7 +69,7 @@ class HomeRepository {
           .limit(limit);
 
       return response
-          .map<ServiceTypeModel>((data) => ServiceTypeModel.fromServiceTypesTable(data))
+          .map<ServiceTypeModel>((data) => ServiceTypeModel.fromJson(data))
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch service categories: $e');
@@ -100,7 +96,7 @@ class HomeRepository {
       }
 
       return response
-          .map((item) => ServiceListingModel.fromServiceListingsTable(item))
+          .map((item) => ServiceListingModel.fromJson(item))
           .toList();
     } catch (e) {
       // TODO: Add robust error handling, e.g., logging
@@ -123,7 +119,7 @@ class HomeRepository {
           .limit(limit);
 
       return response
-          .map<ServiceListingModel>((data) => ServiceListingModel.fromServiceListingsTable(data))
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch private theater services: $e');
@@ -153,7 +149,7 @@ class HomeRepository {
           .limit(limit);
 
       return response
-          .map<ServiceListingModel>((data) => ServiceListingModel.fromServiceListingsTable(data))
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch popular nearby services: $e');

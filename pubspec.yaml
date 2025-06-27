@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # State Management
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
@@ -26,6 +26,7 @@ dependencies:
   lottie: ^3.0.0
   flutter_otp_text_field: ^1.1.1
   flutter_staggered_grid_view: ^0.7.0
+  smooth_page_indicator: ^1.1.0
   
   # Utils
   intl: ^0.19.0
@@ -39,16 +40,27 @@ dependencies:
   json_annotation: ^4.8.1
   ionicons: ^0.2.2
   
+  # Animation
+  animated_text_kit: ^4.2.2
+  package_info_plus: ^8.0.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
   riverpod_generator: ^2.3.9
   build_runner: ^2.4.8
   custom_lint: ^0.6.2
   riverpod_lint: ^2.3.7
   freezed: ^2.4.7
   json_serializable: ^6.7.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21 # optional. default is 21
 
 flutter:
   uses-material-design: true

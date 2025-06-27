@@ -35,16 +35,21 @@ class ExploreCategoriesSection extends ConsumerWidget {
           const Text(
             'Explore Categories',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
               fontFamily: 'Okra',
-              color: Colors.black87,
+              color: Color(0xFF2A3143),
             ),
           ),
           TextButton(
             onPressed: () {
               // TODO: Navigate to all categories screen
             },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(50, 30),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               'See more',
               style: TextStyle(
@@ -62,33 +67,25 @@ class ExploreCategoriesSection extends ConsumerWidget {
 
   Widget _buildLoadingState() {
     return SizedBox(
-      height: 140,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: 4,
         itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Column(
-              children: [
-                Container(
-                  width: 120,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: 80,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+          return Container(
+            width: 160,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  spreadRadius: 0,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -100,7 +97,7 @@ class ExploreCategoriesSection extends ConsumerWidget {
 
   Widget _buildErrorState() {
     return const SizedBox(
-      height: 140,
+      height: 110,
       child: Center(
         child: Text(
           'Could not load categories.',
@@ -113,7 +110,7 @@ class ExploreCategoriesSection extends ConsumerWidget {
   Widget _buildCategoriesList(List<ServiceTypeModel> categories) {
     if (categories.isEmpty) {
       return const SizedBox(
-        height: 140,
+        height: 110,
         child: Center(
           child: Text(
             'No categories available.',
@@ -124,11 +121,11 @@ class ExploreCategoriesSection extends ConsumerWidget {
     }
 
     return SizedBox(
-      height: 140,
+      height: 110,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
@@ -139,59 +136,86 @@ class ExploreCategoriesSection extends ConsumerWidget {
   }
 
   Widget _buildCategoryCard(ServiceTypeModel category) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       child: GestureDetector(
         onTap: () {
           // TODO: Handle category tap
         },
-        child: SizedBox(
-          width: 120,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 130,
-                height: 80,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: category.iconUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: category.iconUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              Container(color: Colors.grey[200]),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[200],
-                            child: const Icon(
-                              Icons.image_not_supported_outlined,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
-                      : Container(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                spreadRadius: 0,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Category Image
+                category.iconUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: category.iconUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) => Container(
                           color: Colors.grey[200],
                           child: const Icon(
-                            Icons.category_outlined,
+                            Icons.image_not_supported_outlined,
                             color: Colors.grey,
                           ),
                         ),
+                      )
+                    : Container(
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.category_outlined,
+                          color: Colors.grey,
+                        ),
+                      ),
+                // Gradient Overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: const [0.5, 1.0],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                category.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Okra',
-                  color: Colors.black87,
+                // Category Title
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  right: 12,
+                  child: Text(
+                    category.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1.2,
+                      fontFamily: 'Okra',
+                    ),
+                    textAlign: TextAlign.left,
+                    maxLines: 2,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

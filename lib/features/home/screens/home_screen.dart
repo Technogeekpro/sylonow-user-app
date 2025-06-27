@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:lottie/lottie.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:sylonow_user/features/home/widgets/app_bar/home_app_bar.dart';
 import 'package:sylonow_user/features/home/widgets/categories/explore_categories_section.dart';
 import 'package:sylonow_user/features/home/widgets/featured/featured_section.dart';
@@ -19,6 +20,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
+  
+  final List<String> _searchTexts = [
+    'Birthday Decoration',
+    'Anniversary Setup',
+    'Wedding Decoration',
+    'Baby Shower',
+    'Corporate Events',
+    'Theme Parties',
+  ];
 
   @override
   void initState() {
@@ -47,12 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       extendBody: true,
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+        decoration: const BoxDecoration(color: Colors.white),
         child: Stack(
           children: [
             // Main scrollable content
@@ -60,35 +65,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               controller: _scrollController,
               slivers: [
                 // Advertisement container is now the first item, starting from the top
-                SliverToBoxAdapter(
-                  child: _buildAdvertisementSection(context),
-                ),
+                SliverToBoxAdapter(child: _buildAdvertisementSection(context)),
                 // We add a spacer here so the next content (QuoteSection) isn't hidden
                 // behind the search bar initially.
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 40),
-                ),
-                SliverToBoxAdapter(
-                  child: QuoteSection(),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 24),
-                ),
-                SliverToBoxAdapter(
-                  child: ExploreCategoriesSection(),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 24),
-                ),
-                SliverToBoxAdapter(
-                  child: FeaturedSection(),
-                ),
-                SliverToBoxAdapter(
-                  child: ImageCollageSection(),
-                ),
-                SliverToBoxAdapter(
-                  child: PopularNearbySection(),
-                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                SliverToBoxAdapter(child: QuoteSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: ExploreCategoriesSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: FeaturedSection()),
+                SliverToBoxAdapter(child: ImageCollageSection()),
+                SliverToBoxAdapter(child: PopularNearbySection()),
               ],
             ),
             // Custom App Bar as an overlay
@@ -110,29 +97,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final searchSectionHeight = 60.0;
 
     // 0.0 -> 1.0 as user scrolls through the location section height
-    final locationScrollRatio = (_scrollOffset / locationSectionHeight).clamp(0.0, 1.0);
+    final locationScrollRatio = (_scrollOffset / locationSectionHeight).clamp(
+      0.0,
+      1.0,
+    );
 
     // Opacity for the app bar background (becomes fully opaque after scrolling 50px)
     final appBarOpacity = (_scrollOffset / 50).clamp(0.0, 1.0);
 
     return Container(
       // Height shrinks as user scrolls, causing search bar to "stick" at top
-      height: statusBarHeight + locationSectionHeight + searchSectionHeight - (locationSectionHeight * locationScrollRatio),
+      height:
+          statusBarHeight +
+          locationSectionHeight +
+          searchSectionHeight -
+          (locationSectionHeight * locationScrollRatio),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(appBarOpacity),
-        boxShadow: appBarOpacity > 0.5 ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ] : null,
+        boxShadow: appBarOpacity > 0.5
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Stack(
         children: [
           // Location Section (slides up and fades out)
           Positioned(
-            top: statusBarHeight - (locationSectionHeight * locationScrollRatio),
+            top:
+                statusBarHeight - (locationSectionHeight * locationScrollRatio),
             left: 0,
             right: 0,
             height: locationSectionHeight,
@@ -148,6 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             right: 0,
             height: searchSectionHeight,
             child: Container(
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: _buildSearchSection(),
             ),
@@ -156,7 +154,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-  
+
   Widget _buildLocationContent() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -170,7 +168,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Transform.rotate(
                     angle: 1,
-                    child: Icon(Icons.navigation, color: Colors.white, size: 20),
+                    child: Icon(
+                      Icons.navigation,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
@@ -207,11 +209,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 onPressed: () {},
-                icon: Icon(
-                  Icons.wallet,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                icon: Icon(Icons.wallet, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 8),
               const CircleAvatar(
@@ -239,27 +237,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(
+          color: const Color(0xFFE1E2E4),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            blurRadius: 15,
+            offset: const Offset(5, 4),
+            spreadRadius: 0,
           ),
         ],
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "Search for services...",
-          hintStyle: TextStyle(
-            color: Colors.grey[500],
-            fontFamily: 'Okra',
+      child: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 16, right: 8),
+            child: Icon(
+              Icons.search,
+              color: Color(0xFFF34E5F),
+              size: 20,
+            ),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          prefixIcon: Icon(Icons.search, color: Colors.pink),
-          suffixIcon: Icon(Icons.mic, color: Colors.pink),
-        ),
+          Expanded(
+            child: Container(
+              height: 45,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: [
+                  const Text(
+                    'Search "',
+                    style: TextStyle(
+                      color: Color(0xFF737680),
+                      fontSize: 14,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  DefaultTextStyle(
+                    style: const TextStyle(
+                      color: Color(0xFF737680),
+                      fontSize: 14,
+                      fontFamily: 'Okra',
+                    ),
+                    child: AnimatedTextKit(
+                      animatedTexts: _searchTexts.map((text) => 
+                        TypewriterAnimatedText(
+                          text,
+                          speed: const Duration(milliseconds: 80),
+                          cursor: '',
+                        )
+                      ).toList(),
+                      repeatForever: true,
+                      pause: const Duration(milliseconds: 1000),
+                      displayFullTextOnTap: true,
+                    ),
+                  ),
+                  const Text(
+                    '"',
+                    style: TextStyle(
+                      color: Color(0xFF737680),
+                      fontSize: 14,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -270,8 +316,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Container(
-      height: 400 + appBarHeight, // Increase height to account for the space it now occupies
-   
+      height:
+          400 +
+          appBarHeight, // Increase height to account for the space it now occupies
+
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         image: DecorationImage(
@@ -307,8 +355,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     fontFamily: 'Okra',
                   ),
                 ),
-                //Sylonow logo 
-                Image.asset('assets/images/sylonow_white_logo.png', width: 100, height: 56),
+                //Sylonow logo
+                Image.asset(
+                  'assets/images/sylonow_white_logo.png',
+                  width: 100,
+                  height: 56,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'Get 50% OFF\non Your First\nService Booking!',

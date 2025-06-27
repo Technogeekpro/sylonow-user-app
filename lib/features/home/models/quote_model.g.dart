@@ -9,25 +9,23 @@ part of 'quote_model.dart';
 _$QuoteModelImpl _$$QuoteModelImplFromJson(Map<String, dynamic> json) =>
     _$QuoteModelImpl(
       id: json['id'] as String,
-      text: json['text'] as String,
-      author: json['author'] as String?,
-      category: json['category'] as String?,
-      backgroundUrl: json['backgroundUrl'] as String?,
-      textColor: json['textColor'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      quote: json['quote'] as String,
+      imageUrl: json['image_url'] as String?,
+      sex: json['sex'] as String?,
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] == null
+          ? null
+          : DateTime.parse(json['updated_at'] as String),
     );
 
 Map<String, dynamic> _$$QuoteModelImplToJson(_$QuoteModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'text': instance.text,
-      'author': instance.author,
-      'category': instance.category,
-      'backgroundUrl': instance.backgroundUrl,
-      'textColor': instance.textColor,
-      'isActive': instance.isActive,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
+      'quote': instance.quote,
+      'image_url': instance.imageUrl,
+      'sex': instance.sex,
+      'created_at': instance.createdAt?.toIso8601String(),
+      'updated_at': instance.updatedAt?.toIso8601String(),
     };
