@@ -54,7 +54,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       });
 
       try {
-        await ref.read(authControllerProvider.notifier).verifyPhoneOtp(
+        final authService = ref.read(authServiceProvider);
+        await authService.verifyPhoneOtpAndSignIn(
           phoneNumber: widget.phoneNumber,
           otp: _otp,
         );
@@ -89,7 +90,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       });
 
       try {
-        await ref.read(authControllerProvider.notifier).sendOtpToPhone(widget.phoneNumber);
+        final authService = ref.read(authServiceProvider);
+        await authService.signInWithPhone(widget.phoneNumber);
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

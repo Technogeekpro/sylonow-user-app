@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../home/screens/home_screen.dart';
+import '../../home/screens/optimized_home_screen.dart';
 import '../../inside/screens/inside_screen.dart';
 import '../../outside/screens/outside_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -54,15 +54,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(currentIndexProvider);
     
-    final screens = [
-      const HomeScreen(),
-      const InsideScreen(),
-      const OutsideScreen(),
-      const ProfileScreen(),
-    ];
-
     return Scaffold(
-      body: screens[currentIndex],
+      body: IndexedStack(
+        index: currentIndex,
+        children: const [
+          OptimizedHomeScreen(), // Using optimized HomeScreen with performance improvements
+          InsideScreen(),
+          OutsideScreen(),
+          ProfileScreen(),
+        ],
+      ),
       bottomNavigationBar: _CustomBottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {
@@ -113,7 +114,7 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
       end: widget.currentIndex.toDouble(),
     ).animate(CurvedAnimation(
       parent: _indicatorPositionController,
-      curve: Curves.elasticOut,
+      curve: Curves.decelerate, 
     ));
   }
 
@@ -126,7 +127,7 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
         end: widget.currentIndex.toDouble(),
       ).animate(CurvedAnimation(
         parent: _indicatorPositionController,
-        curve: Curves.elasticOut,
+        curve: Curves.decelerate,
       ));
       _indicatorPositionController.forward(from: 0);
     }
@@ -144,6 +145,10 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
       height: 85,
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),

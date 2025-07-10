@@ -18,7 +18,10 @@ dependencies:
   go_router: ^14.2.0
   
   # Supabase
-  supabase_flutter: ^2.0.0
+  supabase_flutter: ^2.9.1
+  
+  # Authentication
+  google_sign_in: ^6.2.1
   
   # UI Components
   flutter_svg: ^2.0.10+1
@@ -43,6 +46,10 @@ dependencies:
   # Animation
   animated_text_kit: ^4.2.2
   package_info_plus: ^8.0.0
+  geolocator: ^14.0.1
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.0+1
+  uuid: ^4.5.1
   
 dev_dependencies:
   flutter_test:

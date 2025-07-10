@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sylonow_user/features/address/screens/add_edit_address_screen.dart';
+import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
 import '../../features/auth/providers/auth_providers.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
+import '../../features/auth/screens/phone_input_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/home/screens/main_screen.dart';
@@ -31,6 +34,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
+        path: PhoneInputScreen.routeName,
+        builder: (context, state) => const PhoneInputScreen(),
+      ),
+      GoRoute(
         path: AppConstants.otpVerificationRoute,
         builder: (context, state) {
           final phoneNumber = (state.extra as Map<String, dynamic>)['phoneNumber'] as String;
@@ -51,8 +58,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const BookingHistoryScreen(),
       ),
       GoRoute(
-        path: '/profile/addresses',
-        builder: (context, state) => const AddressesScreen(),
+        path: ManageAddressScreen.routeName,
+        builder: (context, state) => const ManageAddressScreen(),
+      ),
+      GoRoute(
+        path: AddEditAddressScreen.routeName,
+        builder: (context, state) => const AddEditAddressScreen(),
       ),
       GoRoute(
         path: '/profile/payments',
@@ -87,32 +98,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) async {
-      final isAuthenticated = await ref.read(isAuthenticatedProvider.future);
-      
-      final isOnLoginPage = state.matchedLocation == AppConstants.loginRoute;
-      final isOnRegisterPage = state.matchedLocation == AppConstants.registerRoute;
       final isOnSplashPage = state.matchedLocation == AppConstants.splashRoute;
-      final isOnOtpPage = state.matchedLocation == AppConstants.otpVerificationRoute;
       
-      // If the user is on the splash screen, let the splash screen handle the redirection
+      // Always let splash screen handle the authentication check and navigation
       if (isOnSplashPage) {
         return null;
       }
       
-      // If the user is not authenticated and not on an auth page, redirect to login
-      if (!isAuthenticated && 
-          !isOnLoginPage && 
-          !isOnRegisterPage && 
-          !isOnOtpPage) {
-        return AppConstants.homeRoute;
-      }
-      
-      // If the user is authenticated and on an auth page, redirect to home
-      if (isAuthenticated && 
-          (isOnLoginPage || isOnRegisterPage)) {
-        return AppConstants.homeRoute;
-      }
-      
+      // For all other routes, let them through
+      // The splash screen will handle proper navigation based on auth state
       return null;
     },
   );
@@ -155,28 +149,6 @@ class BookingHistoryScreen extends StatelessWidget {
       body: const Center(
         child: Text(
           'Booking History Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-class AddressesScreen extends StatelessWidget {
-  const AddressesScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Addresses'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Addresses Screen\n(To be implemented)',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 18),
         ),

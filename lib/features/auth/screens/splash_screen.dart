@@ -20,7 +20,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   void initState() {
     super.initState();
     _initPackageInfo();
-    _navigateToNextScreen();
+    _checkAuthAndNavigate();
   }
 
   Future<void> _initPackageInfo() async {
@@ -30,10 +30,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     });
   }
 
-  void _navigateToNextScreen() {
-    Future.delayed(const Duration(seconds: 3), () {
-      context.go('/home');
-    });
+  Future<void> _checkAuthAndNavigate() async {
+    // Show splash for at least 3 seconds
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (!mounted) return;
+    
+    try {
+      // Check if user is authenticated
+      final isAuthenticated = await ref.read(isAuthenticatedProvider.future);
+      
+      if (isAuthenticated) {
+        // User is logged in, go to main screen
+        context.go(AppConstants.homeRoute);
+      } else {
+        // User is not logged in, go to login screen
+        context.go(AppConstants.loginRoute);
+      }
+    } catch (e) {
+      // Error checking auth, default to login screen
+      context.go(AppConstants.loginRoute);
+    }
   }
 
   @override

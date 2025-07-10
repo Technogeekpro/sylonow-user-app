@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/app_constants.dart';
 
 class AuthService {
   final SupabaseClient _supabaseClient;
+  late final GoogleSignIn _googleSignIn;
   
-  AuthService(this._supabaseClient);
+  AuthService(this._supabaseClient) {
+    _googleSignIn = GoogleSignIn(
+      // Use your Web client ID from Google Cloud Console
+      // This should match the OAuth client configured in Supabase
+      serverClientId: '828054656956-9lb66n0bjgeoo7ta808ank5acj09uno7.apps.googleusercontent.com',
+    );
+  }
   
   // Sign up with email and password
   Future<AuthResponse> signUpWithEmail({
@@ -122,6 +130,102 @@ class AuthService {
   // Get current user
   User? getCurrentUser() {
     return _supabaseClient.auth.currentUser;
+  }
+  
+  // Sign in with Google
+  Future<AuthResponse?> signInWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        return null;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (accessToken == null) {
+        throw 'No Access Token found.';
+      }
+      if (idToken == null) {
+        throw 'No ID Token found.';
+      }
+
+      // Sign in to Supabase with Google credentials
+      final response = await _supabaseClient.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+
+      if (response.user != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(AppConstants.isLoggedInKey, true);
+        await prefs.setString(AppConstants.userEmailKey, response.user!.email ?? '');
+        await prefs.setString(AppConstants.userIdKey, response.user!.id);
+      }
+
+      return response;
+    } catch (e) {
+      debugPrint('Google sign in error: $e');
+      rethrow;
+    }
+  }
+
+  // Sign out from Google
+  Future<void> signOutFromGoogle() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (e) {
+      debugPrint('Google sign out error: $e');
+    }
+  }
+
+  // Enhanced phone authentication
+  Future<void> signInWithPhone(String phoneNumber) async {
+    try {
+      await _supabaseClient.auth.signInWithOtp(
+        phone: phoneNumber,
+        shouldCreateUser: true,
+      );
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(AppConstants.userPhoneKey, phoneNumber);
+    } catch (e) {
+      debugPrint('Phone sign in error: $e');
+      rethrow;
+    }
+  }
+
+  // Verify phone OTP and complete authentication
+  Future<AuthResponse> verifyPhoneOtpAndSignIn({
+    required String phoneNumber,
+    required String otp,
+  }) async {
+    try {
+      final response = await _supabaseClient.auth.verifyOTP(
+        phone: phoneNumber,
+        token: otp,
+        type: OtpType.sms,
+      );
+      
+      if (response.user != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(AppConstants.isLoggedInKey, true);
+        await prefs.setString(AppConstants.userPhoneKey, phoneNumber);
+        await prefs.setString(AppConstants.userIdKey, response.user!.id);
+      }
+      
+      return response;
+    } catch (e) {
+      debugPrint('Verify phone OTP error: $e');
+      rethrow;
+    }
   }
   
   // Reset password

@@ -3,11 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/custom_text_field.dart';
-import '../controllers/auth_controller.dart';
 import '../providers/auth_providers.dart';
+import 'phone_input_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -17,195 +14,253 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  
-  bool _isPasswordVisible = false;
   bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void _continueWithPhone() {
+    // Navigate to phone input screen
+    context.push(PhoneInputScreen.routeName);
   }
 
-  void _togglePasswordVisibility() {
-    setState(() {
-      _isPasswordVisible = !_isPasswordVisible;
-    });
-  }
-
-  Future<void> _loginWithEmail() async {
-    // Bypass authentication - go directly to home screen
+  Future<void> _continueWithGoogle() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate loading for better UX
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final authService = ref.read(authServiceProvider);
+      
+      // Sign in with Google
+      final response = await authService.signInWithGoogle();
 
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
+        
+        if (response != null && response.user != null) {
+          // Successfully signed in, navigate to home
       context.go(AppConstants.homeRoute);
+        } else {
+          // User canceled the sign-in
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sign in was canceled')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign in failed: ${e.toString()}')),
+        );
+      }
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: Column(
+        children: [
+          // Top Half - Primary Background with Logo
+          Container(
+            height: screenHeight * 0.6, // 60% of screen height
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: SafeArea(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(),
-              
               // Logo
-              Center(
-                child: Image.asset(
-                  'assets/images/app_icon.png',
-                  height: 220,
-                ),
+                  Image.asset(
+                    'assets/images/sylonow_white_logo.png',
+                    width: MediaQuery.of(context).size.width * 0.5,
               ),
+                  const SizedBox(height: 24),
               
-              const SizedBox(height: 48),
-              
-              // Title
+                  // Welcome Text
               const Text(
-                'Welcome Back',
+                    'Welcome to Sylonow',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
                 ),
-                textAlign: TextAlign.center,
               ),
-              
               const SizedBox(height: 8),
               
               // Subtitle
               Text(
-                'Sign in to your account',
+                    'Your one-stop solution for all services',
                 style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
                   fontSize: 16,
-                  color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ],
                 ),
-                textAlign: TextAlign.center,
+            ),
               ),
               
-              const SizedBox(height: 40),
-              
-              // Login Form
-              Form(
-                key: _formKey,
+          // Bottom Half - Login Options
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Email Field
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      hint: 'Enter your email',
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      validator: Validators.validateEmail,
+                  const Text(
+                    'Choose your login method',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Okra',
                     ),
+                  ),
+                  const SizedBox(height: 32),
                     
-                    const SizedBox(height: 20),
-                    
-                    // Password Field
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      hint: 'Enter your password',
-                      obscureText: !_isPasswordVisible,
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible 
-                            ? Icons.visibility_off_outlined 
-                            : Icons.visibility_outlined,
-                          color: Colors.grey[600],
+                  // Continue with Phone Button
+                  SizedBox(
+                    height: 56,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _continueWithPhone,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        onPressed: _togglePasswordVisibility,
+                        elevation: 0,
                       ),
-                      validator: Validators.validatePassword,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.phone, size: 24),
+                          SizedBox(width: 12),
+                          Text(
+                            'Continue with Phone',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     ),
                     
                     const SizedBox(height: 16),
                     
-                    // Forgot Password
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          // Navigate to forgot password
-                        },
+                  // OR Divider
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'Forgot Password?',
+                          'OR',
                           style: TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: Colors.grey[600],
                             fontSize: 14,
+                            fontFamily: 'Okra',
                           ),
                         ),
                       ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+                    ],
                     ),
                     
-                    const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                     
-                    // Login Button
+                  // Continue with Google Button
                     SizedBox(
-                      height: 50,
+                    height: 56,
                       width: double.infinity,
-                      child: CustomButton(
-                        text: 'Sign In',
-                        onPressed: _loginWithEmail,
-                        isLoading: _isLoading,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _continueWithGoogle,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black54,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/app_icon.png', // You can replace with Google logo
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Okra',
                       ),
                     ),
                   ],
+                            ),
                 ),
               ),
               
-              const Spacer(),
+                  const SizedBox(height: 32),
               
-              // Sign Up Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                  // Terms and Privacy
                   Text(
-                    "Don't have an account? ",
+                    'By continuing, you agree to our Terms of Service\nand Privacy Policy',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      context.push(AppConstants.registerRoute);
-                    },
-                    child: Text(
-                      'Sign Up',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      fontSize: 12,
+                      fontFamily: 'Okra',
                     ),
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
