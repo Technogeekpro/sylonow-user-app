@@ -10,8 +10,11 @@ import '../../features/auth/screens/phone_input_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/home/screens/main_screen.dart';
+import '../../features/search/screens/search_screen.dart';
 import '../constants/app_constants.dart';
 import '../../features/services/screens/service_detail_screen.dart';
+import '../../features/wallet/screens/wallet_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -47,6 +50,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.homeRoute,
         builder: (context, state) => const MainScreen(),
+      ),
+      // Search route
+      GoRoute(
+        path: SearchScreen.routeName,
+        builder: (context, state) => const SearchScreen(),
+      ),
+      // Wallet route
+      GoRoute(
+        path: WalletScreen.routeName,
+        builder: (context, state) => const WalletScreen(),
+      ),
+      // Profile route
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
       // Profile related routes
       GoRoute(

@@ -300,7 +300,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
 
 // Performance optimization: Separate stateless widgets for reusability and const optimization
 class _LocationLoadingScreen extends StatelessWidget {
-  const _LocationLoadingScreen();
+  const _LocationLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +328,7 @@ class _LocationLoadingScreen extends StatelessWidget {
 }
 
 class _LocationBlockedScreen extends StatelessWidget {
-  const _LocationBlockedScreen({required this.onRetry});
+  const _LocationBlockedScreen({super.key, required this.onRetry});
   
   final VoidCallback onRetry;
 
@@ -390,6 +390,7 @@ class _LocationBlockedScreen extends StatelessWidget {
 // Performance optimization: Extract complex widgets to separate classes
 class _CustomAppBarOverlay extends ConsumerWidget {
   const _CustomAppBarOverlay({
+    super.key,
     required this.scrollOffset,
     required this.isLocationEnabled,
   });
@@ -451,7 +452,7 @@ class _CustomAppBarOverlay extends ConsumerWidget {
 }
 
 class _LocationContent extends ConsumerWidget {
-  const _LocationContent({required this.isLocationEnabled});
+  const _LocationContent({super.key, required this.isLocationEnabled});
   
   final bool isLocationEnabled;
 
@@ -536,7 +537,7 @@ class _LocationContent extends ConsumerWidget {
 }
 
 class _WalletButton extends StatelessWidget {
-  const _WalletButton();
+  const _WalletButton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -548,27 +549,34 @@ class _WalletButton extends StatelessWidget {
           side: const BorderSide(color: Colors.white),
         ),
       ),
-      onPressed: () {},
+      onPressed: () {
+        context.push('/wallet');
+      },
       icon: const Icon(Icons.wallet, color: Colors.white, size: 20),
     );
   }
 }
 
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar();
+  const _UserAvatar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const CircleAvatar(
-      backgroundColor: Colors.black,
-      radius: 20,
-      child: Text(
-        "A",
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Okra',
+    return GestureDetector(
+      onTap: () {
+        context.push('/profile');
+      },
+      child: const CircleAvatar(
+        backgroundColor: Colors.black,
+        radius: 20,
+        child: Text(
+          "A",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Okra',
+          ),
         ),
       ),
     );
@@ -576,58 +584,64 @@ class _UserAvatar extends StatelessWidget {
 }
 
 class _SearchSection extends StatelessWidget {
-  const _SearchSection();
+  const _SearchSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(5, 4),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16, right: 8),
-            child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
-          ),
-          Expanded(
-            child: Container(
-              height: 45,
-              alignment: Alignment.centerLeft,
-              child: const Row(
-                children: [
-                  Text(
-                    'Search "',
-                    style: TextStyle(
-                      color: Color(0xFF737680),
-                      fontSize: 14,
-                      fontFamily: 'Okra',
+    return GestureDetector(
+      onTap: () {
+        // Navigate to search screen
+        context.push('/search');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(5, 4),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 16, right: 8),
+              child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
+            ),
+            Expanded(
+              child: Container(
+                height: 45,
+                alignment: Alignment.centerLeft,
+                child: const Row(
+                  children: [
+                    Text(
+                      'Search "',
+                      style: TextStyle(
+                        color: Color(0xFF737680),
+                        fontSize: 14,
+                        fontFamily: 'Okra',
+                      ),
                     ),
-                  ),
-                  Expanded(child: _AnimatedSearchText()),
-                  Text(
-                    '"',
-                    style: TextStyle(
-                      color: Color(0xFF737680),
-                      fontSize: 14,
-                      fontFamily: 'Okra',
+                    Expanded(child: _AnimatedSearchText()),
+                    Text(
+                      '"',
+                      style: TextStyle(
+                        color: Color(0xFF737680),
+                        fontSize: 14,
+                        fontFamily: 'Okra',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -635,7 +649,7 @@ class _SearchSection extends StatelessWidget {
 
 // Performance optimization: Separate animated text to avoid rebuilding parent
 class _AnimatedSearchText extends StatelessWidget {
-  const _AnimatedSearchText();
+  const _AnimatedSearchText({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -646,7 +660,7 @@ class _AnimatedSearchText extends StatelessWidget {
         fontFamily: 'Okra',
       ),
       child: AnimatedTextKit(
-        animatedTexts: OptimizedHomeScreen._searchTexts
+        animatedTexts: _OptimizedHomeScreenState._searchTexts
             .map(
               (text) => TypewriterAnimatedText(
                 text,
@@ -665,7 +679,7 @@ class _AnimatedSearchText extends StatelessWidget {
 
 // Performance optimization: Simplify advertisement section - remove heavy Lottie
 class _AdvertisementSection extends StatelessWidget {
-  const _AdvertisementSection();
+  const _AdvertisementSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -762,6 +776,7 @@ class _AdvertisementSection extends StatelessWidget {
 // Optimized dialog widgets with minimal styling for better performance
 class _LocationPermissionDialog extends StatelessWidget {
   const _LocationPermissionDialog({
+    super.key,
     required this.onPermissionGranted,
     required this.onOpenSettings,
     required this.locationService,
@@ -816,6 +831,7 @@ class _LocationPermissionDialog extends StatelessWidget {
 
 class _OpenSettingsDialog extends StatelessWidget {
   const _OpenSettingsDialog({
+    super.key,
     required this.onSettingsOpened,
     required this.locationService,
   });
@@ -863,6 +879,7 @@ class _OpenSettingsDialog extends StatelessWidget {
 
 class _EnableLocationDialog extends StatelessWidget {
   const _EnableLocationDialog({
+    super.key,
     required this.onLocationEnabled,
     required this.locationService,
   });
