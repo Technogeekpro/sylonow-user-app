@@ -15,6 +15,7 @@ import '../constants/app_constants.dart';
 import '../../features/services/screens/service_detail_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/reviews/screens/reviews_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -111,6 +112,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             price: extra?['price'] ?? '\$22',
             rating: extra?['rating'] ?? '4.9',
             reviewCount: extra?['reviewCount'] ?? 102,
+          );
+        },
+      ),
+      // Reviews route
+      GoRoute(
+        path: ReviewsScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ReviewsScreen(
+            serviceId: extra?['serviceId'] ?? '',
+            serviceName: extra?['serviceName'] ?? 'Service',
+            averageRating: extra?['averageRating'] ?? 4.9,
+            totalReviews: extra?['totalReviews'] ?? 0,
           );
         },
       ),

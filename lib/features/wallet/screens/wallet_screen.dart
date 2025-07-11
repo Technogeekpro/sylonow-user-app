@@ -262,7 +262,7 @@ class WalletScreen extends ConsumerWidget {
         ),
       ),
       title: Text(
-        transaction.description,
+        transaction.description ?? '',
         style: const TextStyle(
           fontFamily: 'Okra',
           fontWeight: FontWeight.w500,

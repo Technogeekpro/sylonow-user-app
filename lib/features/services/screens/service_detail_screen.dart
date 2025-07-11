@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../reviews/screens/reviews_screen.dart';
 
 class ServiceDetailScreen extends ConsumerStatefulWidget {
   final String serviceId;
@@ -41,14 +43,14 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   final List<Map<String, dynamic>> _relatedServices = [
     {
       'name': 'Baby shower',
-      'price': '\$22',
+      'price': '₹1,850',
       'rating': '4.9',
       'reviewCount': 102,
       'image': 'assets/images/category1.jpg',
     },
     {
       'name': 'Birthday party',
-      'price': '\$35',
+      'price': '₹2,950',
       'rating': '4.8',
       'reviewCount': 89,
       'image': 'assets/images/category2.jpg',
@@ -115,7 +117,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               color: Colors.black,
             ),
             onPressed: () {
-              // Handle share
+              _shareService();
             },
           ),
         ),
@@ -226,7 +228,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.price,
+                      _formatPriceToRupees(widget.price),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -287,7 +289,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () {
-                  // Navigate to reviews
+                  _navigateToReviews();
                 },
                 child: Text(
                   'See reviews',
@@ -570,6 +572,63 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // Helper method to format price to rupees
+  String _formatPriceToRupees(String price) {
+    // Convert dollar prices to rupees (assuming $1 = ₹84 approximately)
+    if (price.startsWith('\$')) {
+      final dollarAmount = double.tryParse(price.substring(1)) ?? 0;
+      final rupeeAmount = (dollarAmount * 84).round();
+      return '₹${_formatNumberWithCommas(rupeeAmount)}';
+    }
+    // If already in rupees, return as is
+    if (price.startsWith('₹')) {
+      return price;
+    }
+    // Default case
+    return '₹$price';
+  }
+
+  // Helper method to format numbers with commas
+  String _formatNumberWithCommas(int number) {
+    return number.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+  }
+
+  // Share service functionality
+  void _shareService() {
+    final shareText = '''
+🎉 Check out this amazing service on Sylonow!
+
+${widget.serviceName}
+Price: ${_formatPriceToRupees(widget.price)}
+Rating: ${widget.rating} ⭐ (${widget.reviewCount} reviews)
+
+Book now and make your celebration special!
+
+Download Sylonow app: https://sylonow.com
+''';
+
+    Share.share(
+      shareText,
+      subject: 'Amazing ${widget.serviceName} service on Sylonow',
+    );
+  }
+
+  // Navigate to reviews screen
+  void _navigateToReviews() {
+    context.push(
+      ReviewsScreen.routeName,
+      extra: {
+        'serviceId': widget.serviceId,
+        'serviceName': widget.serviceName,
+        'averageRating': double.tryParse(widget.rating) ?? 4.9,
+        'totalReviews': widget.reviewCount,
+      },
     );
   }
 } 

@@ -21,15 +21,20 @@ TransactionModel _$TransactionModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$TransactionModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'transaction_type')
   String get type =>
       throw _privateConstructorUsedError; // 'refund', 'payment', 'cashback'
   double get amount => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
   String get status =>
       throw _privateConstructorUsedError; // 'pending', 'completed', 'failed'
-  String? get orderId => throw _privateConstructorUsedError;
-  String? get bookingId => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'reference_id')
+  String? get referenceId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'reference_type')
+  String? get referenceType => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get metadata => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
@@ -53,13 +58,14 @@ abstract class $TransactionModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String userId,
-      String type,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'transaction_type') String type,
       double amount,
-      String description,
       String status,
-      String? orderId,
-      String? bookingId,
+      String? description,
+      @JsonKey(name: 'reference_id') String? referenceId,
+      @JsonKey(name: 'reference_type') String? referenceType,
+      Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt});
 }
@@ -83,10 +89,11 @@ class _$TransactionModelCopyWithImpl<$Res, $Val extends TransactionModel>
     Object? userId = null,
     Object? type = null,
     Object? amount = null,
-    Object? description = null,
     Object? status = null,
-    Object? orderId = freezed,
-    Object? bookingId = freezed,
+    Object? description = freezed,
+    Object? referenceId = freezed,
+    Object? referenceType = freezed,
+    Object? metadata = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -107,22 +114,26 @@ class _$TransactionModelCopyWithImpl<$Res, $Val extends TransactionModel>
           ? _value.amount
           : amount // ignore: cast_nullable_to_non_nullable
               as double,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      orderId: freezed == orderId
-          ? _value.orderId
-          : orderId // ignore: cast_nullable_to_non_nullable
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      bookingId: freezed == bookingId
-          ? _value.bookingId
-          : bookingId // ignore: cast_nullable_to_non_nullable
+      referenceId: freezed == referenceId
+          ? _value.referenceId
+          : referenceId // ignore: cast_nullable_to_non_nullable
               as String?,
+      referenceType: freezed == referenceType
+          ? _value.referenceType
+          : referenceType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      metadata: freezed == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -145,13 +156,14 @@ abstract class _$$TransactionModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String userId,
-      String type,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'transaction_type') String type,
       double amount,
-      String description,
       String status,
-      String? orderId,
-      String? bookingId,
+      String? description,
+      @JsonKey(name: 'reference_id') String? referenceId,
+      @JsonKey(name: 'reference_type') String? referenceType,
+      Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt});
 }
@@ -173,10 +185,11 @@ class __$$TransactionModelImplCopyWithImpl<$Res>
     Object? userId = null,
     Object? type = null,
     Object? amount = null,
-    Object? description = null,
     Object? status = null,
-    Object? orderId = freezed,
-    Object? bookingId = freezed,
+    Object? description = freezed,
+    Object? referenceId = freezed,
+    Object? referenceType = freezed,
+    Object? metadata = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -197,22 +210,26 @@ class __$$TransactionModelImplCopyWithImpl<$Res>
           ? _value.amount
           : amount // ignore: cast_nullable_to_non_nullable
               as double,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      orderId: freezed == orderId
-          ? _value.orderId
-          : orderId // ignore: cast_nullable_to_non_nullable
+      description: freezed == description
+          ? _value.description
+          : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      bookingId: freezed == bookingId
-          ? _value.bookingId
-          : bookingId // ignore: cast_nullable_to_non_nullable
+      referenceId: freezed == referenceId
+          ? _value.referenceId
+          : referenceId // ignore: cast_nullable_to_non_nullable
               as String?,
+      referenceType: freezed == referenceType
+          ? _value.referenceType
+          : referenceType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      metadata: freezed == metadata
+          ? _value._metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -230,15 +247,17 @@ class __$$TransactionModelImplCopyWithImpl<$Res>
 class _$TransactionModelImpl implements _TransactionModel {
   const _$TransactionModelImpl(
       {required this.id,
-      required this.userId,
-      required this.type,
+      @JsonKey(name: 'user_id') required this.userId,
+      @JsonKey(name: 'transaction_type') required this.type,
       required this.amount,
-      required this.description,
       required this.status,
-      this.orderId,
-      this.bookingId,
+      this.description,
+      @JsonKey(name: 'reference_id') this.referenceId,
+      @JsonKey(name: 'reference_type') this.referenceType,
+      final Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') required this.createdAt,
-      @JsonKey(name: 'updated_at') required this.updatedAt});
+      @JsonKey(name: 'updated_at') required this.updatedAt})
+      : _metadata = metadata;
 
   factory _$TransactionModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$TransactionModelImplFromJson(json);
@@ -246,21 +265,35 @@ class _$TransactionModelImpl implements _TransactionModel {
   @override
   final String id;
   @override
+  @JsonKey(name: 'user_id')
   final String userId;
   @override
+  @JsonKey(name: 'transaction_type')
   final String type;
 // 'refund', 'payment', 'cashback'
   @override
   final double amount;
   @override
-  final String description;
-  @override
   final String status;
 // 'pending', 'completed', 'failed'
   @override
-  final String? orderId;
+  final String? description;
   @override
-  final String? bookingId;
+  @JsonKey(name: 'reference_id')
+  final String? referenceId;
+  @override
+  @JsonKey(name: 'reference_type')
+  final String? referenceType;
+  final Map<String, dynamic>? _metadata;
+  @override
+  Map<String, dynamic>? get metadata {
+    final value = _metadata;
+    if (value == null) return null;
+    if (_metadata is EqualUnmodifiableMapView) return _metadata;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
@@ -270,7 +303,7 @@ class _$TransactionModelImpl implements _TransactionModel {
 
   @override
   String toString() {
-    return 'TransactionModel(id: $id, userId: $userId, type: $type, amount: $amount, description: $description, status: $status, orderId: $orderId, bookingId: $bookingId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TransactionModel(id: $id, userId: $userId, type: $type, amount: $amount, status: $status, description: $description, referenceId: $referenceId, referenceType: $referenceType, metadata: $metadata, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -282,12 +315,14 @@ class _$TransactionModelImpl implements _TransactionModel {
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.amount, amount) || other.amount == amount) &&
+            (identical(other.status, status) || other.status == status) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.status, status) || other.status == status) &&
-            (identical(other.orderId, orderId) || other.orderId == orderId) &&
-            (identical(other.bookingId, bookingId) ||
-                other.bookingId == bookingId) &&
+            (identical(other.referenceId, referenceId) ||
+                other.referenceId == referenceId) &&
+            (identical(other.referenceType, referenceType) ||
+                other.referenceType == referenceType) &&
+            const DeepCollectionEquality().equals(other._metadata, _metadata) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -296,8 +331,19 @@ class _$TransactionModelImpl implements _TransactionModel {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, userId, type, amount,
-      description, status, orderId, bookingId, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      userId,
+      type,
+      amount,
+      status,
+      description,
+      referenceId,
+      referenceType,
+      const DeepCollectionEquality().hash(_metadata),
+      createdAt,
+      updatedAt);
 
   /// Create a copy of TransactionModel
   /// with the given fields replaced by the non-null parameter values.
@@ -319,13 +365,14 @@ class _$TransactionModelImpl implements _TransactionModel {
 abstract class _TransactionModel implements TransactionModel {
   const factory _TransactionModel(
           {required final String id,
-          required final String userId,
-          required final String type,
+          @JsonKey(name: 'user_id') required final String userId,
+          @JsonKey(name: 'transaction_type') required final String type,
           required final double amount,
-          required final String description,
           required final String status,
-          final String? orderId,
-          final String? bookingId,
+          final String? description,
+          @JsonKey(name: 'reference_id') final String? referenceId,
+          @JsonKey(name: 'reference_type') final String? referenceType,
+          final Map<String, dynamic>? metadata,
           @JsonKey(name: 'created_at') required final DateTime createdAt,
           @JsonKey(name: 'updated_at') required final DateTime updatedAt}) =
       _$TransactionModelImpl;
@@ -336,19 +383,25 @@ abstract class _TransactionModel implements TransactionModel {
   @override
   String get id;
   @override
+  @JsonKey(name: 'user_id')
   String get userId;
   @override
+  @JsonKey(name: 'transaction_type')
   String get type; // 'refund', 'payment', 'cashback'
   @override
   double get amount;
   @override
-  String get description;
-  @override
   String get status; // 'pending', 'completed', 'failed'
   @override
-  String? get orderId;
+  String? get description;
   @override
-  String? get bookingId;
+  @JsonKey(name: 'reference_id')
+  String? get referenceId;
+  @override
+  @JsonKey(name: 'reference_type')
+  String? get referenceType;
+  @override
+  Map<String, dynamic>? get metadata;
   @override
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
