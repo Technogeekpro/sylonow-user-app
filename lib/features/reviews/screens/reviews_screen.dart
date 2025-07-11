@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/review_model.dart';
+import '../providers/reviews_providers.dart';
 
 class ReviewsScreen extends ConsumerWidget {
   static const String routeName = '/reviews';
@@ -23,8 +24,9 @@ class ReviewsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Sample reviews data - in real app, this would come from a provider
-    final sampleReviews = _generateSampleReviews();
+    // Get reviews from database
+    final reviewsAsync = ref.watch(serviceReviewsProvider(serviceId));
+    final statsAsync = ref.watch(reviewStatsProvider(serviceId));
     
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -45,20 +47,40 @@ class ReviewsScreen extends ConsumerWidget {
         slivers: [
           // Reviews Header
           SliverToBoxAdapter(
-            child: _buildReviewsHeader(),
+            child: statsAsync.when(
+              data: (stats) => _buildReviewsHeader(stats),
+              loading: () => _buildReviewsHeader(null),
+              error: (error, _) => _buildReviewsHeader(null),
+            ),
           ),
           // Rating Distribution
           SliverToBoxAdapter(
-            child: _buildRatingDistribution(),
+            child: statsAsync.when(
+              data: (stats) => _buildRatingDistribution(stats),
+              loading: () => _buildLoadingWidget(),
+              error: (error, _) => _buildErrorWidget(),
+            ),
           ),
           // Reviews List
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final review = sampleReviews[index];
-                return _buildReviewCard(review);
-              },
-              childCount: sampleReviews.length,
+          reviewsAsync.when(
+            data: (reviews) => reviews.isEmpty
+                ? const SliverToBoxAdapter(
+                    child: _EmptyReviewsWidget(),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final review = reviews[index];
+                        return _buildReviewCard(review);
+                      },
+                      childCount: reviews.length,
+                    ),
+                  ),
+            loading: () => const SliverToBoxAdapter(
+              child: _LoadingReviewsWidget(),
+            ),
+            error: (error, _) => SliverToBoxAdapter(
+              child: _ErrorReviewsWidget(error: error.toString()),
             ),
           ),
           // Bottom padding
@@ -70,7 +92,7 @@ class ReviewsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReviewsHeader() {
+  Widget _buildReviewsHeader(Map<String, dynamic>? stats) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -116,7 +138,7 @@ class ReviewsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      averageRating.toStringAsFixed(1),
+                      (stats?['averageRating'] ?? averageRating).toStringAsFixed(1),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -128,7 +150,7 @@ class ReviewsScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Based on $totalReviews reviews',
+                'Based on ${stats?['totalReviews'] ?? totalReviews} reviews',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -142,7 +164,7 @@ class ReviewsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRatingDistribution() {
+  Widget _buildRatingDistribution(Map<String, dynamic>? stats) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
@@ -172,7 +194,7 @@ class ReviewsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ...List.generate(5, (index) {
             final rating = 5 - index;
-            final percentage = _getRatingPercentage(rating);
+            final percentage = _getRatingPercentage(rating, stats);
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -335,22 +357,59 @@ class ReviewsScreen extends ConsumerWidget {
     );
   }
 
-  double _getRatingPercentage(int rating) {
-    // Sample data - in real app, this would be calculated from actual reviews
-    switch (rating) {
-      case 5:
-        return 65.0;
-      case 4:
-        return 25.0;
-      case 3:
-        return 8.0;
-      case 2:
-        return 2.0;
-      case 1:
-        return 0.0;
-      default:
-        return 0.0;
+  double _getRatingPercentage(int rating, Map<String, dynamic>? stats) {
+    if (stats == null || stats['ratingDistribution'] == null) {
+      // Fallback sample data
+      switch (rating) {
+        case 5:
+          return 65.0;
+        case 4:
+          return 25.0;
+        case 3:
+          return 8.0;
+        case 2:
+          return 2.0;
+        case 1:
+          return 0.0;
+        default:
+          return 0.0;
+      }
     }
+
+    final distribution = stats['ratingDistribution'] as Map<String, dynamic>;
+    final totalReviews = stats['totalReviews'] as int;
+    
+    if (totalReviews == 0) return 0.0;
+    
+    final count = distribution[rating.toString()] ?? 0;
+    return (count / totalReviews * 100).toDouble();
+  }
+
+  Widget _buildLoadingWidget() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Text(
+        'Error loading rating distribution',
+        style: TextStyle(
+          color: Colors.red,
+          fontFamily: 'Okra',
+        ),
+      ),
+    );
   }
 
   List<ReviewModel> _generateSampleReviews() {
@@ -406,5 +465,138 @@ class ReviewsScreen extends ConsumerWidget {
         updatedAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
     ];
+  }
+}
+
+// Empty Reviews Widget
+class _EmptyReviewsWidget extends StatelessWidget {
+  const _EmptyReviewsWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.rate_review_outlined,
+            size: 64,
+            color: Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No reviews yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+              fontFamily: 'Okra',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Be the first to review this service',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[500],
+              fontFamily: 'Okra',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Loading Reviews Widget
+class _LoadingReviewsWidget extends StatelessWidget {
+  const _LoadingReviewsWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: const Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(color: AppTheme.primaryColor),
+            SizedBox(height: 16),
+            Text(
+              'Loading reviews...',
+              style: TextStyle(
+                color: Colors.grey,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Error Reviews Widget
+class _ErrorReviewsWidget extends StatelessWidget {
+  final String error;
+  
+  const _ErrorReviewsWidget({super.key, required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: Colors.red[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Unable to load reviews',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.red[600],
+              fontFamily: 'Okra',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Please check your connection and try again',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontFamily: 'Okra',
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

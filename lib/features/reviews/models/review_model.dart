@@ -7,10 +7,10 @@ part 'review_model.g.dart';
 class ReviewModel with _$ReviewModel {
   const factory ReviewModel({
     required String id,
-    required String userId,
-    required String serviceId,
-    required String userName,
-    String? userAvatar,
+    @JsonKey(name: 'user_id') required String userId,
+    @JsonKey(name: 'service_id') required String serviceId,
+    @JsonKey(name: 'user_name') required String userName,
+    @JsonKey(name: 'user_avatar') String? userAvatar,
     required double rating,
     required String comment,
     @JsonKey(name: 'created_at') required DateTime createdAt,
