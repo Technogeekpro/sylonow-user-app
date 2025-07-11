@@ -20,8 +20,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final FocusNode _focusNode = FocusNode();
   Timer? _debounceTimer;
   String _currentQuery = '';
+  bool _showClearButton = false;
 
-  // Search suggestions - predefined popular searches
   static const List<String> _searchSuggestions = [
     'Birthday Decoration',
     'Anniversary Setup',
@@ -40,7 +40,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-focus search field when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -57,13 +56,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
     
-    // Debounce search queries - wait 500ms after user stops typing
+    setState(() {
+      _showClearButton = query.isNotEmpty;
+    });
+    
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (query.trim().isNotEmpty && query.trim() != _currentQuery) {
         setState(() {
           _currentQuery = query.trim();
         });
-        // Trigger search with the debounced query
         ref.read(searchResultsProvider(query.trim()));
       }
     });
@@ -75,9 +76,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       setState(() {
         _currentQuery = query.trim();
       });
-      // Remove focus to hide keyboard
       _focusNode.unfocus();
-      // Trigger search
       ref.read(searchResultsProvider(query.trim()));
     }
   }
@@ -87,6 +86,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounceTimer?.cancel();
     setState(() {
       _currentQuery = '';
+      _showClearButton = false;
     });
     _focusNode.requestFocus();
   }
@@ -104,7 +104,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       appBar: _buildSearchAppBar(),
       body: Column(
         children: [
-          // Search suggestions or results
           Expanded(
             child: _currentQuery.isEmpty
                 ? _buildSearchSuggestions(recentSearches)
@@ -142,7 +141,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               fontFamily: 'Okra',
             ),
             prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
-            suffixIcon: _searchController.text.isNotEmpty
+            suffixIcon: _showClearButton
                 ? IconButton(
                     icon: const Icon(Icons.clear, color: Colors.grey, size: 20),
                     onPressed: _clearSearch,
@@ -166,7 +165,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Recent searches section
           if (recentSearches.isNotEmpty) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -204,7 +202,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(height: 24),
           ],
           
-          // Popular searches section
           const Text(
             'Popular Searches',
             style: TextStyle(
@@ -301,21 +298,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Add to recent searches
           ref.read(recentSearchesProvider.notifier).add(_currentQuery);
-          // Navigate to service detail - implement this route
-          // context.push('/service-detail/${service.id}');
         },
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Service image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: service.imageUrl?.isNotEmpty == true
+                child: service.image.isNotEmpty
                     ? AppImageCacheManager.buildOptimizedNetworkImage(
-                        imageUrl: service.imageUrl!,
+                        imageUrl: service.image,
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
@@ -332,7 +325,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SizedBox(width: 12),
               
-              // Service details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,9 +354,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        if (service.price != null) ...[
+                        if ((service.offerPrice ?? service.originalPrice) != null) ...[
                           Text(
-                            '₹${service.price}',
+                            '₹${service.offerPrice ?? service.originalPrice}',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -396,7 +388,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
               
-              // Action button
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
