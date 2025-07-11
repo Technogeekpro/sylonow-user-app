@@ -108,10 +108,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>?;
           return ServiceDetailScreen(
             serviceId: serviceId,
-            serviceName: extra?['serviceName'] ?? 'Service Name',
-            price: extra?['price'] ?? '\$22',
-            rating: extra?['rating'] ?? '4.9',
-            reviewCount: extra?['reviewCount'] ?? 102,
+            serviceName: extra?['serviceName'],
+            price: extra?['price'],
+            rating: extra?['rating'],
+            reviewCount: extra?['reviewCount'],
           );
         },
       ),

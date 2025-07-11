@@ -376,12 +376,12 @@ class ReviewsScreen extends ConsumerWidget {
       }
     }
 
-    final distribution = stats['ratingDistribution'] as Map<String, dynamic>;
+    final distribution = stats['ratingDistribution'] as Map<int, int>;
     final totalReviews = stats['totalReviews'] as int;
     
     if (totalReviews == 0) return 0.0;
     
-    final count = distribution[rating.toString()] ?? 0;
+    final count = distribution[rating] ?? 0;
     return (count / totalReviews * 100).toDouble();
   }
 

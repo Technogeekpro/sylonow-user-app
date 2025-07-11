@@ -22,6 +22,8 @@ class ServiceListingModel with _$ServiceListingModel {
     @JsonKey(name: 'is_featured') bool? isFeatured,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'is_active') bool? isActive,
+    List<String>? photos, // Array of service images
+    String? category, // Service category for finding related services
   }) = _ServiceListingModel;
 
   factory ServiceListingModel.fromJson(Map<String, dynamic> json) =>

@@ -156,6 +156,78 @@ class HomeRepository {
     }
   }
 
+  /// Fetches a specific service by ID
+  /// 
+  /// Returns the service details if found, null otherwise
+  Future<ServiceListingModel?> getServiceById(String serviceId) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              owner_name,
+              rating,
+              total_reviews,
+              total_jobs_completed,
+              profile_picture_url,
+              location
+            )
+          ''')
+          .eq('id', serviceId)
+          .eq('is_active', true)
+          .single();
+
+      return ServiceListingModel.fromJson(response);
+    } catch (e) {
+      // Return null if service not found or any error occurs
+      return null;
+    }
+  }
+
+  /// Fetches related services by category
+  /// 
+  /// Returns a list of services in the same category, excluding the current service
+  Future<List<ServiceListingModel>> getRelatedServices({
+    required String currentServiceId,
+    String? category,
+    int limit = 4,
+  }) async {
+    try {
+      var query = _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              owner_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('is_active', true)
+          .neq('id', currentServiceId) // Exclude current service
+          .limit(limit);
+
+      // Filter by category if provided
+      if (category != null && category.isNotEmpty) {
+        query = query.eq('category', category);
+      }
+
+      final response = await query.order('rating', ascending: false);
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      // Return empty list on error
+      return [];
+    }
+  }
+
   /// Fetches all home screen data at once
   /// 
   /// Returns a map containing all the home screen data

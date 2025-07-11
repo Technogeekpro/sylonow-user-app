@@ -76,7 +76,8 @@ class PopularNearbySection extends ConsumerWidget {
           '/service/${service.id}',
           extra: {
             'serviceName': service.name,
-            'price': '\$22', // Default price since not in model
+            'price': service.offerPrice != null ? '₹${service.offerPrice!.round()}' : 
+                    service.originalPrice != null ? '₹${service.originalPrice!.round()}' : null,
             'rating': (service.rating ?? 4.9).toStringAsFixed(1),
             'reviewCount': service.reviewsCount ?? 102,
           },

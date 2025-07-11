@@ -13,7 +13,9 @@
       "mcp__supabase__list_tables",
       "mcp__supabase__execute_sql",
       "Bash(flutter packages pub run:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   },
