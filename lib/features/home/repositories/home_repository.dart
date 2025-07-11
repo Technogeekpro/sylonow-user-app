@@ -3,6 +3,7 @@ import 'package:sylonow_user/features/home/models/quote_model.dart';
 import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
+import 'package:sylonow_user/features/home/models/category_model.dart';
 
 /// Repository class for handling home screen data operations
 /// 
@@ -207,17 +208,22 @@ class HomeRepository {
               rating,
               total_reviews
             )
-          ''')
+          ''');
+
+      // Build query conditions
+      query = query
           .eq('is_active', true)
-          .neq('id', currentServiceId) // Exclude current service
-          .limit(limit);
+          .neq('id', currentServiceId); // Exclude current service
 
       // Filter by category if provided
       if (category != null && category.isNotEmpty) {
         query = query.eq('category', category);
       }
 
-      final response = await query.order('rating', ascending: false);
+      // Apply limit and order
+      final response = await query
+          .limit(limit)
+          .order('rating', ascending: false);
 
       return response
           .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
@@ -225,6 +231,66 @@ class HomeRepository {
     } catch (e) {
       // Return empty list on error
       return [];
+    }
+  }
+
+  /// Fetches all categories
+  /// 
+  /// Returns a list of active categories sorted by sort_order
+  Future<List<CategoryModel>> getCategories({int? limit}) async {
+    try {
+      var query = _supabase
+          .from('categories')
+          .select()
+          .eq('is_active', true)
+          .order('sort_order');
+
+      if (limit != null) {
+        query = query.limit(limit);
+      }
+
+      final response = await query;
+
+      return response
+          .map<CategoryModel>((data) => CategoryModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch categories: $e');
+    }
+  }
+
+  /// Fetches services by category
+  /// 
+  /// Returns a list of services filtered by category
+  Future<List<ServiceListingModel>> getServicesByCategory({
+    required String categoryName,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              owner_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('category', categoryName)
+          .eq('is_active', true)
+          .limit(limit)
+          .range(offset, offset + limit - 1)
+          .order('rating', ascending: false);
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch services by category: $e');
     }
   }
 
@@ -241,6 +307,7 @@ class HomeRepository {
         getFeaturedServices(),
         getPrivateTheaterServices(),
         getPopularNearbyServices(),
+        getCategories(limit: 8), // Add categories to home screen data
       ]);
 
       return {
@@ -250,6 +317,7 @@ class HomeRepository {
         'featuredServices': results[3] as List<ServiceListingModel>,
         'privateTheaterServices': results[4] as List<ServiceListingModel>,
         'popularNearbyServices': results[5] as List<ServiceListingModel>,
+        'categories': results[6] as List<CategoryModel>,
       };
     } catch (e) {
       throw Exception('Failed to fetch home screen data: $e');

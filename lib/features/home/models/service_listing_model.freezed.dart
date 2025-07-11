@@ -45,6 +45,9 @@ mixin _$ServiceListingModel {
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool? get isActive => throw _privateConstructorUsedError;
+  List<String>? get photos =>
+      throw _privateConstructorUsedError; // Array of service images
+  String? get category => throw _privateConstructorUsedError;
 
   /// Serializes this ServiceListingModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -77,7 +80,9 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       @JsonKey(name: 'offer_price') double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      @JsonKey(name: 'is_active') bool? isActive});
+      @JsonKey(name: 'is_active') bool? isActive,
+      List<String>? photos,
+      String? category});
 
   $VendorModelCopyWith<$Res>? get vendor;
 }
@@ -112,6 +117,8 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? isFeatured = freezed,
     Object? createdAt = freezed,
     Object? isActive = freezed,
+    Object? photos = freezed,
+    Object? category = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -174,6 +181,14 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      photos: freezed == photos
+          ? _value.photos
+          : photos // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -215,7 +230,9 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       @JsonKey(name: 'offer_price') double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      @JsonKey(name: 'is_active') bool? isActive});
+      @JsonKey(name: 'is_active') bool? isActive,
+      List<String>? photos,
+      String? category});
 
   @override
   $VendorModelCopyWith<$Res>? get vendor;
@@ -249,6 +266,8 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? isFeatured = freezed,
     Object? createdAt = freezed,
     Object? isActive = freezed,
+    Object? photos = freezed,
+    Object? category = freezed,
   }) {
     return _then(_$ServiceListingModelImpl(
       id: null == id
@@ -311,6 +330,14 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      photos: freezed == photos
+          ? _value._photos
+          : photos // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -333,8 +360,11 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       @JsonKey(name: 'offer_price') this.offerPrice,
       @JsonKey(name: 'is_featured') this.isFeatured,
       @JsonKey(name: 'created_at') this.createdAt,
-      @JsonKey(name: 'is_active') this.isActive})
-      : _inclusions = inclusions;
+      @JsonKey(name: 'is_active') this.isActive,
+      final List<String>? photos,
+      this.category})
+      : _inclusions = inclusions,
+        _photos = photos;
 
   factory _$ServiceListingModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ServiceListingModelImplFromJson(json);
@@ -387,10 +417,23 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
   @override
   @JsonKey(name: 'is_active')
   final bool? isActive;
+  final List<String>? _photos;
+  @override
+  List<String>? get photos {
+    final value = _photos;
+    if (value == null) return null;
+    if (_photos is EqualUnmodifiableListView) return _photos;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+// Array of service images
+  @override
+  final String? category;
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive)';
+    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category)';
   }
 
   @override
@@ -422,7 +465,10 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isActive, isActive) ||
-                other.isActive == isActive));
+                other.isActive == isActive) &&
+            const DeepCollectionEquality().equals(other._photos, _photos) &&
+            (identical(other.category, category) ||
+                other.category == category));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -443,7 +489,9 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       offerPrice,
       isFeatured,
       createdAt,
-      isActive);
+      isActive,
+      const DeepCollectionEquality().hash(_photos),
+      category);
 
   /// Create a copy of ServiceListingModel
   /// with the given fields replaced by the non-null parameter values.
@@ -464,22 +512,23 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
 abstract class _ServiceListingModel implements ServiceListingModel {
   const factory _ServiceListingModel(
-          {required final String id,
-          @JsonKey(name: 'title') required final String name,
-          @JsonKey(name: 'cover_photo') required final String image,
-          final String? description,
-          final double? rating,
-          @JsonKey(name: 'reviews_count') final int? reviewsCount,
-          @JsonKey(name: 'offers_count') final int? offersCount,
-          final VendorModel? vendor,
-          @JsonKey(name: 'promotional_tag') final String? promotionalTag,
-          final List<String>? inclusions,
-          @JsonKey(name: 'original_price') final double? originalPrice,
-          @JsonKey(name: 'offer_price') final double? offerPrice,
-          @JsonKey(name: 'is_featured') final bool? isFeatured,
-          @JsonKey(name: 'created_at') final DateTime? createdAt,
-          @JsonKey(name: 'is_active') final bool? isActive}) =
-      _$ServiceListingModelImpl;
+      {required final String id,
+      @JsonKey(name: 'title') required final String name,
+      @JsonKey(name: 'cover_photo') required final String image,
+      final String? description,
+      final double? rating,
+      @JsonKey(name: 'reviews_count') final int? reviewsCount,
+      @JsonKey(name: 'offers_count') final int? offersCount,
+      final VendorModel? vendor,
+      @JsonKey(name: 'promotional_tag') final String? promotionalTag,
+      final List<String>? inclusions,
+      @JsonKey(name: 'original_price') final double? originalPrice,
+      @JsonKey(name: 'offer_price') final double? offerPrice,
+      @JsonKey(name: 'is_featured') final bool? isFeatured,
+      @JsonKey(name: 'created_at') final DateTime? createdAt,
+      @JsonKey(name: 'is_active') final bool? isActive,
+      final List<String>? photos,
+      final String? category}) = _$ServiceListingModelImpl;
 
   factory _ServiceListingModel.fromJson(Map<String, dynamic> json) =
       _$ServiceListingModelImpl.fromJson;
@@ -524,6 +573,10 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @override
   @JsonKey(name: 'is_active')
   bool? get isActive;
+  @override
+  List<String>? get photos; // Array of service images
+  @override
+  String? get category;
 
   /// Create a copy of ServiceListingModel
   /// with the given fields replaced by the non-null parameter values.

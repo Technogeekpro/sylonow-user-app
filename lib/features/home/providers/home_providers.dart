@@ -6,6 +6,7 @@ import 'package:sylonow_user/features/home/models/quote_model.dart';
 import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
+import 'package:sylonow_user/features/home/models/category_model.dart';
 
 /// Provider for Supabase client
 final supabaseProvider = Provider<SupabaseClient>((ref) {
@@ -126,4 +127,16 @@ final popularNearbyServicesProvider = FutureProvider<List<ServiceListingModel>>(
 final homeScreenDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final repository = ref.watch(homeRepositoryProvider);
   return repository.getHomeScreenData();
+});
+
+/// Provider for categories
+final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getCategories();
+});
+
+/// Provider for services by category
+final servicesByCategoryProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, categoryName) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getServicesByCategory(categoryName: categoryName);
 }); 

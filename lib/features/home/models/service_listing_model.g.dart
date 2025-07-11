@@ -30,6 +30,9 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
           ? null
           : DateTime.parse(json['created_at'] as String),
       isActive: json['is_active'] as bool?,
+      photos:
+          (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      category: json['category'] as String?,
     );
 
 Map<String, dynamic> _$$ServiceListingModelImplToJson(
@@ -50,4 +53,6 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'is_featured': instance.isFeatured,
       'created_at': instance.createdAt?.toIso8601String(),
       'is_active': instance.isActive,
+      'photos': instance.photos,
+      'category': instance.category,
     };

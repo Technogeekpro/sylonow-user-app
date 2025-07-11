@@ -21,9 +21,13 @@ ReviewModel _$ReviewModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ReviewModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'service_id')
   String get serviceId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'user_name')
   String get userName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'user_avatar')
   String? get userAvatar => throw _privateConstructorUsedError;
   double get rating => throw _privateConstructorUsedError;
   String get comment => throw _privateConstructorUsedError;
@@ -50,10 +54,10 @@ abstract class $ReviewModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String userId,
-      String serviceId,
-      String userName,
-      String? userAvatar,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'service_id') String serviceId,
+      @JsonKey(name: 'user_name') String userName,
+      @JsonKey(name: 'user_avatar') String? userAvatar,
       double rating,
       String comment,
       @JsonKey(name: 'created_at') DateTime createdAt,
@@ -136,10 +140,10 @@ abstract class _$$ReviewModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String userId,
-      String serviceId,
-      String userName,
-      String? userAvatar,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'service_id') String serviceId,
+      @JsonKey(name: 'user_name') String userName,
+      @JsonKey(name: 'user_avatar') String? userAvatar,
       double rating,
       String comment,
       @JsonKey(name: 'created_at') DateTime createdAt,
@@ -215,10 +219,10 @@ class __$$ReviewModelImplCopyWithImpl<$Res>
 class _$ReviewModelImpl implements _ReviewModel {
   const _$ReviewModelImpl(
       {required this.id,
-      required this.userId,
-      required this.serviceId,
-      required this.userName,
-      this.userAvatar,
+      @JsonKey(name: 'user_id') required this.userId,
+      @JsonKey(name: 'service_id') required this.serviceId,
+      @JsonKey(name: 'user_name') required this.userName,
+      @JsonKey(name: 'user_avatar') this.userAvatar,
       required this.rating,
       required this.comment,
       @JsonKey(name: 'created_at') required this.createdAt,
@@ -230,12 +234,16 @@ class _$ReviewModelImpl implements _ReviewModel {
   @override
   final String id;
   @override
+  @JsonKey(name: 'user_id')
   final String userId;
   @override
+  @JsonKey(name: 'service_id')
   final String serviceId;
   @override
+  @JsonKey(name: 'user_name')
   final String userName;
   @override
+  @JsonKey(name: 'user_avatar')
   final String? userAvatar;
   @override
   final double rating;
@@ -298,10 +306,10 @@ class _$ReviewModelImpl implements _ReviewModel {
 abstract class _ReviewModel implements ReviewModel {
   const factory _ReviewModel(
           {required final String id,
-          required final String userId,
-          required final String serviceId,
-          required final String userName,
-          final String? userAvatar,
+          @JsonKey(name: 'user_id') required final String userId,
+          @JsonKey(name: 'service_id') required final String serviceId,
+          @JsonKey(name: 'user_name') required final String userName,
+          @JsonKey(name: 'user_avatar') final String? userAvatar,
           required final double rating,
           required final String comment,
           @JsonKey(name: 'created_at') required final DateTime createdAt,
@@ -314,12 +322,16 @@ abstract class _ReviewModel implements ReviewModel {
   @override
   String get id;
   @override
+  @JsonKey(name: 'user_id')
   String get userId;
   @override
+  @JsonKey(name: 'service_id')
   String get serviceId;
   @override
+  @JsonKey(name: 'user_name')
   String get userName;
   @override
+  @JsonKey(name: 'user_avatar')
   String? get userAvatar;
   @override
   double get rating;
