@@ -9,7 +9,7 @@ class CategoryModel with _$CategoryModel {
     required String id,
     required String name,
     String? description,
-    @JsonKey(name: 'icon_url') String? iconUrl,
+    @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'color_code') String? colorCode,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'sort_order') @Default(0) int sortOrder,

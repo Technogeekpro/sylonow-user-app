@@ -47,7 +47,27 @@ mixin _$ServiceListingModel {
   bool? get isActive => throw _privateConstructorUsedError;
   List<String>? get photos =>
       throw _privateConstructorUsedError; // Array of service images
-  String? get category => throw _privateConstructorUsedError;
+  String? get category =>
+      throw _privateConstructorUsedError; // Service category for finding related services
+// Enhanced booking fields from database
+  @JsonKey(name: 'venue_types')
+  List<String>? get venueTypes => throw _privateConstructorUsedError;
+  @JsonKey(name: 'theme_tags')
+  List<String>? get themeTags => throw _privateConstructorUsedError;
+  @JsonKey(name: 'add_ons')
+  List<Map<String, dynamic>>? get addOns => throw _privateConstructorUsedError;
+  @JsonKey(name: 'setup_time')
+  String? get setupTime => throw _privateConstructorUsedError;
+  @JsonKey(name: 'booking_notice')
+  String? get bookingNotice => throw _privateConstructorUsedError;
+  @JsonKey(name: 'customization_available')
+  bool? get customizationAvailable => throw _privateConstructorUsedError;
+  @JsonKey(name: 'customization_note')
+  String? get customizationNote => throw _privateConstructorUsedError;
+  @JsonKey(name: 'service_environment')
+  List<String>? get serviceEnvironment => throw _privateConstructorUsedError;
+  @JsonKey(name: 'video_url')
+  String? get videoUrl => throw _privateConstructorUsedError;
 
   /// Serializes this ServiceListingModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -82,7 +102,16 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive,
       List<String>? photos,
-      String? category});
+      String? category,
+      @JsonKey(name: 'venue_types') List<String>? venueTypes,
+      @JsonKey(name: 'theme_tags') List<String>? themeTags,
+      @JsonKey(name: 'add_ons') List<Map<String, dynamic>>? addOns,
+      @JsonKey(name: 'setup_time') String? setupTime,
+      @JsonKey(name: 'booking_notice') String? bookingNotice,
+      @JsonKey(name: 'customization_available') bool? customizationAvailable,
+      @JsonKey(name: 'customization_note') String? customizationNote,
+      @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
+      @JsonKey(name: 'video_url') String? videoUrl});
 
   $VendorModelCopyWith<$Res>? get vendor;
 }
@@ -119,6 +148,15 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? isActive = freezed,
     Object? photos = freezed,
     Object? category = freezed,
+    Object? venueTypes = freezed,
+    Object? themeTags = freezed,
+    Object? addOns = freezed,
+    Object? setupTime = freezed,
+    Object? bookingNotice = freezed,
+    Object? customizationAvailable = freezed,
+    Object? customizationNote = freezed,
+    Object? serviceEnvironment = freezed,
+    Object? videoUrl = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -189,6 +227,42 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String?,
+      venueTypes: freezed == venueTypes
+          ? _value.venueTypes
+          : venueTypes // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      themeTags: freezed == themeTags
+          ? _value.themeTags
+          : themeTags // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      addOns: freezed == addOns
+          ? _value.addOns
+          : addOns // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
+      setupTime: freezed == setupTime
+          ? _value.setupTime
+          : setupTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingNotice: freezed == bookingNotice
+          ? _value.bookingNotice
+          : bookingNotice // ignore: cast_nullable_to_non_nullable
+              as String?,
+      customizationAvailable: freezed == customizationAvailable
+          ? _value.customizationAvailable
+          : customizationAvailable // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      customizationNote: freezed == customizationNote
+          ? _value.customizationNote
+          : customizationNote // ignore: cast_nullable_to_non_nullable
+              as String?,
+      serviceEnvironment: freezed == serviceEnvironment
+          ? _value.serviceEnvironment
+          : serviceEnvironment // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -232,7 +306,16 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive,
       List<String>? photos,
-      String? category});
+      String? category,
+      @JsonKey(name: 'venue_types') List<String>? venueTypes,
+      @JsonKey(name: 'theme_tags') List<String>? themeTags,
+      @JsonKey(name: 'add_ons') List<Map<String, dynamic>>? addOns,
+      @JsonKey(name: 'setup_time') String? setupTime,
+      @JsonKey(name: 'booking_notice') String? bookingNotice,
+      @JsonKey(name: 'customization_available') bool? customizationAvailable,
+      @JsonKey(name: 'customization_note') String? customizationNote,
+      @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
+      @JsonKey(name: 'video_url') String? videoUrl});
 
   @override
   $VendorModelCopyWith<$Res>? get vendor;
@@ -268,6 +351,15 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? isActive = freezed,
     Object? photos = freezed,
     Object? category = freezed,
+    Object? venueTypes = freezed,
+    Object? themeTags = freezed,
+    Object? addOns = freezed,
+    Object? setupTime = freezed,
+    Object? bookingNotice = freezed,
+    Object? customizationAvailable = freezed,
+    Object? customizationNote = freezed,
+    Object? serviceEnvironment = freezed,
+    Object? videoUrl = freezed,
   }) {
     return _then(_$ServiceListingModelImpl(
       id: null == id
@@ -338,6 +430,42 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.category
           : category // ignore: cast_nullable_to_non_nullable
               as String?,
+      venueTypes: freezed == venueTypes
+          ? _value._venueTypes
+          : venueTypes // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      themeTags: freezed == themeTags
+          ? _value._themeTags
+          : themeTags // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      addOns: freezed == addOns
+          ? _value._addOns
+          : addOns // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
+      setupTime: freezed == setupTime
+          ? _value.setupTime
+          : setupTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      bookingNotice: freezed == bookingNotice
+          ? _value.bookingNotice
+          : bookingNotice // ignore: cast_nullable_to_non_nullable
+              as String?,
+      customizationAvailable: freezed == customizationAvailable
+          ? _value.customizationAvailable
+          : customizationAvailable // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      customizationNote: freezed == customizationNote
+          ? _value.customizationNote
+          : customizationNote // ignore: cast_nullable_to_non_nullable
+              as String?,
+      serviceEnvironment: freezed == serviceEnvironment
+          ? _value._serviceEnvironment
+          : serviceEnvironment // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -362,9 +490,23 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'is_active') this.isActive,
       final List<String>? photos,
-      this.category})
+      this.category,
+      @JsonKey(name: 'venue_types') final List<String>? venueTypes,
+      @JsonKey(name: 'theme_tags') final List<String>? themeTags,
+      @JsonKey(name: 'add_ons') final List<Map<String, dynamic>>? addOns,
+      @JsonKey(name: 'setup_time') this.setupTime,
+      @JsonKey(name: 'booking_notice') this.bookingNotice,
+      @JsonKey(name: 'customization_available') this.customizationAvailable,
+      @JsonKey(name: 'customization_note') this.customizationNote,
+      @JsonKey(name: 'service_environment')
+      final List<String>? serviceEnvironment,
+      @JsonKey(name: 'video_url') this.videoUrl})
       : _inclusions = inclusions,
-        _photos = photos;
+        _photos = photos,
+        _venueTypes = venueTypes,
+        _themeTags = themeTags,
+        _addOns = addOns,
+        _serviceEnvironment = serviceEnvironment;
 
   factory _$ServiceListingModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$ServiceListingModelImplFromJson(json);
@@ -430,10 +572,74 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 // Array of service images
   @override
   final String? category;
+// Service category for finding related services
+// Enhanced booking fields from database
+  final List<String>? _venueTypes;
+// Service category for finding related services
+// Enhanced booking fields from database
+  @override
+  @JsonKey(name: 'venue_types')
+  List<String>? get venueTypes {
+    final value = _venueTypes;
+    if (value == null) return null;
+    if (_venueTypes is EqualUnmodifiableListView) return _venueTypes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _themeTags;
+  @override
+  @JsonKey(name: 'theme_tags')
+  List<String>? get themeTags {
+    final value = _themeTags;
+    if (value == null) return null;
+    if (_themeTags is EqualUnmodifiableListView) return _themeTags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<Map<String, dynamic>>? _addOns;
+  @override
+  @JsonKey(name: 'add_ons')
+  List<Map<String, dynamic>>? get addOns {
+    final value = _addOns;
+    if (value == null) return null;
+    if (_addOns is EqualUnmodifiableListView) return _addOns;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
+  @JsonKey(name: 'setup_time')
+  final String? setupTime;
+  @override
+  @JsonKey(name: 'booking_notice')
+  final String? bookingNotice;
+  @override
+  @JsonKey(name: 'customization_available')
+  final bool? customizationAvailable;
+  @override
+  @JsonKey(name: 'customization_note')
+  final String? customizationNote;
+  final List<String>? _serviceEnvironment;
+  @override
+  @JsonKey(name: 'service_environment')
+  List<String>? get serviceEnvironment {
+    final value = _serviceEnvironment;
+    if (value == null) return null;
+    if (_serviceEnvironment is EqualUnmodifiableListView)
+      return _serviceEnvironment;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
+  @JsonKey(name: 'video_url')
+  final String? videoUrl;
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category)';
+    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl)';
   }
 
   @override
@@ -468,30 +674,57 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.isActive == isActive) &&
             const DeepCollectionEquality().equals(other._photos, _photos) &&
             (identical(other.category, category) ||
-                other.category == category));
+                other.category == category) &&
+            const DeepCollectionEquality()
+                .equals(other._venueTypes, _venueTypes) &&
+            const DeepCollectionEquality()
+                .equals(other._themeTags, _themeTags) &&
+            const DeepCollectionEquality().equals(other._addOns, _addOns) &&
+            (identical(other.setupTime, setupTime) ||
+                other.setupTime == setupTime) &&
+            (identical(other.bookingNotice, bookingNotice) ||
+                other.bookingNotice == bookingNotice) &&
+            (identical(other.customizationAvailable, customizationAvailable) ||
+                other.customizationAvailable == customizationAvailable) &&
+            (identical(other.customizationNote, customizationNote) ||
+                other.customizationNote == customizationNote) &&
+            const DeepCollectionEquality()
+                .equals(other._serviceEnvironment, _serviceEnvironment) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      name,
-      image,
-      description,
-      rating,
-      reviewsCount,
-      offersCount,
-      vendor,
-      promotionalTag,
-      const DeepCollectionEquality().hash(_inclusions),
-      originalPrice,
-      offerPrice,
-      isFeatured,
-      createdAt,
-      isActive,
-      const DeepCollectionEquality().hash(_photos),
-      category);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        name,
+        image,
+        description,
+        rating,
+        reviewsCount,
+        offersCount,
+        vendor,
+        promotionalTag,
+        const DeepCollectionEquality().hash(_inclusions),
+        originalPrice,
+        offerPrice,
+        isFeatured,
+        createdAt,
+        isActive,
+        const DeepCollectionEquality().hash(_photos),
+        category,
+        const DeepCollectionEquality().hash(_venueTypes),
+        const DeepCollectionEquality().hash(_themeTags),
+        const DeepCollectionEquality().hash(_addOns),
+        setupTime,
+        bookingNotice,
+        customizationAvailable,
+        customizationNote,
+        const DeepCollectionEquality().hash(_serviceEnvironment),
+        videoUrl
+      ]);
 
   /// Create a copy of ServiceListingModel
   /// with the given fields replaced by the non-null parameter values.
@@ -512,23 +745,35 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
 abstract class _ServiceListingModel implements ServiceListingModel {
   const factory _ServiceListingModel(
-      {required final String id,
-      @JsonKey(name: 'title') required final String name,
-      @JsonKey(name: 'cover_photo') required final String image,
-      final String? description,
-      final double? rating,
-      @JsonKey(name: 'reviews_count') final int? reviewsCount,
-      @JsonKey(name: 'offers_count') final int? offersCount,
-      final VendorModel? vendor,
-      @JsonKey(name: 'promotional_tag') final String? promotionalTag,
-      final List<String>? inclusions,
-      @JsonKey(name: 'original_price') final double? originalPrice,
-      @JsonKey(name: 'offer_price') final double? offerPrice,
-      @JsonKey(name: 'is_featured') final bool? isFeatured,
-      @JsonKey(name: 'created_at') final DateTime? createdAt,
-      @JsonKey(name: 'is_active') final bool? isActive,
-      final List<String>? photos,
-      final String? category}) = _$ServiceListingModelImpl;
+          {required final String id,
+          @JsonKey(name: 'title') required final String name,
+          @JsonKey(name: 'cover_photo') required final String image,
+          final String? description,
+          final double? rating,
+          @JsonKey(name: 'reviews_count') final int? reviewsCount,
+          @JsonKey(name: 'offers_count') final int? offersCount,
+          final VendorModel? vendor,
+          @JsonKey(name: 'promotional_tag') final String? promotionalTag,
+          final List<String>? inclusions,
+          @JsonKey(name: 'original_price') final double? originalPrice,
+          @JsonKey(name: 'offer_price') final double? offerPrice,
+          @JsonKey(name: 'is_featured') final bool? isFeatured,
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          @JsonKey(name: 'is_active') final bool? isActive,
+          final List<String>? photos,
+          final String? category,
+          @JsonKey(name: 'venue_types') final List<String>? venueTypes,
+          @JsonKey(name: 'theme_tags') final List<String>? themeTags,
+          @JsonKey(name: 'add_ons') final List<Map<String, dynamic>>? addOns,
+          @JsonKey(name: 'setup_time') final String? setupTime,
+          @JsonKey(name: 'booking_notice') final String? bookingNotice,
+          @JsonKey(name: 'customization_available')
+          final bool? customizationAvailable,
+          @JsonKey(name: 'customization_note') final String? customizationNote,
+          @JsonKey(name: 'service_environment')
+          final List<String>? serviceEnvironment,
+          @JsonKey(name: 'video_url') final String? videoUrl}) =
+      _$ServiceListingModelImpl;
 
   factory _ServiceListingModel.fromJson(Map<String, dynamic> json) =
       _$ServiceListingModelImpl.fromJson;
@@ -576,7 +821,35 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @override
   List<String>? get photos; // Array of service images
   @override
-  String? get category;
+  String? get category; // Service category for finding related services
+// Enhanced booking fields from database
+  @override
+  @JsonKey(name: 'venue_types')
+  List<String>? get venueTypes;
+  @override
+  @JsonKey(name: 'theme_tags')
+  List<String>? get themeTags;
+  @override
+  @JsonKey(name: 'add_ons')
+  List<Map<String, dynamic>>? get addOns;
+  @override
+  @JsonKey(name: 'setup_time')
+  String? get setupTime;
+  @override
+  @JsonKey(name: 'booking_notice')
+  String? get bookingNotice;
+  @override
+  @JsonKey(name: 'customization_available')
+  bool? get customizationAvailable;
+  @override
+  @JsonKey(name: 'customization_note')
+  String? get customizationNote;
+  @override
+  @JsonKey(name: 'service_environment')
+  List<String>? get serviceEnvironment;
+  @override
+  @JsonKey(name: 'video_url')
+  String? get videoUrl;
 
   /// Create a copy of ServiceListingModel
   /// with the given fields replaced by the non-null parameter values.

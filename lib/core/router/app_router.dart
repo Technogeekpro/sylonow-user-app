@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/features/address/screens/add_edit_address_screen.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
-import '../../features/auth/providers/auth_providers.dart';
+
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/phone_input_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/booking/screens/booking_success_screen.dart';
 import '../../features/home/screens/main_screen.dart';
 import '../../features/search/screens/search_screen.dart';
 import '../constants/app_constants.dart';
@@ -16,6 +17,11 @@ import '../../features/services/screens/service_detail_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/reviews/screens/reviews_screen.dart';
+import '../../features/categories/screens/all_categories_screen.dart';
+import '../../features/categories/screens/category_services_screen.dart';
+import '../../features/booking/screens/checkout_screen.dart';
+import '../../features/booking/screens/payment_screen.dart';
+import '../../features/home/models/service_listing_model.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -115,6 +121,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // Booking flow routes
+      GoRoute(
+        path: CheckoutScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          final service = extra['service'] as ServiceListingModel;
+          final selectedAddressId = extra['selectedAddressId'] as String?;
+          return CheckoutScreen(
+            service: service,
+            selectedAddressId: selectedAddressId,
+          );
+        },
+      ),
+      GoRoute(
+        path: PaymentScreen.routeName,
+        builder: (context, state) {
+          final bookingData = state.extra as Map<String, dynamic>;
+          return PaymentScreen(
+            bookingData: bookingData,
+          );
+        },
+      ),
+      // Booking Success route
+      GoRoute(
+        path: BookingSuccessScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return BookingSuccessScreen(
+            bookingData: extra['bookingData'] as Map<String, dynamic>,
+            paymentMethod: extra['paymentMethod'] as String,
+          );
+        },
+      ),
       // Reviews route
       GoRoute(
         path: ReviewsScreen.routeName,
@@ -126,6 +165,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             averageRating: extra?['averageRating'] ?? 4.9,
             totalReviews: extra?['totalReviews'] ?? 0,
           );
+        },
+      ),
+      // All categories route
+      GoRoute(
+        path: '/categories',
+        builder: (context, state) => const AllCategoriesScreen(),
+      ),
+      // Category services route
+      GoRoute(
+        path: '/category/:categoryName',
+        builder: (context, state) {
+          final categoryName = state.pathParameters['categoryName']!;
+          return CategoryServicesScreen(categoryName: categoryName);
         },
       ),
     ],

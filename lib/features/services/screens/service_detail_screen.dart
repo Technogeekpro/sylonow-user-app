@@ -4,24 +4,71 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_shimmer.dart';
 import '../../reviews/screens/reviews_screen.dart';
 import '../../home/models/service_listing_model.dart';
 import '../../home/providers/home_providers.dart';
-import '../../home/repositories/home_repository.dart';
+
+import '../../booking/screens/checkout_screen.dart';
 
 // Provider to fetch individual service details
 final serviceDetailProvider = FutureProvider.family<ServiceListingModel?, String>((ref, serviceId) async {
-  final repository = ref.watch(homeRepositoryProvider);
-  return await repository.getServiceById(serviceId);
+  try {
+    debugPrint('🔄 Fetching service details for ID: $serviceId');
+    final repository = ref.watch(homeRepositoryProvider);
+    final service = await repository.getServiceById(serviceId);
+    
+    if (service != null) {
+      debugPrint('✅ Service loaded successfully:');
+      debugPrint('  - Name: ${service.name}');
+      debugPrint('  - Image: ${service.image}');
+      debugPrint('  - Photos count: ${service.photos?.length ?? 0}');
+      debugPrint('  - Category: ${service.category}');
+      debugPrint('  - Original Price: ${service.originalPrice}');
+      debugPrint('  - Offer Price: ${service.offerPrice}');
+    } else {
+      debugPrint('❌ Service not found for ID: $serviceId');
+    }
+    
+    return service;
+  } catch (e, stackTrace) {
+    debugPrint('❌ Error fetching service details for ID: $serviceId');
+    debugPrint('Error: $e');
+    debugPrint('StackTrace: $stackTrace');
+    rethrow;
+  }
 });
 
 // Provider to fetch related services
 final relatedServicesProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, String?>>((ref, params) async {
-  final repository = ref.watch(homeRepositoryProvider);
-  return await repository.getRelatedServices(
-    currentServiceId: params['serviceId']!,
-    category: params['category'],
-  );
+  try {
+    final serviceId = params['serviceId']!;
+    final category = params['category'];
+    
+    debugPrint('🔄 Fetching related services for:');
+    debugPrint('  - Service ID: $serviceId');
+    debugPrint('  - Category: $category');
+    
+    final repository = ref.watch(homeRepositoryProvider);
+    final relatedServices = await repository.getRelatedServices(
+      currentServiceId: serviceId,
+      category: category,
+    );
+    
+    debugPrint('✅ Related services loaded: ${relatedServices.length} items');
+    for (var service in relatedServices.take(3)) {
+      debugPrint('  - ${service.name} (${service.id})');
+    }
+    
+    return relatedServices;
+  } catch (e, stackTrace) {
+    debugPrint('❌ Error fetching related services:');
+    debugPrint('  - Service ID: ${params['serviceId']}');
+    debugPrint('  - Category: ${params['category']}');
+    debugPrint('  - Error: $e');
+    debugPrint('  - StackTrace: $stackTrace');
+    rethrow;
+  }
 });
 
 class ServiceDetailScreen extends ConsumerStatefulWidget {
@@ -49,14 +96,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   int _currentImageIndex = 0;
   bool _isFavorite = false;
 
-  // Default service images when service doesn't have multiple images
-  final List<String> _defaultImages = [
-    'assets/images/carousel_1.jpg',
-    'assets/images/carousel_2.jpg',
-    'assets/images/carousel_3.jpg',
-    'assets/images/carousel_4.jpg',
-    'assets/images/carousel_5.jpg',
-  ];
+  // Placeholder for when no images are available
+  final String _placeholderImage = 'https://via.placeholder.com/400x300/f0f0f0/999999?text=No+Image';
 
 
   @override
@@ -73,25 +114,48 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       backgroundColor: Colors.white,
       body: serviceDetailAsync.when(
         loading: () => const _LoadingScreen(),
-        error: (error, stack) => _ErrorScreen(
-          error: error.toString(),
-          onRetry: () => ref.refresh(serviceDetailProvider(widget.serviceId)),
-        ),
-        data: (service) => _buildServiceDetail(service),
+        error: (error, stack) {
+          // Enhanced error logging
+          debugPrint('ServiceDetailScreen Error: $error');
+          debugPrint('ServiceId: ${widget.serviceId}');
+          return _ErrorScreen(
+            error: error.toString(),
+            onRetry: () => ref.refresh(serviceDetailProvider(widget.serviceId)),
+          );
+        },
+        data: (service) {
+          if (service == null) {
+            debugPrint('❌ Service data is null for ID: ${widget.serviceId}');
+            return _ErrorScreen(
+              error: 'Service not found',
+              onRetry: () => ref.refresh(serviceDetailProvider(widget.serviceId)),
+            );
+          }
+          
+          debugPrint('✅ Service detail screen rendering with service: ${service.name}');
+          return _buildServiceDetail(service);
+        },
       ),
     );
   }
 
-  Widget _buildServiceDetail(ServiceListingModel? service) {
-    // Use fetched service data or fallback to passed parameters
-    final serviceName = service?.name ?? widget.serviceName ?? 'Service';
-    final serviceDescription = service?.description ?? 'A beautiful service designed to make your celebration special.';
-    final serviceRating = service?.rating?.toStringAsFixed(1) ?? widget.rating ?? '4.9';
-    final reviewCount = service?.reviewsCount ?? widget.reviewCount ?? 0;
-    final originalPrice = service?.originalPrice;
-    final offerPrice = service?.offerPrice;
-    final serviceImage = service?.image;
-    final promotionalTag = service?.promotionalTag;
+  Widget _buildServiceDetail(ServiceListingModel service) {
+    // Log service data usage
+    debugPrint('🏗️ Building service detail for: ${service.name}');
+    debugPrint('  - Has photos: ${service.photos?.isNotEmpty == true}');
+    debugPrint('  - Has image: ${service.image.isNotEmpty}');
+    debugPrint('  - Has pricing: original=${service.originalPrice}, offer=${service.offerPrice}');
+    
+    // Use fetched service data with fallbacks for backward compatibility
+    final serviceName = service.name.isNotEmpty ? service.name : (widget.serviceName ?? 'Service');
+    final serviceDescription = service.description?.isNotEmpty == true 
+        ? service.description! 
+        : 'A beautiful service designed to make your celebration special.';
+    final serviceRating = service.rating?.toStringAsFixed(1) ?? widget.rating ?? '4.9';
+    final reviewCount = service.reviewsCount ?? widget.reviewCount ?? 0;
+    final originalPrice = service.originalPrice;
+    final offerPrice = service.offerPrice;
+    final promotionalTag = service.promotionalTag;
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -111,23 +175,29 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomBookingBar(serviceName),
+      bottomNavigationBar: _buildBottomBookingBar(service, serviceName),
     );
   }
 
-  Widget _buildSliverAppBar(ServiceListingModel? service, String serviceName) {
-    // Create image list from service photos array, or fallback to cover photo, then default images
+  Widget _buildSliverAppBar(ServiceListingModel service, String serviceName) {
+    // Create image list from service photos array, or fallback to cover photo, or placeholder
     List<String> imageList = [];
     
-    if (service?.photos != null && service!.photos!.isNotEmpty) {
-      // Use photos array from Supabase
-      imageList = service.photos!;
-    } else if (service?.image != null) {
-      // Use cover photo as single image
-      imageList = [service!.image];
-    } else {
-      // Fallback to default images
-      imageList = _defaultImages;
+    if (service.photos != null && service.photos!.isNotEmpty) {
+      // Filter out null or empty image URLs from photos array
+      imageList = service.photos!
+          .where((photo) => photo.isNotEmpty && photo.trim().isNotEmpty)
+          .toList();
+    } 
+    
+    // If no valid photos, try cover photo
+    if (imageList.isEmpty && service.image.isNotEmpty && service.image.trim().isNotEmpty) {
+      imageList = [service.image];
+    }
+    
+    // If still no images, use placeholder
+    if (imageList.isEmpty) {
+      imageList = [_placeholderImage];
     }
     return SliverAppBar(
       expandedHeight: 300,
@@ -178,6 +248,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 final imageUrl = imageList[index];
                 final isNetworkImage = imageUrl.startsWith('http');
                 
+                debugPrint('Loading main image $index: $imageUrl (isNetwork: $isNetworkImage)');
+                
                 return Container(
                   child: isNetworkImage
                       ? CachedNetworkImage(
@@ -189,23 +261,65 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                               child: CircularProgressIndicator(color: Colors.pink),
                             ),
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(_defaultImages[0]),
-                                fit: BoxFit.cover,
+                          errorWidget: (context, url, error) {
+                            debugPrint('Main image load error for $url: $error');
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                      size: 50,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Image failed to load',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : imageUrl == _placeholderImage
+                          ? Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 50,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'No image available',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                          ),
-                        )
-                      : Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(imageUrl),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
                 );
               },
             ),
@@ -238,15 +352,31 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                                 imageUrl: imageList[entry.key],
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(color: Colors.grey[200]),
-                                errorWidget: (context, url, error) => Image.asset(
-                                  _defaultImages[0],
-                                  fit: BoxFit.cover,
-                                ),
+                                errorWidget: (context, url, error) {
+                                  debugPrint('Thumbnail image error for ${imageList[entry.key]}: $error');
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                      size: 16,
+                                    ),
+                                  );
+                                },
                               )
-                            : Image.asset(
-                                imageList[entry.key],
-                                fit: BoxFit.cover,
-                              ),
+                            : imageList[entry.key] == _placeholderImage
+                                ? Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 16,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    imageList[entry.key],
+                                    fit: BoxFit.cover,
+                                  ),
                       ),
                     );
                   }),
@@ -279,7 +409,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
-  Widget _buildServiceInfo(ServiceListingModel? service, String serviceName, double? originalPrice, double? offerPrice, String rating, int reviewCount, String? promotionalTag) {
+  Widget _buildServiceInfo(ServiceListingModel service, String serviceName, double? originalPrice, double? offerPrice, String rating, int reviewCount, String? promotionalTag) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -488,40 +618,61 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
-  Widget _buildRelatedServices(ServiceListingModel? currentService) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'You might like / More like this',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Okra',
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Consumer(
-            builder: (context, ref, child) {
-              final relatedServicesAsync = ref.watch(relatedServicesProvider({
-                'serviceId': widget.serviceId,
-                'category': currentService?.category,
-              }));
-              
-              return relatedServicesAsync.when(
-                loading: () => const SizedBox(
-                  height: 120,
-                  child: Center(
-                    child: CircularProgressIndicator(color: Colors.pink),
+  Widget _buildRelatedServices(ServiceListingModel currentService) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final relatedServicesAsync = ref.watch(relatedServicesProvider({
+          'serviceId': widget.serviceId,
+          'category': currentService.category,
+        }));
+        
+        return relatedServicesAsync.when(
+          loading: () => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'You might like / More like this',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Okra',
+                    color: Colors.black87,
                   ),
                 ),
-                error: (error, stack) => const SizedBox(
-                  height: 120,
-                  child: Center(
-                    child: Text(
+                const SizedBox(height: 16),
+                const RelatedServicesShimmer(),
+              ],
+            ),
+          ),
+          error: (error, stack) {
+            debugPrint('Related services error: $error');
+            debugPrint('Service category: ${currentService.category}');
+            debugPrint('Current service ID: ${widget.serviceId}');
+            // Show error state instead of hiding
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'You might like / More like this',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
                       'Unable to load related services',
                       style: TextStyle(
                         color: Colors.grey,
@@ -529,24 +680,64 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                       ),
                     ),
                   ),
-                ),
-                data: (relatedServices) {
-                  if (relatedServices.isEmpty) {
-                    return const SizedBox(
-                      height: 120,
-                      child: Center(
-                        child: Text(
-                          'No related services found',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontFamily: 'Okra',
-                          ),
+                ],
+              ),
+            );
+          },
+          data: (relatedServices) {
+            debugPrint('Related services loaded: ${relatedServices.length} items');
+            if (relatedServices.isEmpty) {
+              // Show message instead of hiding section
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'You might like / More like this',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Okra',
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'No related services found',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontFamily: 'Okra',
                         ),
                       ),
-                    );
-                  }
-                  
-                  return SizedBox(
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'You might like / More like this',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
                     height: 120,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
@@ -593,29 +784,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                                     topLeft: Radius.circular(12),
                                     bottomLeft: Radius.circular(12),
                                   ),
-                                  child: Container(
+                                  child: SizedBox(
                                     width: 100,
                                     height: 120,
-                                    child: CachedNetworkImage(
-                                      imageUrl: service.image,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => Container(
-                                        color: Colors.grey[200],
-                                        child: const Center(
-                                          child: CircularProgressIndicator(
-                                            color: Colors.pink,
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      errorWidget: (context, url, error) => Container(
-                                        color: Colors.grey[200],
-                                        child: const Icon(
-                                          Icons.image_not_supported,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ),
+                                    child: _buildRelatedServiceImage(service),
                                   ),
                                 ),
                                 Expanded(
@@ -674,17 +846,106 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                         );
                       },
                     ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildBottomBookingBar(String serviceName) {
+  Widget _buildRelatedServiceImage(ServiceListingModel service) {
+    // Get the best available image URL
+    String imageUrl = '';
+    
+    // Try photos array first, then cover photo, then placeholder
+    if (service.photos != null && service.photos!.isNotEmpty) {
+      final validPhotos = service.photos!.where((photo) => photo.isNotEmpty && photo.trim().isNotEmpty).toList();
+      if (validPhotos.isNotEmpty) {
+        imageUrl = validPhotos.first;
+      }
+    }
+    
+    if (imageUrl.isEmpty && service.image.isNotEmpty && service.image.trim().isNotEmpty) {
+      imageUrl = service.image;
+    }
+    
+    if (imageUrl.isEmpty) {
+      imageUrl = _placeholderImage;
+    }
+
+    debugPrint('Related service image for ${service.name}: $imageUrl');
+
+    if (imageUrl == _placeholderImage) {
+      return Container(
+        color: Colors.grey[200],
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.image,
+                color: Colors.grey,
+                size: 24,
+              ),
+              SizedBox(height: 4),
+              Text(
+                'No image',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        color: Colors.grey[200],
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Colors.pink,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) {
+        debugPrint('Related service image error for ${service.name}: $error');
+        return Container(
+          color: Colors.grey[200],
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.image_not_supported,
+                  color: Colors.grey,
+                  size: 24,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'No image',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomBookingBar(ServiceListingModel service, String serviceName) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -715,7 +976,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
             child: ElevatedButton(
               onPressed: () {
                 // Handle booking
-                _showBookingBottomSheet(serviceName);
+                _showBookingBottomSheet(service, serviceName);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
@@ -741,78 +1002,13 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
-  void _showBookingBottomSheet(String serviceName) {
+  void _showBookingBottomSheet(ServiceListingModel service, String serviceName) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Book Service',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Okra',
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Select your preferred date and time to book this service.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                fontFamily: 'Okra',
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.pop();
-                  // Navigate to booking flow
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Continue Booking',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true,
+      isDismissible: true,
+      builder: (context) => CustomizationBottomSheet(service: service),
     );
   }
 
@@ -897,6 +1093,745 @@ Download Sylonow app: https://sylonow.com
         'averageRating': double.tryParse(rating) ?? 4.9,
         'totalReviews': reviewCount,
       },
+    );
+  }
+}
+
+// Customization Bottom Sheet Widget
+class CustomizationBottomSheet extends ConsumerStatefulWidget {
+  final ServiceListingModel service;
+  
+  const CustomizationBottomSheet({
+    super.key,
+    required this.service,
+  });
+
+  @override
+  ConsumerState<CustomizationBottomSheet> createState() => _CustomizationBottomSheetState();
+}
+
+class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSheet> {
+  String selectedTheme = 'Option';
+  String selectedVenueType = 'Option';
+  String selectedDate = 'Select Date';
+  String selectedTime = 'Select Time';
+  String selectedEnvironment = 'Option';
+  List<String> selectedAddOns = [];
+  final TextEditingController commentsController = TextEditingController();
+
+  // Dynamic lists based on service data
+  late List<String> themes;
+  late List<String> venueTypes;
+  late List<String> serviceEnvironments;
+  late List<Map<String, dynamic>> availableAddOns;
+  
+  final List<String> timeSlots = [
+    '09:00-11:00',
+    '11:00-13:00', 
+    '13:00-15:00',
+    '15:00-17:00',
+    '17:00-19:00',
+    '19:00-21:00',
+    '21:00-23:00',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeOptionsFromService();
+  }
+
+  void _initializeOptionsFromService() {
+    // Initialize themes from service data or fallback to defaults
+    themes = widget.service.themeTags?.isNotEmpty == true 
+        ? widget.service.themeTags!
+        : ['Romantic', 'Classic', 'Modern', 'Traditional'];
+
+    // Initialize venue types from service data or fallback to defaults
+    venueTypes = widget.service.venueTypes?.isNotEmpty == true 
+        ? widget.service.venueTypes!
+        : ['Indoor', 'Outdoor', 'Hotel', 'Home'];
+
+    // Initialize service environments
+    serviceEnvironments = widget.service.serviceEnvironment?.isNotEmpty == true
+        ? widget.service.serviceEnvironment!.map((env) => env.toUpperCase()).toList()
+        : ['INDOOR', 'OUTDOOR'];
+
+    // Initialize add-ons from service data
+    availableAddOns = widget.service.addOns ?? [];
+
+    debugPrint('🎨 Bottom sheet initialized with:');
+    debugPrint('  - Themes: $themes');
+    debugPrint('  - Venue types: $venueTypes');
+    debugPrint('  - Service environments: $serviceEnvironments');
+    debugPrint('  - Available add-ons: ${availableAddOns.length}');
+  }
+
+  @override
+  void dispose() {
+    commentsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  const Text(
+                    'Customise / Requirements',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Service Info Section
+                  _buildServiceInfoCard(),
+                  const SizedBox(height: 24),
+
+                  // Select Theme Section
+                  _buildSectionTitle('Select theme'),
+                  const SizedBox(height: 12),
+                  ...themes.map((theme) => _buildRadioOption(
+                    theme,
+                    selectedTheme,
+                    (value) => setState(() => selectedTheme = value),
+                  )),
+                  const SizedBox(height: 24),
+
+                  // Venue Type Section
+                  _buildSectionTitle('Venue type'),
+                  const SizedBox(height: 12),
+                  ...venueTypes.map((venue) => _buildRadioOption(
+                    venue,
+                    selectedVenueType,
+                    (value) => setState(() => selectedVenueType = value),
+                  )),
+                  const SizedBox(height: 24),
+
+                  // Service Environment Section (if available)
+                  if (serviceEnvironments.isNotEmpty) ...[
+                    _buildSectionTitle('Service environment'),
+                    const SizedBox(height: 12),
+                    ...serviceEnvironments.map((env) => _buildRadioOption(
+                      env,
+                      selectedEnvironment,
+                      (value) => setState(() => selectedEnvironment = value),
+                    )),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Add-ons Section (if available)
+                  if (availableAddOns.isNotEmpty) ...[
+                    _buildSectionTitle('Add-ons (optional)'),
+                    const SizedBox(height: 12),
+                    _buildAddOnsSection(),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Time Slot and Date Section
+                  _buildSectionTitle('Time slot and Date'),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdown(
+                          selectedDate,
+                          'Select Date',
+                          _getNextSevenDays(),
+                          (value) => setState(() => selectedDate = value),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildDropdown(
+                          selectedTime,
+                          'Select Time',
+                          timeSlots,
+                          (value) => setState(() => selectedTime = value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Inclusions Section (if available)
+                  if (widget.service.inclusions?.isNotEmpty == true) ...[
+                    _buildSectionTitle('What\'s included'),
+                    const SizedBox(height: 12),
+                    _buildInclusionsSection(),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Additional Comments Section
+                  _buildSectionTitle('Additional comments'),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: TextField(
+                      controller: commentsController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: widget.service.customizationNote?.isNotEmpty == true
+                            ? widget.service.customizationNote!
+                            : 'Add comment (optional)',
+                        hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontFamily: 'Okra',
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                      style: const TextStyle(fontFamily: 'Okra'),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+
+          // Continue Button
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _validateAndContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 20, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              const Text(
+                'Service Information',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ],
+          ),
+          if (widget.service.setupTime?.isNotEmpty == true || 
+              widget.service.bookingNotice?.isNotEmpty == true) ...[
+            const SizedBox(height: 12),
+            if (widget.service.setupTime?.isNotEmpty == true)
+              _buildInfoRow('Setup Time', widget.service.setupTime!),
+            if (widget.service.bookingNotice?.isNotEmpty == true)
+              _buildInfoRow('Advance Booking', widget.service.bookingNotice!),
+          ],
+          if (widget.service.customizationAvailable == true) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 16, color: Colors.green),
+                const SizedBox(width: 8),
+                const Text(
+                  'Customization available',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.green,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddOnsSection() {
+    return Column(
+      children: availableAddOns.map((addon) {
+        final addonName = addon['name']?.toString() ?? 'Add-on';
+        final addonPrice = addon['price']?.toString() ?? '';
+        final isSelected = selectedAddOns.contains(addonName);
+        
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                selectedAddOns.remove(addonName);
+              } else {
+                selectedAddOns.add(addonName);
+              }
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
+                width: isSelected ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primaryColor : Colors.grey[400]!,
+                      width: 2,
+                    ),
+                    color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, color: Colors.white, size: 12)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    addonName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'Okra',
+                      color: isSelected ? AppTheme.primaryColor : Colors.black87,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                if (addonPrice.isNotEmpty)
+                  Text(
+                    '+₹$addonPrice',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? AppTheme.primaryColor : Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildInclusionsSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: widget.service.inclusions!.map((inclusion) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  size: 16,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    inclusion,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Okra',
+        color: Colors.black87,
+      ),
+    );
+  }
+
+  Widget _buildRadioOption(String option, String selectedValue, Function(String) onChanged) {
+    return GestureDetector(
+      onTap: () => onChanged(option),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selectedValue == option ? AppTheme.primaryColor : Colors.grey[400]!,
+                  width: 2,
+                ),
+                color: selectedValue == option ? AppTheme.primaryColor : Colors.transparent,
+              ),
+              child: selectedValue == option
+                  ? const Icon(Icons.check, color: Colors.white, size: 12)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              option,
+              style: TextStyle(
+                fontSize: 14,
+                fontFamily: 'Okra',
+                color: selectedValue == option ? AppTheme.primaryColor : Colors.black87,
+                fontWeight: selectedValue == option ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String selectedValue, String hint, List<String> items, Function(String) onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        value: selectedValue == hint ? null : selectedValue,
+        hint: Text(
+          hint,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontFamily: 'Okra',
+          ),
+        ),
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: items.map((item) => DropdownMenuItem(
+          value: item,
+          child: Text(
+            item,
+            style: const TextStyle(fontFamily: 'Okra'),
+          ),
+        )).toList(),
+        onChanged: (value) {
+          if (value != null) onChanged(value);
+        },
+      ),
+    );
+  }
+
+  List<String> _getNextSevenDays() {
+    final now = DateTime.now();
+    return List.generate(7, (index) {
+      final date = now.add(Duration(days: index + 1));
+      return '${date.day}/${date.month}/${date.year}';
+    });
+  }
+
+  void _validateAndContinue() {
+    // Validate theme selection
+    if (selectedTheme == 'Option') {
+      _showError('Please select a theme');
+      return;
+    }
+    
+    // Validate venue type selection
+    if (selectedVenueType == 'Option') {
+      _showError('Please select a venue type');
+      return;
+    }
+    
+    // Validate service environment if available
+    if (serviceEnvironments.isNotEmpty && selectedEnvironment == 'Option') {
+      _showError('Please select a service environment');
+      return;
+    }
+    
+    // Validate date selection
+    if (selectedDate == 'Select Date') {
+      _showError('Please select a date');
+      return;
+    }
+    
+    // Validate time selection
+    if (selectedTime == 'Select Time') {
+      _showError('Please select a time');
+      return;
+    }
+
+    // Validate service essential fields
+    if (widget.service.id.isEmpty) {
+      debugPrint('❌ Service ID is empty');
+      _showError('Invalid service. Please try again.');
+      return;
+    }
+
+    if (widget.service.name.isEmpty) {
+      debugPrint('❌ Service name is empty');
+      _showError('Service information incomplete. Please try again.');
+      return;
+    }
+
+    // Check pricing information
+    if (widget.service.originalPrice == null && widget.service.offerPrice == null) {
+      debugPrint('⚠️ Service has no pricing information');
+    }
+
+    // Create comprehensive customization data
+    final customizationData = {
+      'theme': selectedTheme,
+      'venueType': selectedVenueType,
+      'serviceEnvironment': serviceEnvironments.isNotEmpty ? selectedEnvironment : null,
+      'date': selectedDate,
+      'time': selectedTime,
+      'addOns': selectedAddOns,
+      'comments': commentsController.text.trim(),
+      'setupTime': widget.service.setupTime,
+      'bookingNotice': widget.service.bookingNotice,
+    };
+
+    debugPrint('✅ Navigating to checkout with enhanced data:');
+    debugPrint('  - Service: ${widget.service.name} (${widget.service.id})');
+    debugPrint('  - Theme: $selectedTheme');
+    debugPrint('  - Venue: $selectedVenueType');
+    debugPrint('  - Environment: $selectedEnvironment');
+    debugPrint('  - Date & Time: $selectedDate at $selectedTime');
+    debugPrint('  - Add-ons: $selectedAddOns');
+    debugPrint('  - Comments: ${commentsController.text.isNotEmpty ? "Added" : "None"}');
+
+    try {
+      // Close bottom sheet first
+      Navigator.of(context).pop();
+      
+      // Navigate to checkout with enhanced data
+      context.push(
+        CheckoutScreen.routeName,
+        extra: {
+          'service': widget.service,
+          'customization': customizationData,
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ Navigation error: $e');
+      _showError('Unable to proceed to checkout. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
+// Related Services Shimmer Widget
+class RelatedServicesShimmer extends StatelessWidget {
+  const RelatedServicesShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 280,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
+                  child: Container(
+                    width: 100,
+                    height: 120,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.pink,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 14,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 12,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

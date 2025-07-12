@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/features/home/providers/home_providers.dart';
+import 'package:sylonow_user/features/home/providers/cached_home_providers.dart';
 import 'package:sylonow_user/features/home/models/category_model.dart';
 
-class ExploreCategoriesSection extends ConsumerWidget {
-  const ExploreCategoriesSection({super.key});
+class OptimizedExploreCategoriesSection extends ConsumerWidget {
+  const OptimizedExploreCategoriesSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesAsyncValue = ref.watch(categoriesProvider);
+    final categoriesAsyncValue = ref.watch(cachedCategoriesProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,7 +20,7 @@ class ExploreCategoriesSection extends ConsumerWidget {
         const SizedBox(height: 16),
         categoriesAsyncValue.when(
           loading: () => _buildLoadingState(),
-          error: (error, stack) => _buildErrorState(),
+          error: (error, stack) => _buildErrorState(ref),
           data: (categories) => _buildCategoriesList(context, categories),
         ),
       ],
@@ -73,13 +73,12 @@ class ExploreCategoriesSection extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 4,
+        itemCount: 6, // Show 6 shimmer items
         itemBuilder: (context, index) {
           return Container(
             width: 160,
             margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -90,19 +89,46 @@ class ExploreCategoriesSection extends ConsumerWidget {
                 ),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: _ShimmerPlaceholder(),
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildErrorState() {
-    return const SizedBox(
+  Widget _buildErrorState(WidgetRef ref) {
+    return SizedBox(
       height: 110,
       child: Center(
-        child: Text(
-          'Could not load categories.',
-          style: TextStyle(color: Colors.grey),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Could not load categories',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontFamily: 'Okra',
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                ref.invalidate(cachedCategoriesProvider);
+              },
+              child: Text(
+                'Retry',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontFamily: 'Okra',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -115,11 +141,17 @@ class ExploreCategoriesSection extends ConsumerWidget {
         child: Center(
           child: Text(
             'No categories available.',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: Colors.grey,
+              fontFamily: 'Okra',
+            ),
           ),
         ),
       );
     }
+
+    // Show first 8 categories in horizontal list
+    final displayCategories = categories.take(8).toList();
 
     return SizedBox(
       height: 110,
@@ -127,9 +159,9 @@ class ExploreCategoriesSection extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: categories.length,
+        itemCount: displayCategories.length,
         itemBuilder: (context, index) {
-          final category = categories[index];
+          final category = displayCategories[index];
           return _buildCategoryCard(context, category);
         },
       ),
@@ -137,6 +169,8 @@ class ExploreCategoriesSection extends ConsumerWidget {
   }
 
   Widget _buildCategoryCard(BuildContext context, CategoryModel category) {
+    final Color categoryColor = _parseColor(category.colorCode) ?? AppTheme.primaryColor;
+
     return Container(
       width: 160,
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -161,28 +195,9 @@ class ExploreCategoriesSection extends ConsumerWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Category Image
-                category.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: category.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            Container(color: Colors.grey[200]),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.image_not_supported_outlined,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.category_outlined,
-                          color: Colors.grey,
-                        ),
-                      ),
+                // Category Image with optimized caching
+                _buildCategoryImage(category, categoryColor),
+                
                 // Gradient Overlay
                 Container(
                   decoration: BoxDecoration(
@@ -197,6 +212,7 @@ class ExploreCategoriesSection extends ConsumerWidget {
                     ),
                   ),
                 ),
+                
                 // Category Title
                 Positioned(
                   bottom: 12,
@@ -213,6 +229,25 @@ class ExploreCategoriesSection extends ConsumerWidget {
                     ),
                     textAlign: TextAlign.left,
                     maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                
+                // Category color indicator
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: categoryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 1,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -220,6 +255,99 @@ class ExploreCategoriesSection extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCategoryImage(CategoryModel category, Color fallbackColor) {
+    if (category.imageUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: category.imageUrl!,
+        fit: BoxFit.cover,
+        memCacheWidth: 320, // Optimize memory usage for small images
+        memCacheHeight: 220,
+        placeholder: (context, url) => _ShimmerPlaceholder(),
+        errorWidget: (context, url, error) => _buildFallbackImage(fallbackColor),
+      );
+    } else {
+      return _buildFallbackImage(fallbackColor);
+    }
+  }
+
+  Widget _buildFallbackImage(Color color) {
+    return Container(
+      color: color.withOpacity(0.1),
+      child: Icon(
+        Icons.category_outlined,
+        color: color,
+        size: 32,
+      ),
+    );
+  }
+
+  Color? _parseColor(String? colorCode) {
+    if (colorCode == null || !colorCode.startsWith('#')) return null;
+    try {
+      return Color(int.parse(colorCode.substring(1), radix: 16) + 0xFF000000);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
+// Optimized shimmer placeholder
+class _ShimmerPlaceholder extends StatefulWidget {
+  @override
+  _ShimmerPlaceholderState createState() => _ShimmerPlaceholderState();
+}
+
+class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [
+                (_animation.value - 1).clamp(0.0, 1.0),
+                _animation.value.clamp(0.0, 1.0),
+                (_animation.value + 1).clamp(0.0, 1.0),
+              ],
+              colors: [
+                Colors.grey[200]!,
+                Colors.grey[100]!,
+                Colors.grey[200]!,
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

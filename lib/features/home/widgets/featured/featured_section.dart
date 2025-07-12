@@ -202,7 +202,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
     }
 
     return SizedBox(
-      height: 330,
+      height: 340,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,

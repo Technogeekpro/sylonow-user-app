@@ -33,6 +33,23 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
       photos:
           (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList(),
       category: json['category'] as String?,
+      venueTypes: (json['venue_types'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      themeTags: (json['theme_tags'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      addOns: (json['add_ons'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList(),
+      setupTime: json['setup_time'] as String?,
+      bookingNotice: json['booking_notice'] as String?,
+      customizationAvailable: json['customization_available'] as bool?,
+      customizationNote: json['customization_note'] as String?,
+      serviceEnvironment: (json['service_environment'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      videoUrl: json['video_url'] as String?,
     );
 
 Map<String, dynamic> _$$ServiceListingModelImplToJson(
@@ -55,4 +72,13 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'is_active': instance.isActive,
       'photos': instance.photos,
       'category': instance.category,
+      'venue_types': instance.venueTypes,
+      'theme_tags': instance.themeTags,
+      'add_ons': instance.addOns,
+      'setup_time': instance.setupTime,
+      'booking_notice': instance.bookingNotice,
+      'customization_available': instance.customizationAvailable,
+      'customization_note': instance.customizationNote,
+      'service_environment': instance.serviceEnvironment,
+      'video_url': instance.videoUrl,
     };

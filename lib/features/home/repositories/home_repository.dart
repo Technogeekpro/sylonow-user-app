@@ -169,11 +169,11 @@ class HomeRepository {
             vendors(
               id,
               business_name,
-              owner_name,
+              full_name,
               rating,
               total_reviews,
               total_jobs_completed,
-              profile_picture_url,
+              profile_image_url,
               location
             )
           ''')
@@ -191,43 +191,65 @@ class HomeRepository {
   /// Fetches related services by category
   /// 
   /// Returns a list of services in the same category, excluding the current service
+  /// If no services found in same category, returns other services
   Future<List<ServiceListingModel>> getRelatedServices({
     required String currentServiceId,
     String? category,
     int limit = 4,
   }) async {
     try {
-      var query = _supabase
-          .from('service_listings')
-          .select('''
-            *,
-            vendors(
-              id,
-              business_name,
-              owner_name,
-              rating,
-              total_reviews
-            )
-          ''');
+      List<ServiceListingModel> results = [];
 
-      // Build query conditions
-      query = query
-          .eq('is_active', true)
-          .neq('id', currentServiceId); // Exclude current service
-
-      // Filter by category if provided
+      // First, try to get services in the same category
       if (category != null && category.isNotEmpty) {
-        query = query.eq('category', category);
+        final categoryResponse = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors(
+                id,
+                business_name,
+                full_name,
+                rating,
+                total_reviews
+              )
+            ''')
+            .eq('is_active', true)
+            .eq('category', category)
+            .neq('id', currentServiceId)
+            .limit(limit)
+            .order('rating', ascending: false);
+
+        results = categoryResponse
+            .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+            .toList();
       }
 
-      // Apply limit and order
-      final response = await query
-          .limit(limit)
-          .order('rating', ascending: false);
+      // If no services found in same category, get any other services
+      if (results.isEmpty) {
+        final generalResponse = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors(
+                id,
+                business_name,
+                full_name,
+                rating,
+                total_reviews
+              )
+            ''')
+            .eq('is_active', true)
+            .neq('id', currentServiceId)
+            .limit(limit)
+            .order('rating', ascending: false);
 
-      return response
-          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
-          .toList();
+        results = generalResponse
+            .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+            .toList();
+      }
+
+      return results;
     } catch (e) {
       // Return empty list on error
       return [];
@@ -275,7 +297,7 @@ class HomeRepository {
             vendors(
               id,
               business_name,
-              owner_name,
+              full_name,
               rating,
               total_reviews
             )

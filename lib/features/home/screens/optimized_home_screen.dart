@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:sylonow_user/features/home/widgets/categories/explore_categories_section.dart';
+import 'package:sylonow_user/features/home/widgets/categories/optimized_explore_categories_section.dart';
 import 'package:sylonow_user/features/home/widgets/featured/featured_section.dart';
 import 'package:sylonow_user/features/home/widgets/collage/image_collage_section.dart';
 import 'package:sylonow_user/features/home/widgets/popular_nearby/popular_nearby_section.dart';
@@ -228,7 +228,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
               SliverToBoxAdapter(child: SizedBox(height: 40)),
               SliverToBoxAdapter(child: QuoteSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(child: ExploreCategoriesSection()),
+              SliverToBoxAdapter(child: OptimizedExploreCategoriesSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(child: FeaturedSection()),
               SliverToBoxAdapter(child: ImageCollageSection()),

@@ -8,6 +8,7 @@ part 'service_listing_model.g.dart';
 class ServiceListingModel with _$ServiceListingModel {
   const factory ServiceListingModel({
     required String id,
+    @JsonKey(name: 'vendor_id') String? vendorId,
     @JsonKey(name: 'title') required String name,
     @JsonKey(name: 'cover_photo') required String image,
     String? description,
@@ -24,6 +25,16 @@ class ServiceListingModel with _$ServiceListingModel {
     @JsonKey(name: 'is_active') bool? isActive,
     List<String>? photos, // Array of service images
     String? category, // Service category for finding related services
+    // Enhanced booking fields from database
+    @JsonKey(name: 'venue_types') List<String>? venueTypes,
+    @JsonKey(name: 'theme_tags') List<String>? themeTags,
+    @JsonKey(name: 'add_ons') List<Map<String, dynamic>>? addOns,
+    @JsonKey(name: 'setup_time') String? setupTime,
+    @JsonKey(name: 'booking_notice') String? bookingNotice,
+    @JsonKey(name: 'customization_available') bool? customizationAvailable,
+    @JsonKey(name: 'customization_note') String? customizationNote,
+    @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
+    @JsonKey(name: 'video_url') String? videoUrl,
   }) = _ServiceListingModel;
 
   factory ServiceListingModel.fromJson(Map<String, dynamic> json) =>
