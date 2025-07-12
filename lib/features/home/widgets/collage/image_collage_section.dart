@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
@@ -40,10 +41,16 @@ class ImageCollageSection extends ConsumerWidget {
           final service = displayServices[index];
           if (service == null) {
             // Show loading placeholder for missing services
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: _getBorderRadius(index),
+            return ClipPath(
+              clipper: ShapeBorderClipper(
+                shape: ContinuousRectangleBorder(
+                  borderRadius: _getBorderRadius(index),
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                ),
               ),
             );
           }
@@ -67,10 +74,16 @@ class ImageCollageSection extends ConsumerWidget {
         crossAxisSpacing: 12,
         childAspectRatio: 1.0,
         children: List.generate(4, (index) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: _getBorderRadius(index),
+          return ClipPath(
+            clipper: ShapeBorderClipper(
+              shape: ContinuousRectangleBorder(
+                borderRadius: _getBorderRadius(index),
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+              ),
             ),
           );
         }),
@@ -79,8 +92,8 @@ class ImageCollageSection extends ConsumerWidget {
   }
 
   BorderRadius _getBorderRadius(int index) {
-    const double smallRadius = 0;
-    const double largeRadius = 60;
+    const double smallRadius = 16;
+    const double largeRadius = 120;
     switch (index) {
       case 0: // Top-left
         return const BorderRadius.only(
@@ -126,23 +139,70 @@ class _ImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: AppTheme.primaryColor,
-          width: 2,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: CachedNetworkImage(
-          imageUrl: service.image,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(color: Colors.grey[200]),
-          errorWidget: (context, url, error) => Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.broken_image, color: Colors.grey),
+    return GestureDetector(
+      onTap: () {
+        context.push(
+          '/service/${service.id}',
+          extra: {
+            'serviceName': service.name,
+            'price': service.offerPrice?.toString() ?? service.originalPrice?.toString(),
+            'rating': service.rating?.toStringAsFixed(1) ?? '4.9',
+            'reviewCount': service.reviewsCount ?? 0,
+          },
+        );
+      },
+      child: Hero(
+        tag: 'collage_service_${service.id}',
+        flightShuttleBuilder: (
+          BuildContext flightContext,
+          Animation<double> animation,
+          HeroFlightDirection flightDirection,
+          BuildContext fromHeroContext,
+          BuildContext toHeroContext,
+        ) {
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              return ClipPath(
+                clipper: ShapeBorderClipper(
+                  shape: ContinuousRectangleBorder(
+                    borderRadius: BorderRadius.lerp(
+                      borderRadius,
+                      BorderRadius.circular(0),
+                      flightDirection == HeroFlightDirection.push 
+                          ? animation.value 
+                          : 1 - animation.value,
+                    )!,
+                  ),
+                ),
+                child: child,
+              );
+            },
+            child: CachedNetworkImage(
+              imageUrl: service.image,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: Colors.grey[200]),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[200],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              ),
+            ),
+          );
+        },
+        child: ClipPath(
+          clipper: ShapeBorderClipper(
+            shape: ContinuousRectangleBorder(
+              borderRadius: borderRadius,
+            ),
+          ),
+          child: CachedNetworkImage(
+            imageUrl: service.image,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(color: Colors.grey[200]),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey[200],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
           ),
         ),
       ),

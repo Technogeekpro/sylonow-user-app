@@ -84,11 +84,14 @@ class PopularNearbySection extends ConsumerWidget {
         );
       },
       child: Container(
-      height: 119,
+      height: 134,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(30),
+          bottomLeft: Radius.circular(30),
+        ),
         border: Border.all(
           color: const Color(0xFFEFEFEF),
           width: 1.2,
@@ -101,27 +104,25 @@ class PopularNearbySection extends ConsumerWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(15),
-                  bottomLeft: Radius.circular(15),
+                  bottomLeft: Radius.circular(30),
                 ),
                 child: SizedBox(
                   width: 117,
-                  height: 117,
+                  height: 130,
                   child: Stack(
                     children: [
                       CachedNetworkImage(
                         imageUrl: service.image,
                         width: 117,
-                        height: 117,
+                        height: 130,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           width: 117,
-                          height: 117,
+                          height: 130,
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(15),
-                              bottomLeft: Radius.circular(15),
+                              bottomLeft: Radius.circular(30),
                             ),
                           ),
                           child: Center(
@@ -133,12 +134,11 @@ class PopularNearbySection extends ConsumerWidget {
                         ),
                         errorWidget: (context, url, error) => Container(
                           width: 117,
-                          height: 117,
+                          height: 130,
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(15),
-                              bottomLeft: Radius.circular(15),
+                              bottomLeft: Radius.circular(30),
                             ),
                           ),
                           child: const Center(
@@ -150,11 +150,10 @@ class PopularNearbySection extends ConsumerWidget {
                       // Gradient overlay
                       Container(
                         width: 117,
-                        height: 117,
+                        height: 130,
                         decoration: BoxDecoration(
                           borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(15),
-                            bottomLeft: Radius.circular(15),
+                            bottomLeft: Radius.circular(30),
                           ),
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
@@ -295,28 +294,33 @@ class PopularNearbySection extends ConsumerWidget {
                   ),
                   const Spacer(),
                   // Description with More link
-                  RichText(
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      text: service.description ?? 'A floral engagement decoration creates a romantic and elegant ambiance with lush flower arrangements, cascading garlands, and a beautifully adorned stage.',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                        fontFamily: 'Okra',
-                        height: 1.3,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '...More',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFFFF0080),
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Okra',
-                          ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 32, // Exactly 2 lines of text with 1.3 line height
+                    ),
+                    child: RichText(
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        text: service.description ?? 'A floral engagement decoration creates a romantic and elegant ambiance with lush flower arrangements, cascading garlands, and a beautifully adorned stage.',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          fontFamily: 'Okra',
+                          height: 1.3,
                         ),
-                      ],
+                        children: const [
+                          TextSpan(
+                            text: ' More',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFFF0080),
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

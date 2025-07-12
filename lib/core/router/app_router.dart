@@ -16,6 +16,7 @@ import '../constants/app_constants.dart';
 import '../../features/services/screens/service_detail_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/reviews/screens/reviews_screen.dart';
 import '../../features/categories/screens/all_categories_screen.dart';
 import '../../features/categories/screens/category_services_screen.dart';
@@ -197,28 +198,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 // Placeholder screens for profile navigation
-class EditProfileScreen extends StatelessWidget {
-  const EditProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Edit Profile Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
 class BookingHistoryScreen extends StatelessWidget {
   const BookingHistoryScreen({super.key});
 

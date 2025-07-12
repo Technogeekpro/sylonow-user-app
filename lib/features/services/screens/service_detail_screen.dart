@@ -250,76 +250,79 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 
                 debugPrint('Loading main image $index: $imageUrl (isNetwork: $isNetworkImage)');
                 
-                return Container(
-                  child: isNetworkImage
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[200],
-                            child: const Center(
-                              child: CircularProgressIndicator(color: Colors.pink),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) {
-                            debugPrint('Main image load error for $url: $error');
-                            return Container(
+                return Hero(
+                  tag: 'collage_service_${widget.serviceId}',
+                  child: Container(
+                    child: isNetworkImage
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
                               color: Colors.grey[200],
                               child: const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.broken_image,
-                                      color: Colors.grey,
-                                      size: 50,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Image failed to load',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : imageUrl == _placeholderImage
-                          ? Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image,
-                                      color: Colors.grey,
-                                      size: 50,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'No image available',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Container(
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(imageUrl),
-                                  fit: BoxFit.cover,
-                                ),
+                                child: CircularProgressIndicator(color: Colors.pink),
                               ),
                             ),
+                            errorWidget: (context, url, error) {
+                              debugPrint('Main image load error for $url: $error');
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.broken_image,
+                                        color: Colors.grey,
+                                        size: 50,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Image failed to load',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : imageUrl == _placeholderImage
+                            ? Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image,
+                                        color: Colors.grey,
+                                        size: 50,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'No image available',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(imageUrl),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                  ),
                 );
               },
             ),
@@ -1836,7 +1839,7 @@ class RelatedServicesShimmer extends StatelessWidget {
   }
 }
 
-// Loading screen widget
+// Loading screen widget with shimmer effect
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
 
@@ -1844,26 +1847,151 @@ class _LoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
-        ),
+      body: CustomScrollView(
+        slivers: [
+          // Shimmer App Bar
+          SliverAppBar(
+            expandedHeight: 300,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.white,
+            flexibleSpace: FlexibleSpaceBar(
+              background: ShimmerEffect(
+                width: double.infinity,
+                height: 300,
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => context.pop(),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Service title shimmer
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ShimmerEffect(
+                              width: 200,
+                              height: 28,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            const SizedBox(height: 12),
+                            ShimmerEffect(
+                              width: 150,
+                              height: 24,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Favorite button shimmer
+                      ShimmerEffect(
+                        width: 48,
+                        height: 48,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Rating section shimmer
+                  Row(
+                    children: [
+                      ShimmerEffect(
+                        width: 120,
+                        height: 20,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      const SizedBox(width: 12),
+                      ShimmerEffect(
+                        width: 80,
+                        height: 20,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Description shimmer
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerEffect(
+                        width: double.infinity,
+                        height: 16,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      const SizedBox(height: 8),
+                      ShimmerEffect(
+                        width: double.infinity,
+                        height: 16,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      const SizedBox(height: 8),
+                      ShimmerEffect(
+                        width: 200,
+                        height: 16,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  // Related services section shimmer
+                  ShimmerEffect(
+                    width: 180,
+                    height: 24,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  const SizedBox(height: 16),
+                  const RelatedServicesShimmer(),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      // Bottom bar shimmer
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Row(
           children: [
-            CircularProgressIndicator(color: Colors.pink),
-            SizedBox(height: 16),
-            Text(
-              'Loading service details...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                fontFamily: 'Okra',
+            ShimmerEffect(
+              width: 48,
+              height: 48,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ShimmerEffect(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ],

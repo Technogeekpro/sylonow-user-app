@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../features/auth/providers/auth_providers.dart';
+import '../providers/profile_providers.dart';
+import '../models/user_profile_model.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    final profileAsyncValue = ref.watch(currentUserProfileProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -18,7 +24,11 @@ class ProfileScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              _buildProfileCard(context),
+              profileAsyncValue.when(
+                data: (profile) => _buildProfileCard(context, currentUser, profile),
+                loading: () => _buildLoadingProfileCard(),
+                error: (error, stack) => _buildErrorProfileCard(context, ref),
+              ),
               const SizedBox(height: 24),
               _buildPersonalSection(context, ref),
               const SizedBox(height: 16),
@@ -35,7 +45,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context) {
+  Widget _buildProfileCard(BuildContext context, dynamic currentUser, UserProfileModel? profile) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -48,23 +58,15 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppTheme.primaryColor,
-            child: const Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.white,
-            ),
-          ),
+          _buildProfileAvatar(profile),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'John Doe',
-                  style: TextStyle(
+                Text(
+                  profile?.fullName ?? currentUser?.email?.split('@')[0] ?? 'User',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Okra',
@@ -73,30 +75,24 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'john.doe@email.com',
+                  profile?.email ?? currentUser?.email ?? 'No email',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
                     fontFamily: 'Okra',
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Premium Member',
+                if (profile?.phoneNumber != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    profile!.phoneNumber!,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                      fontSize: 14,
+                      color: Colors.grey[600],
                       fontFamily: 'Okra',
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -113,6 +109,133 @@ class ProfileScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(UserProfileModel? profile) {
+    if (profile?.profileImageUrl != null) {
+      return CircleAvatar(
+        radius: 40,
+        backgroundImage: CachedNetworkImageProvider(profile!.profileImageUrl!),
+        backgroundColor: AppTheme.primaryColor,
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: profile.profileImageUrl!,
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
+            errorWidget: (context, url, error) => const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 40,
+      backgroundColor: AppTheme.primaryColor,
+      child: Text(
+        profile?.fullName?.isNotEmpty == true 
+            ? profile!.fullName!.substring(0, 1).toUpperCase()
+            : 'U',
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontFamily: 'Okra',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingProfileCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.grey[300],
+            child: const CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 20,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 14,
+                  width: 180,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorProfileCard(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
+          const SizedBox(height: 8),
+          const Text(
+            'Failed to load profile',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Okra',
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => ref.refresh(currentUserProfileProvider),
+            child: const Text(
+              'Retry',
+              style: TextStyle(
+                fontSize: 14,
                 fontFamily: 'Okra',
               ),
             ),
