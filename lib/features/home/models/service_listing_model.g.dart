@@ -10,6 +10,7 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
         Map<String, dynamic> json) =>
     _$ServiceListingModelImpl(
       id: json['id'] as String,
+      vendorId: json['vendor_id'] as String?,
       name: json['title'] as String,
       image: json['cover_photo'] as String,
       description: json['description'] as String?,
@@ -56,6 +57,7 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
         _$ServiceListingModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'vendor_id': instance.vendorId,
       'title': instance.name,
       'cover_photo': instance.image,
       'description': instance.description,

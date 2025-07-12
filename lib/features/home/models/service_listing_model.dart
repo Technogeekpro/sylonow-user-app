@@ -8,7 +8,7 @@ part 'service_listing_model.g.dart';
 class ServiceListingModel with _$ServiceListingModel {
   const factory ServiceListingModel({
     required String id,
-    @JsonKey(name: 'vendor_id') String? vendorId,
+    @JsonKey(name: 'vendor_id') required String? vendorId,
     @JsonKey(name: 'title') required String name,
     @JsonKey(name: 'cover_photo') required String image,
     String? description,

@@ -577,7 +577,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       // First create the order in the database
       final order = await ref.read(orderCreationProvider.notifier).createOrder(
         userId: user.id,
-        vendorId: bookingData['vendorId'] ?? service.vendorId ?? service.vendor?.id ?? 'unknown-vendor',
+        vendorId: service.vendorId ?? service.vendor?.id ?? 'unknown-vendor',  // Updated this line
         customerName: bookingData['customerName'] ?? user.userMetadata?['full_name'] ?? 'Customer',
         serviceListingId: service.id,
         serviceTitle: service.name,
@@ -597,10 +597,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       // Process Razorpay payment for 60% advance
       await ref.read(razorpayPaymentProvider.notifier).processPayment(
-        bookingId: order.id, // Use the actual order ID
+        bookingId: order.id,
         userId: user.id,
         vendorId: order.vendorId ?? '',
-        amount: advanceAmount, // Only charge 60% advance
+        amount: advanceAmount,
         customerName: order.customerName,
         customerEmail: order.customerEmail ?? user.email ?? '',
         customerPhone: order.customerPhone ?? user.phone ?? '',

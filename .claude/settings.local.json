@@ -15,7 +15,10 @@
       "Bash(flutter packages pub run:*)",
       "Bash(cd:*)",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(bash -c \"cd ''/mnt/e/Flutter Projects - 2025/Sylonow/sylonow_user'' && flutter analyze\")",
+      "Bash(/bin/bash -c \"flutter analyze\")",
+      "Bash(/mnt/e/flutter/bin/flutter analyze)"
     ],
     "deny": []
   },

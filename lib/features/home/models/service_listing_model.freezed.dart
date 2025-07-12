@@ -21,6 +21,8 @@ ServiceListingModel _$ServiceListingModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$ServiceListingModel {
   String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId => throw _privateConstructorUsedError;
   @JsonKey(name: 'title')
   String get name => throw _privateConstructorUsedError;
   @JsonKey(name: 'cover_photo')
@@ -87,6 +89,7 @@ abstract class $ServiceListingModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'title') String name,
       @JsonKey(name: 'cover_photo') String image,
       String? description,
@@ -132,6 +135,7 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
   @override
   $Res call({
     Object? id = null,
+    Object? vendorId = freezed,
     Object? name = null,
     Object? image = null,
     Object? description = freezed,
@@ -163,6 +167,10 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -291,6 +299,7 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'title') String name,
       @JsonKey(name: 'cover_photo') String image,
       String? description,
@@ -335,6 +344,7 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? vendorId = freezed,
     Object? name = null,
     Object? image = null,
     Object? description = freezed,
@@ -366,6 +376,10 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -475,6 +489,7 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
 class _$ServiceListingModelImpl implements _ServiceListingModel {
   const _$ServiceListingModelImpl(
       {required this.id,
+      @JsonKey(name: 'vendor_id') required this.vendorId,
       @JsonKey(name: 'title') required this.name,
       @JsonKey(name: 'cover_photo') required this.image,
       this.description,
@@ -513,6 +528,9 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
   @override
   final String id;
+  @override
+  @JsonKey(name: 'vendor_id')
+  final String? vendorId;
   @override
   @JsonKey(name: 'title')
   final String name;
@@ -639,7 +657,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl)';
+    return 'ServiceListingModel(id: $id, vendorId: $vendorId, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl)';
   }
 
   @override
@@ -648,6 +666,8 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
         (other.runtimeType == runtimeType &&
             other is _$ServiceListingModelImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.vendorId, vendorId) ||
+                other.vendorId == vendorId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.image, image) || other.image == image) &&
             (identical(other.description, description) ||
@@ -699,6 +719,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
   int get hashCode => Object.hashAll([
         runtimeType,
         id,
+        vendorId,
         name,
         image,
         description,
@@ -746,6 +767,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 abstract class _ServiceListingModel implements ServiceListingModel {
   const factory _ServiceListingModel(
           {required final String id,
+          @JsonKey(name: 'vendor_id') required final String? vendorId,
           @JsonKey(name: 'title') required final String name,
           @JsonKey(name: 'cover_photo') required final String image,
           final String? description,
@@ -780,6 +802,9 @@ abstract class _ServiceListingModel implements ServiceListingModel {
 
   @override
   String get id;
+  @override
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId;
   @override
   @JsonKey(name: 'title')
   String get name;

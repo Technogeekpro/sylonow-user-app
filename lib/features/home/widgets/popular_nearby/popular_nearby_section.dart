@@ -224,15 +224,57 @@ class PopularNearbySection extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   // Price
-                  Text(
-                    '₹22',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Okra',
-                      color: Color(0xFFFF0080),
-                      height: 1.0,
-                    ),
+                  Row(
+                    children: [
+                      if (service.offerPrice != null) ...[
+                        Text(
+                          '₹${service.offerPrice!.round()}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Okra',
+                            color: Color(0xFFFF0080),
+                            height: 1.0,
+                          ),
+                        ),
+                        if (service.originalPrice != null && service.originalPrice! > service.offerPrice!) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '₹${service.originalPrice!.round()}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Okra',
+                              color: Color(0xFF6B7280),
+                              decoration: TextDecoration.lineThrough,
+                              height: 1.0,
+                            ),
+                          ),
+                        ],
+                      ] else if (service.originalPrice != null) ...[
+                        Text(
+                          '₹${service.originalPrice!.round()}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Okra',
+                            color: Color(0xFFFF0080),
+                            height: 1.0,
+                          ),
+                        ),
+                      ] else ...[
+                        const Text(
+                          'Price on request',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                            color: Color(0xFF6B7280),
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   // Rating section
