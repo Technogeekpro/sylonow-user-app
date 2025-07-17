@@ -37,6 +37,11 @@ class ServiceListingModel with _$ServiceListingModel {
     @JsonKey(name: 'video_url') String? videoUrl,
   }) = _ServiceListingModel;
 
-  factory ServiceListingModel.fromJson(Map<String, dynamic> json) =>
-      _$ServiceListingModelFromJson(json);
+  factory ServiceListingModel.fromJson(Map<String, dynamic> json) {
+    // Handle both 'vendor' and 'vendors' fields
+    if (json.containsKey('vendors') && json['vendors'] != null && !json.containsKey('vendor')) {
+      json['vendor'] = json['vendors'];
+    }
+    return _$ServiceListingModelFromJson(json);
+  }
 } 
