@@ -6,7 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../home/providers/home_providers.dart';
 import '../../home/models/service_listing_model.dart';
 
-class CategoryServicesScreen extends ConsumerWidget {
+class CategoryServicesScreen extends ConsumerStatefulWidget {
   final String categoryName;
 
   const CategoryServicesScreen({
@@ -17,14 +17,160 @@ class CategoryServicesScreen extends ConsumerWidget {
   static const String routeName = '/category';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final servicesAsync = ref.watch(servicesByCategoryProvider(categoryName));
+  ConsumerState<CategoryServicesScreen> createState() => _CategoryServicesScreenState();
+}
+
+class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  double? _minPrice;
+  double? _maxPrice;
+  double? _minRating;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openFilterModal(List<ServiceListingModel> allServices) {
+    double? tempMinPrice = _minPrice;
+    double? tempMaxPrice = _maxPrice;
+    double? tempMinRating = _minRating;
+
+    // Calculate price/rating bounds from data
+    final prices = allServices
+        .map((s) => s.offerPrice ?? s.originalPrice)
+        .whereType<double>()
+        .toList();
+    final minPossiblePrice = prices.isEmpty ? 0.0 : prices.reduce((a, b) => a < b ? a : b);
+    final maxPossiblePrice = prices.isEmpty ? 10000.0 : prices.reduce((a, b) => a > b ? a : b);
+    final ratings = allServices.map((s) => s.rating ?? 0.0).toList();
+    final minPossibleRating = 0.0;
+    final maxPossibleRating = ratings.isEmpty ? 5.0 : ratings.reduce((a, b) => a > b ? a : b);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets,
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Filter Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
+                    // Price Range
+                    const Text('Price Range (₹)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Min',
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            controller: TextEditingController(text: tempMinPrice?.toStringAsFixed(0) ?? ''),
+                            onChanged: (v) {
+                              setModalState(() {
+                                tempMinPrice = double.tryParse(v);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Max',
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            controller: TextEditingController(text: tempMaxPrice?.toStringAsFixed(0) ?? ''),
+                            onChanged: (v) {
+                              setModalState(() {
+                                tempMaxPrice = double.tryParse(v);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Rating
+                    const Text('Minimum Rating', style: TextStyle(fontWeight: FontWeight.w600)),
+                    Slider(
+                      value: tempMinRating ?? minPossibleRating,
+                      min: minPossibleRating,
+                      max: 5.0,
+                      divisions: 10,
+                      label: (tempMinRating ?? minPossibleRating).toStringAsFixed(1),
+                      onChanged: (v) {
+                        setModalState(() {
+                          tempMinRating = v;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _minPrice = null;
+                              _maxPrice = null;
+                              _minRating = null;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Clear'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _minPrice = tempMinPrice;
+                              _maxPrice = tempMaxPrice;
+                              _minRating = tempMinRating;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Apply'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final servicesAsync = ref.watch(servicesByCategoryProvider(widget.categoryName));
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          categoryName,
+          widget.categoryName,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontFamily: 'Okra',
@@ -38,10 +184,84 @@ class CategoryServicesScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: servicesAsync.when(
-        loading: () => _buildLoadingState(),
-        error: (error, stack) => _buildErrorState(error.toString()),
-        data: (services) => _buildServicesList(context, services),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search services...',
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFFF34E5F)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFF34E5F)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                servicesAsync.maybeWhen(
+                  data: (allServices) => IconButton(
+                    icon: const Icon(Icons.filter_alt_outlined, color: Color(0xFFF34E5F)),
+                    onPressed: () => _openFilterModal(allServices),
+                  ),
+                  orElse: () => IconButton(
+                    icon: const Icon(Icons.filter_alt_outlined, color: Color(0xFFF34E5F)),
+                    onPressed: null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: servicesAsync.when(
+              loading: () => _buildLoadingState(),
+              error: (error, stack) => _buildErrorState(error.toString()),
+              data: (services) {
+                var filtered = services;
+                if (_searchQuery.isNotEmpty) {
+                  filtered = filtered.where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+                }
+                if (_minPrice != null) {
+                  filtered = filtered.where((s) {
+                    final price = s.offerPrice ?? s.originalPrice;
+                    return price == null || price >= _minPrice!;
+                  }).toList();
+                }
+                if (_maxPrice != null) {
+                  filtered = filtered.where((s) {
+                    final price = s.offerPrice ?? s.originalPrice;
+                    return price == null || price <= _maxPrice!;
+                  }).toList();
+                }
+                if (_minRating != null) {
+                  filtered = filtered.where((s) => (s.rating ?? 0.0) >= _minRating!).toList();
+                }
+                return _buildServicesList(context, filtered);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -122,7 +342,7 @@ class CategoryServicesScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'No services in $categoryName',
+                'No services in ${widget.categoryName}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -148,139 +368,74 @@ class CategoryServicesScreen extends ConsumerWidget {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.65
+        ,
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
         final service = services[index];
-        return _buildServiceCard(context, service);
+        return _buildServiceImage(context, service);
       },
     );
   }
 
-  Widget _buildServiceCard(BuildContext context, ServiceListingModel service) {
-    final price = service.offerPrice != null 
-        ? '₹${_formatNumberWithCommas(service.offerPrice!.round())}'
-        : service.originalPrice != null
-            ? '₹${_formatNumberWithCommas(service.originalPrice!.round())}'
-            : 'Price on request';
-
+  Widget _buildServiceImage(BuildContext context, ServiceListingModel service) {
     return GestureDetector(
       onTap: () {
         context.push(
           '/service/${service.id}',
-          extra: {
-            'serviceName': service.name,
-            'price': price,
-            'rating': (service.rating ?? 0.0).toStringAsFixed(1),
-            'reviewCount': service.reviewsCount ?? 0,
-          },
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(70),
+              bottomLeft: Radius.circular(8),
+              bottomRight: Radius.circular(8),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Service Image
-            Expanded(
-              flex: 3,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: Container(
-                  width: double.infinity,
-                  child: CachedNetworkImage(
-                    imageUrl: service.image,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.pink,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                      ),
-                    ),
+            child: CachedNetworkImage(
+              imageUrl: service.image,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 116,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[200],
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.pink,
+                    strokeWidth: 2,
                   ),
                 ),
               ),
-            ),
-            
-            // Service Details
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      service.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Okra',
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                        fontFamily: 'Okra',
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          color: Colors.orange,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${(service.rating ?? 0.0).toStringAsFixed(1)} (${service.reviewsCount ?? 0})',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[200],
+                child: const Icon(
+                  Icons.image_not_supported,
+                  color: Colors.grey,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            service.name,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Okra',
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

@@ -14,15 +14,15 @@ class TheaterRepository {
     var query = _supabase
         .from('private_theaters')
         .select()
-        .eq('is_active', true)
-        .order('rating', ascending: false)
-        .range(offset, offset + limit - 1);
+        .eq('is_active', true);
 
     if (city != null) {
       query = query.eq('city', city);
     }
 
-    final response = await query;
+    final response = await query
+        .order('rating', ascending: false)
+        .range(offset, offset + limit - 1);
     
     return (response as List)
         .map((json) => PrivateTheaterModel.fromJson(json))

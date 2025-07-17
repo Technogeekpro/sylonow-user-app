@@ -69,7 +69,9 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
     );
   }
 
-  Widget _buildTheatersList(AsyncValue<List<PrivateTheaterModel>> theatersAsync) {
+  Widget _buildTheatersList(
+    AsyncValue<List<PrivateTheaterModel>> theatersAsync,
+  ) {
     return theatersAsync.when(
       data: (theaters) {
         if (theaters.isEmpty) {
@@ -85,7 +87,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
         }
 
         return SizedBox(
-          height: 190,
+          height: 100,
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -123,7 +125,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
       },
       child: Container(
         width: 340,
-        height: 190,
+        height: 100,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -142,8 +144,8 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
               // Background image
               Positioned.fill(
                 child: CachedNetworkImage(
-                  imageUrl: theater.images.isNotEmpty 
-                      ? theater.images.first 
+                  imageUrl: theater.images.isNotEmpty
+                      ? theater.images.first
                       : 'https://images.unsplash.com/photo-1489599735188-6c6b2b5d1c3e?w=400',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
@@ -179,32 +181,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
                 ),
               ),
               // Rating badge
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 14),
-                      const SizedBox(width: 2),
-                      Text(
-                        theater.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+           
               // Theater info at bottom
               Positioned(
                 bottom: 0,
@@ -228,63 +205,8 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on, 
-                                   color: Colors.white70, size: 14),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              theater.address,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                                fontFamily: 'Okra',
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.people, 
-                                       color: Colors.white70, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Up to ${theater.capacity} people',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                  fontFamily: 'Okra',
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '₹${theater.hourlyRate.toInt()}/hr',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontFamily: 'Okra',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                     
+                 
                     ],
                   ),
                 ),
