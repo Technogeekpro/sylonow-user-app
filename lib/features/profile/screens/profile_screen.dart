@@ -15,10 +15,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _isSigningOut = false;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final profileAsyncValue = ref.watch(currentUserProfileProvider);
 
@@ -450,7 +448,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _isSigningOut ? null : () => _showSignOutDialog(context, ref),
+          onTap: () => _showSignOutDialog(context, ref),
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -477,8 +475,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showSignOutDialog(BuildContext context, WidgetRef ref) {
-    if (_isSigningOut) return; // Prevent multiple dialogs
-    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -497,65 +493,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
               child: Text(
                 'Cancel',
                 style: TextStyle(color: Colors.grey[600], fontFamily: 'Okra'),
               ),
             ),
-            StatefulBuilder(
-              builder: (context, setDialogState) {
-                return TextButton(
-                  onPressed: _isSigningOut ? null : () async {
-                    if (_isSigningOut) return; // Double-check to prevent multiple calls
-                    
-                    setState(() {
-                      _isSigningOut = true;
-                    });
-                    setDialogState(() {});
-                    
-                    try {
-                      // Close dialog first
-                      Navigator.of(dialogContext).pop();
-                      
-                      // Perform sign out
-                      await ref.read(authControllerProvider.notifier).signOut();
-                      
-                      // Navigate to splash screen to handle auth state
-                      if (mounted && context.mounted) {
-                        context.go('/splash');
-                      }
-                    } catch (e) {
-                      setState(() {
-                        _isSigningOut = false;
-                      });
-                      
-                      if (mounted && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error signing out: ${e.toString()}'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: _isSigningOut
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          'Sign Out',
-                          style: TextStyle(
-                            color: Colors.red[600],
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                );
+            TextButton(
+              onPressed: () async {
+                // Close dialog immediately
+                Navigator.of(dialogContext).pop();
+                
+                try {
+                  // Perform sign out
+                  await ref.read(authControllerProvider.notifier).signOut();
+                  
+                  // Navigate to splash screen to handle auth state
+                  if (context.mounted) {
+                    context.go('/splash');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error signing out: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
+              child: Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                ),
+              ),
             ),
           ],
         );

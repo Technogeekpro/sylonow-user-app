@@ -19,7 +19,8 @@
       "Bash(bash -c \"cd ''/mnt/e/Flutter Projects - 2025/Sylonow/sylonow_user'' && flutter analyze\")",
       "Bash(/bin/bash -c \"flutter analyze\")",
       "Bash(/mnt/e/flutter/bin/flutter analyze)",
-      "Bash(/mnt/e/flutter/bin/flutter packages pub run build_runner build --delete-conflicting-outputs)"
+      "Bash(/mnt/e/flutter/bin/flutter packages pub run build_runner build --delete-conflicting-outputs)",
+      "Bash(bash:*)"
     ],
     "deny": []
   },
