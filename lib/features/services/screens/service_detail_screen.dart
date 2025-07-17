@@ -39,20 +39,39 @@ final serviceDetailProvider = FutureProvider.family<ServiceListingModel?, String
   }
 });
 
+// Parameters class for related services provider
+class RelatedServicesParams {
+  final String serviceId;
+  final String? category;
+  
+  const RelatedServicesParams({
+    required this.serviceId,
+    this.category,
+  });
+  
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RelatedServicesParams &&
+          runtimeType == other.runtimeType &&
+          serviceId == other.serviceId &&
+          category == other.category;
+  
+  @override
+  int get hashCode => serviceId.hashCode ^ category.hashCode;
+}
+
 // Provider to fetch related services
-final relatedServicesProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, String?>>((ref, params) async {
+final relatedServicesProvider = FutureProvider.family<List<ServiceListingModel>, RelatedServicesParams>((ref, params) async {
   try {
-    final serviceId = params['serviceId']!;
-    final category = params['category'];
-    
     debugPrint('🔄 Fetching related services for:');
-    debugPrint('  - Service ID: $serviceId');
-    debugPrint('  - Category: $category');
+    debugPrint('  - Service ID: ${params.serviceId}');
+    debugPrint('  - Category: ${params.category}');
     
     final repository = ref.watch(homeRepositoryProvider);
     final relatedServices = await repository.getRelatedServices(
-      currentServiceId: serviceId,
-      category: category,
+      currentServiceId: params.serviceId,
+      category: params.category,
     );
     
     debugPrint('✅ Related services loaded: ${relatedServices.length} items');
@@ -63,8 +82,8 @@ final relatedServicesProvider = FutureProvider.family<List<ServiceListingModel>,
     return relatedServices;
   } catch (e, stackTrace) {
     debugPrint('❌ Error fetching related services:');
-    debugPrint('  - Service ID: ${params['serviceId']}');
-    debugPrint('  - Category: ${params['category']}');
+    debugPrint('  - Service ID: ${params.serviceId}');
+    debugPrint('  - Category: ${params.category}');
     debugPrint('  - Error: $e');
     debugPrint('  - StackTrace: $stackTrace');
     rethrow;
@@ -624,10 +643,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   Widget _buildRelatedServices(ServiceListingModel currentService) {
     return Consumer(
       builder: (context, ref, child) {
-        final relatedServicesAsync = ref.watch(relatedServicesProvider({
-          'serviceId': widget.serviceId,
-          'category': currentService.category,
-        }));
+        final relatedServicesAsync = ref.watch(relatedServicesProvider(RelatedServicesParams(
+          serviceId: widget.serviceId,
+          category: currentService.category,
+        )));
         
         return relatedServicesAsync.when(
           loading: () => Padding(
