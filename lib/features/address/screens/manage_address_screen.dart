@@ -205,38 +205,16 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
             ),
 
             // Saved Addresses Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  const Text(
-                    'SAVED ADDRESSES',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const Spacer(),
-                  addressesAsync.when(
-                    data: (addresses) => addresses.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.edit,
-                              color: Colors.grey[600],
-                              size: 18,
-                            ),
-                            onPressed: () {
-                              // Navigate to edit addresses screen
-                              context.go('/edit-addresses');
-                            },
-                          )
-                        : const SizedBox(),
-                    loading: () => const SizedBox(),
-                    error: (_, __) => const SizedBox(),
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'SAVED ADDRESSES',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
 
@@ -251,6 +229,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                     ),
                   );
                 }
+                final selectedAddress = ref.watch(selectedAddressProvider);
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -258,6 +237,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                   itemCount: addresses.length,
                   itemBuilder: (context, index) {
                     final address = addresses[index];
+                    final isSelected = selectedAddress?.id == address.id;
                     return Container(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -266,6 +246,9 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: isSelected
+                            ? Border.all(color: Colors.pink[400]!, width: 2)
+                            : null,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
@@ -274,57 +257,88 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                           ),
                         ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      address.addressFor.toString().contains(
-                                            'home',
-                                          )
-                                          ? Icons.home_outlined
-                                          : Icons.work_outline,
-                                      color: Colors.grey[700],
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      address.addressFor
-                                          .toString()
-                                          .split('.')
-                                          .last
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  address.address,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                if (address.phoneNumber != null) ...[
-                                  const SizedBox(height: 4),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          // Select this address and return to home
+                          ref.read(selectedAddressProvider.notifier).state = address;
+                          context.go('/');
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    address.addressFor.toString().contains(
+                                          'home',
+                                        )
+                                        ? Icons.home_outlined
+                                        : Icons.work_outline,
+                                    color: Colors.grey[700],
+                                  ),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Phone number: ${address.phoneNumber}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
+                                    address.addressFor
+                                        .toString()
+                                        .split('.')
+                                        .last
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.pink[400],
+                                      size: 20,
+                                    ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Navigate to edit this specific address
+                                      context.go(
+                                        '${AddEditAddressScreen.routeName}?addressId=${address.id}',
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Icon(
+                                        Icons.edit,
+                                        color: Colors.grey[600],
+                                        size: 16,
+                                      ),
                                     ),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                address.address,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              if (address.phoneNumber != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Phone number: ${address.phoneNumber}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
                               ],
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
