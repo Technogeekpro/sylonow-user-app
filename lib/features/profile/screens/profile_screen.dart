@@ -512,7 +512,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   
                   // Navigate to splash screen to handle auth state
                   if (context.mounted) {
-                    context.go('/splash');
+                    context.go('/');
                   }
                 } catch (e) {
                   if (context.mounted) {

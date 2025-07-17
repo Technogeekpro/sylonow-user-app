@@ -138,15 +138,15 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors!inner(
+            vendor:vendors!inner(
               rating,
               total_reviews,
               total_jobs_completed
             )
           ''')
           .eq('is_active', true)
-          .order('vendors.rating', ascending: false)
-          .order('vendors.total_reviews', ascending: false)
+          .order('vendor.rating', ascending: false)
+          .order('vendor.total_reviews', ascending: false)
           .limit(limit);
 
       return response
@@ -166,7 +166,7 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors(
               id,
               business_name,
               full_name,
@@ -206,7 +206,7 @@ class HomeRepository {
             .from('service_listings')
             .select('''
               *,
-              vendors(
+              vendor:vendors(
                 id,
                 business_name,
                 full_name,
@@ -231,7 +231,7 @@ class HomeRepository {
             .from('service_listings')
             .select('''
               *,
-              vendors(
+              vendor:vendors(
                 id,
                 business_name,
                 full_name,
@@ -294,7 +294,7 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors(
               id,
               business_name,
               full_name,
