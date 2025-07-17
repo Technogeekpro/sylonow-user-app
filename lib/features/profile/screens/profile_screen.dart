@@ -494,7 +494,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop();
+                context.pop();
               },
               child: Text(
                 'Cancel',
@@ -504,7 +504,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 // Close dialog immediately
-                Navigator.of(dialogContext).pop();
+                context.pop();
                 
                 try {
                   // Perform sign out
