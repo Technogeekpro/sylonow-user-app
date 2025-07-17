@@ -177,7 +177,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                     if (!_isLocationEnabled) const SizedBox(height: 16),
                     // Add Address Button
                     InkWell(
-                      onTap: () => context.go(AddEditAddressScreen.routeName),
+                      onTap: () => context.push(AddEditAddressScreen.routeName),
                       child: Row(
                         children: [
                           Icon(
@@ -302,8 +302,8 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                                   GestureDetector(
                                     onTap: () {
                                       // Navigate to edit this specific address
-                                      context.go(
-                                        '${AddEditAddressScreen.routeName}?addressId=${address.id}',
+                                      context.push(
+                                        '/add-edit-address/${address.id}',
                                       );
                                     },
                                     child: Container(

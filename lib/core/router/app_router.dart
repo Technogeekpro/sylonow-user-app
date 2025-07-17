@@ -88,6 +88,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ManageAddressScreen(),
       ),
       GoRoute(
+        path: '/add-edit-address/:addressId',
+        builder: (context, state) {
+          final addressId = state.pathParameters['addressId'];
+          return AddEditAddressScreen(addressId: addressId);
+        },
+      ),
+      GoRoute(
         path: AddEditAddressScreen.routeName,
         builder: (context, state) => const AddEditAddressScreen(),
       ),

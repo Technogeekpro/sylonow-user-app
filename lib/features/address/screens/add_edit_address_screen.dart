@@ -9,8 +9,9 @@ import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:uuid/uuid.dart';
 
 class AddEditAddressScreen extends ConsumerStatefulWidget {
-  const AddEditAddressScreen({super.key});
+  const AddEditAddressScreen({super.key, this.addressId});
 
+  final String? addressId;
   static const routeName = '/add-edit-address';
 
   @override
@@ -27,6 +28,48 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
   final _phoneController = TextEditingController();
   AddressType _addressType = AddressType.home;
   bool _isLoading = false;
+  Address? _existingAddress;
+  bool get _isEditing => widget.addressId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      _loadExistingAddress();
+    }
+  }
+
+  Future<void> _loadExistingAddress() async {
+    if (widget.addressId == null) return;
+    
+    setState(() => _isLoading = true);
+    try {
+      final addresses = await ref.read(addressesProvider.future);
+      _existingAddress = addresses.firstWhere(
+        (address) => address.id == widget.addressId,
+        orElse: () => throw Exception('Address not found'),
+      );
+      
+      _nameController.text = _existingAddress?.name ?? '';
+      _addressController.text = _existingAddress?.address ?? '';
+      _areaController.text = _existingAddress?.area ?? '';
+      _nearbyController.text = _existingAddress?.nearby ?? '';
+      _floorController.text = _existingAddress?.floor ?? '';
+      _phoneController.text = _existingAddress?.phoneNumber ?? '';
+      _addressType = _existingAddress?.addressFor ?? AddressType.home;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading address: $e')),
+        );
+        context.pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -69,8 +112,8 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
           throw Exception('User not logged in');
         }
 
-        final newAddress = Address(
-          id: const Uuid().v4(),
+        final address = Address(
+          id: _isEditing ? widget.addressId! : const Uuid().v4(),
           userId: user.id,
           name: _nameController.text,
           address: _addressController.text,
@@ -81,7 +124,11 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
           addressFor: _addressType,
         );
 
-        await ref.read(addressRepositoryProvider).addAddress(newAddress);
+        if (_isEditing) {
+          await ref.read(addressRepositoryProvider).updateAddress(address);
+        } else {
+          await ref.read(addressRepositoryProvider).addAddress(address);
+        }
 
         ref.invalidate(addressesProvider);
 
@@ -102,7 +149,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Address'),
+        title: Text(_isEditing ? 'Edit Address' : 'Add New Address'),
         leading: BackButton(
           onPressed: () {
             context.pop();
@@ -175,7 +222,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _saveAddress,
-                      child: const Text('Save Address'),
+                      child: Text(_isEditing ? 'Update Address' : 'Save Address'),
                     ),
                   ],
                 ),
