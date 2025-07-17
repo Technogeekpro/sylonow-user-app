@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
@@ -55,7 +56,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Text(
         'Featured',
-        style: Theme.of(context).textTheme.titleMedium,
+        style: Theme.of(context).textTheme.titleLarge,
       ),
     );
   }
@@ -174,7 +175,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
     }
 
     return SizedBox(
-      height: 230,
+      height: 220,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
@@ -216,7 +217,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
       },
       child: Container(
         width: 262,
-        height: 206,
+       
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -237,7 +238,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image section
-            Container(
+            SizedBox(
               height: 122,
               width: double.infinity,
               child: ClipRRect(
@@ -330,6 +331,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
               ),
             ),
             // Description
+            Spacer(),
             Padding(
               padding: const EdgeInsets.fromLTRB(9, 4, 9, 0),
               child: Text(
@@ -358,21 +360,20 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   const SizedBox(width: 16),
-                  Container(
+                  SizedBox(
                     width: 11,
                     height: 11,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFFFF0080),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.local_offer,
-                        color: Color(0xFFFF0080),
-                        size: 8,
-                      ),
+                   
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/svgs/discount.svg',
+                        width: 12,
+                        height: 12,
+                        colorFilter: const ColorFilter.mode(
+                          Color(0xFFFF0080),
+                          BlendMode.srcIn,
+                        ),
+                      )
                     ),
                   ),
                   const SizedBox(width: 4),

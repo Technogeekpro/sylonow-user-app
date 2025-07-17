@@ -23,6 +23,7 @@ import '../../features/categories/screens/category_services_screen.dart';
 import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
+import '../../features/theater/screens/theater_detail_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -186,6 +187,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final categoryName = state.pathParameters['categoryName']!;
           return CategoryServicesScreen(categoryName: categoryName);
+        },
+      ),
+      // Theater detail route
+      GoRoute(
+        path: '/theater/:theaterId',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          return TheaterDetailScreen(theaterId: theaterId);
         },
       ),
     ],

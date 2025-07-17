@@ -6,6 +6,7 @@ import 'package:sylonow_user/features/home/widgets/featured/featured_section.dar
 import 'package:sylonow_user/features/home/widgets/collage/image_collage_section.dart';
 import 'package:sylonow_user/features/home/widgets/popular_nearby/popular_nearby_section.dart';
 import 'package:sylonow_user/features/home/widgets/quote/quote_section.dart';
+import 'package:sylonow_user/features/theater/widgets/theater_section.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -231,6 +232,8 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
               SliverToBoxAdapter(child: OptimizedExploreCategoriesSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(child: FeaturedSection()),
+              SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(child: TheaterSection()),
               SliverToBoxAdapter(child: ImageCollageSection()),
               SliverToBoxAdapter(child: PopularNearbySection()),
             ],
