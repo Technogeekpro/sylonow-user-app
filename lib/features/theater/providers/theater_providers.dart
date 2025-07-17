@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/theater/models/private_theater_model.dart';
 import 'package:sylonow_user/features/theater/repositories/theater_repository.dart';
 
