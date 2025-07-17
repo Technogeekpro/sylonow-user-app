@@ -982,18 +982,6 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.primaryColor),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.favorite_border,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
               onPressed: () {
@@ -1133,7 +1121,6 @@ class CustomizationBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSheet> {
-  String selectedTheme = 'Option';
   String selectedVenueType = 'Option';
   String selectedDate = 'Select Date';
   String selectedTime = 'Select Time';
@@ -1142,7 +1129,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
   final TextEditingController commentsController = TextEditingController();
 
   // Dynamic lists based on service data
-  late List<String> themes;
   late List<String> venueTypes;
   late List<String> serviceEnvironments;
   late List<Map<String, dynamic>> availableAddOns;
@@ -1164,15 +1150,10 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
   }
 
   void _initializeOptionsFromService() {
-    // Initialize themes from service data or fallback to defaults
-    themes = widget.service.themeTags?.isNotEmpty == true 
-        ? widget.service.themeTags!
-        : ['Romantic', 'Classic', 'Modern', 'Traditional'];
-
     // Initialize venue types from service data or fallback to defaults
     venueTypes = widget.service.venueTypes?.isNotEmpty == true 
         ? widget.service.venueTypes!
-        : ['Indoor', 'Outdoor', 'Hotel', 'Home'];
+        : ['Home', 'Community Hall', 'Restaurant', 'Park'];
 
     // Initialize service environments
     serviceEnvironments = widget.service.serviceEnvironment?.isNotEmpty == true
@@ -1183,7 +1164,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
     availableAddOns = widget.service.addOns ?? [];
 
     debugPrint('🎨 Bottom sheet initialized with:');
-    debugPrint('  - Themes: $themes');
     debugPrint('  - Venue types: $venueTypes');
     debugPrint('  - Service environments: $serviceEnvironments');
     debugPrint('  - Available add-ons: ${availableAddOns.length}');
@@ -1239,16 +1219,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
                   
                   // Service Info Section
                   _buildServiceInfoCard(),
-                  const SizedBox(height: 24),
-
-                  // Select Theme Section
-                  _buildSectionTitle('Select theme'),
-                  const SizedBox(height: 12),
-                  ...themes.map((theme) => _buildRadioOption(
-                    theme,
-                    selectedTheme,
-                    (value) => setState(() => selectedTheme = value),
-                  )),
                   const SizedBox(height: 24),
 
                   // Venue Type Section
@@ -1670,12 +1640,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
   }
 
   void _validateAndContinue() {
-    // Validate theme selection
-    if (selectedTheme == 'Option') {
-      _showError('Please select a theme');
-      return;
-    }
-    
     // Validate venue type selection
     if (selectedVenueType == 'Option') {
       _showError('Please select a venue type');
@@ -1720,7 +1684,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
 
     // Create comprehensive customization data
     final customizationData = {
-      'theme': selectedTheme,
       'venueType': selectedVenueType,
       'serviceEnvironment': serviceEnvironments.isNotEmpty ? selectedEnvironment : null,
       'date': selectedDate,
@@ -1733,7 +1696,6 @@ class _CustomizationBottomSheetState extends ConsumerState<CustomizationBottomSh
 
     debugPrint('✅ Navigating to checkout with enhanced data:');
     debugPrint('  - Service: ${widget.service.name} (${widget.service.id})');
-    debugPrint('  - Theme: $selectedTheme');
     debugPrint('  - Venue: $selectedVenueType');
     debugPrint('  - Environment: $selectedEnvironment');
     debugPrint('  - Date & Time: $selectedDate at $selectedTime');
