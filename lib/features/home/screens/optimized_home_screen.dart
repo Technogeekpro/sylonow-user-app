@@ -225,8 +225,8 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
             // Performance optimization: Use const widgets where possible
             slivers: const [
               SliverToBoxAdapter(child: _AdvertisementSection()),
-              SliverToBoxAdapter(child: SizedBox(height: 40)),
-              SliverToBoxAdapter(child: QuoteSection()),
+             // SliverToBoxAdapter(child: SizedBox(height: 40)),
+             // SliverToBoxAdapter(child: QuoteSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(child: OptimizedExploreCategoriesSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -687,7 +687,7 @@ class _AdvertisementSection extends StatelessWidget {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Container(
-      height: 400 + appBarHeight,
+      height: 260 + appBarHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         image: const DecorationImage(
@@ -697,7 +697,7 @@ class _AdvertisementSection extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.only(
-          top: statusBarHeight + appBarHeight + 24,
+          top: statusBarHeight + appBarHeight + 10,
           left: 24,
           right: 24,
           bottom: 24,
@@ -718,13 +718,13 @@ class _AdvertisementSection extends StatelessWidget {
             Image.asset(
               'assets/images/sylonow_white_logo.png',
               width: 100,
-              height: 56,
+              height: 30,
             ),
             const SizedBox(height: 12),
             const Text(
-              'Get 50% OFF\non Your First\nService Booking!',
+              'Get 50% OFF\non Your First Service Booking!',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 fontFamily: 'Okra',
@@ -732,15 +732,7 @@ class _AdvertisementSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Book any service and enjoy massive savings.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.9),
-                fontFamily: 'Okra',
-                height: 1.4,
-              ),
-            ),
+          
             const Spacer(),
             Container(
               width: double.infinity,

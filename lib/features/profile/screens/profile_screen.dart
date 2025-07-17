@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../../../features/auth/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
 import '../models/user_profile_model.dart';
@@ -25,7 +23,8 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             children: [
               profileAsyncValue.when(
-                data: (profile) => _buildProfileCard(context, currentUser, profile),
+                data: (profile) =>
+                    _buildProfileCard(context, currentUser, profile),
                 loading: () => _buildLoadingProfileCard(),
                 error: (error, stack) => _buildErrorProfileCard(context, ref),
               ),
@@ -45,16 +44,17 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, dynamic currentUser, UserProfileModel? profile) {
+  Widget _buildProfileCard(
+    BuildContext context,
+    dynamic currentUser,
+    UserProfileModel? profile,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Row(
         children: [
@@ -65,7 +65,9 @@ class ProfileScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile?.fullName ?? currentUser?.email?.split('@')[0] ?? 'User',
+                  profile?.fullName ??
+                      currentUser?.email?.split('@')[0] ??
+                      'User',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -130,12 +132,10 @@ class ProfileScreen extends ConsumerWidget {
             width: 80,
             height: 80,
             fit: BoxFit.cover,
-            placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
-            errorWidget: (context, url, error) => const Icon(
-              Icons.person,
-              size: 40,
-              color: Colors.white,
-            ),
+            placeholder: (context, url) =>
+                const CircularProgressIndicator(strokeWidth: 2),
+            errorWidget: (context, url, error) =>
+                const Icon(Icons.person, size: 40, color: Colors.white),
           ),
         ),
       );
@@ -145,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
       radius: 40,
       backgroundColor: AppTheme.primaryColor,
       child: Text(
-        profile?.fullName?.isNotEmpty == true 
+        profile?.fullName?.isNotEmpty == true
             ? profile!.fullName!.substring(0, 1).toUpperCase()
             : 'U',
         style: const TextStyle(
@@ -164,10 +164,7 @@ class ProfileScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Row(
         children: [
@@ -212,10 +209,7 @@ class ProfileScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Column(
         children: [
@@ -234,10 +228,7 @@ class ProfileScreen extends ConsumerWidget {
             onPressed: () => ref.refresh(currentUserProfileProvider),
             child: const Text(
               'Retry',
-              style: TextStyle(
-                fontSize: 14,
-                fontFamily: 'Okra',
-              ),
+              style: TextStyle(fontSize: 14, fontFamily: 'Okra'),
             ),
           ),
         ],
@@ -356,10 +347,7 @@ class ProfileScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.grey[300]!,
-              width: 1,
-            ),
+            border: Border.all(color: Colors.grey[300]!, width: 1),
           ),
           child: Column(
             children: items.asMap().entries.map((entry) {
@@ -374,11 +362,7 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () => context.push(item['route'] as String),
                   ),
                   if (index < items.length - 1)
-                    Divider(
-                      height: 1,
-                      color: Colors.grey[200],
-                      indent: 60,
-                    ),
+                    Divider(height: 1, color: Colors.grey[200], indent: 60),
                 ],
               );
             }).toList(),
@@ -408,11 +392,7 @@ class ProfileScreen extends ConsumerWidget {
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppTheme.primaryColor,
-                  size: 24,
-                ),
+                child: Icon(icon, color: AppTheme.primaryColor, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -458,10 +438,7 @@ class ProfileScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -473,11 +450,7 @@ class ProfileScreen extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.logout,
-                  color: AppTheme.primaryColor,
-                  size: 24,
-                ),
+                Icon(Icons.logout, color: AppTheme.primaryColor, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   'Sign Out',
@@ -507,26 +480,18 @@ class ProfileScreen extends ConsumerWidget {
           ),
           title: const Text(
             'Sign Out',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Okra',
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Okra'),
           ),
           content: const Text(
             'Are you sure you want to sign out of your account?',
-            style: TextStyle(
-              fontFamily: 'Okra',
-            ),
+            style: TextStyle(fontFamily: 'Okra'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontFamily: 'Okra',
-                ),
+                style: TextStyle(color: Colors.grey[600], fontFamily: 'Okra'),
               ),
             ),
             TextButton(
@@ -562,4 +527,4 @@ class ProfileScreen extends ConsumerWidget {
       },
     );
   }
-} 
+}

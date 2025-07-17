@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/add_edit_address_screen.dart';
@@ -11,11 +12,37 @@ class ManageAddressScreen extends ConsumerStatefulWidget {
   static const routeName = '/manage-address';
 
   @override
-  ConsumerState<ManageAddressScreen> createState() => _ManageAddressScreenState();
+  ConsumerState<ManageAddressScreen> createState() =>
+      _ManageAddressScreenState();
 }
 
 class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
   final _searchController = TextEditingController();
+  bool _isLocationEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationStatus();
+  }
+
+  Future<void> _checkLocationStatus() async {
+    final locationService = ref.read(locationServiceProvider);
+    try {
+      final permissionStatus = await locationService.getPermissionStatus();
+      final serviceEnabled = await locationService.isLocationServiceEnabled();
+      
+      setState(() {
+        _isLocationEnabled = serviceEnabled && 
+            (permissionStatus == LocationPermission.whileInUse || 
+             permissionStatus == LocationPermission.always);
+      });
+    } catch (e) {
+      setState(() {
+        _isLocationEnabled = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -42,6 +69,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
         ),
       ),
@@ -71,7 +99,10 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                     hintStyle: TextStyle(color: Colors.grey[600]),
                     prefixIcon: Icon(Icons.search, color: Colors.pink[400]),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ),
@@ -96,54 +127,64 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                 child: Column(
                   children: [
                     // Location Permission Row
-                    Row(
-                      children: [
-                        Icon(Icons.location_searching, color: Colors.pink[400], size: 24),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Device location not enabled',
-                                style: TextStyle(
-                                  color: Colors.pink[400],
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Text(
-                                'Tap here to enable your device location for a better experience',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
+                    if (!_isLocationEnabled)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_searching,
+                            color: Colors.pink[400],
+                            size: 24,
                           ),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            await locationService.requestPermission();
-                          },
-                          child: Text(
-                            'Enable',
-                            style: TextStyle(
-                              color: Colors.pink[400],
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Device location not enabled',
+                                  style: TextStyle(
+                                    color: Colors.pink[400],
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Text(
+                                  'Tap here to enable your device location for a better experience',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () async {
+                              await locationService.requestPermission();
+                              _checkLocationStatus();
+                            },
+                            child: Text(
+                              'Enable',
+                              style: TextStyle(
+                                color: Colors.pink[400],
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (!_isLocationEnabled) const SizedBox(height: 16),
                     // Add Address Button
                     InkWell(
                       onTap: () => context.go(AddEditAddressScreen.routeName),
                       child: Row(
                         children: [
-                          Icon(Icons.add_circle_outline, color: Colors.pink[400], size: 24),
+                          Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.pink[400],
+                            size: 24,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             'Add Address',
@@ -163,18 +204,39 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
               ),
             ),
 
-
             // Saved Addresses Section
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                'SAVED ADDRESSES',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  const Text(
+                    'SAVED ADDRESSES',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const Spacer(),
+                  addressesAsync.when(
+                    data: (addresses) => addresses.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              color: Colors.grey[600],
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              // Navigate to edit addresses screen
+                              context.go('/edit-addresses');
+                            },
+                          )
+                        : const SizedBox(),
+                    loading: () => const SizedBox(),
+                    error: (_, __) => const SizedBox(),
+                  ),
+                ],
               ),
             ),
 
@@ -197,7 +259,10 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                   itemBuilder: (context, index) {
                     final address = addresses[index];
                     return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -220,14 +285,20 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                                 Row(
                                   children: [
                                     Icon(
-                                      address.addressFor.toString().contains('home')
+                                      address.addressFor.toString().contains(
+                                            'home',
+                                          )
                                           ? Icons.home_outlined
                                           : Icons.work_outline,
                                       color: Colors.grey[700],
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      address.addressFor.toString().split('.').last.toUpperCase(),
+                                      address.addressFor
+                                          .toString()
+                                          .split('.')
+                                          .last
+                                          .toUpperCase(),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
@@ -253,43 +324,6 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(12),
-                                bottomRight: Radius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.cloudy_snowing, color: Colors.blue),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    "It's raining here, delivery partners may take longer to reach",
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                                  onPressed: () {
-                                    // Show options menu
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.share, color: Colors.grey),
-                                  onPressed: () {
-                                    // Handle share
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     );
@@ -304,4 +338,4 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
       ),
     );
   }
-} 
+}

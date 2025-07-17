@@ -120,7 +120,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
               children: [
                 const SizedBox(height: 20),
                 
-                // Title
+                // Title 
                 Text(
                   'Enter your phone number',
                   style: TextStyle(
