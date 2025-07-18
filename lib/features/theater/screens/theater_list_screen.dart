@@ -39,7 +39,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theatersAsync = ref.watch(theaterListProvider);
+    final theatersAsync = ref.watch(theatersProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -467,7 +467,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => ref.refresh(theaterListProvider),
+            onPressed: () => ref.refresh(theatersProvider),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
