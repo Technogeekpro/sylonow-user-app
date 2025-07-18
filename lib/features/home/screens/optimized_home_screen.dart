@@ -1052,7 +1052,7 @@ class _NewTheaterSectionState extends State<_NewTheaterSection>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Book your exclusive movie experience',
+                        'Book your private theater experience',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 14,

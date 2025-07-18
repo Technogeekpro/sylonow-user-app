@@ -227,7 +227,10 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
             },
           );
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(40),
+          bottomLeft: Radius.circular(40),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -235,14 +238,16 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
             Container(
               height: isSmallScreen ? 180 : 200,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(40),
+                  bottomLeft: Radius.circular(40),
                 ),
-                color: Colors.grey[300],
+                color: Colors.white,
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(40),
+                  bottomLeft: Radius.circular(40),
                 ),
                 child: theater.images.isNotEmpty
                     ? CachedNetworkImage(
@@ -310,7 +315,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              theater.rating?.toStringAsFixed(1) ?? '0.0',
+                              theater.rating.toStringAsFixed(1) ?? '0.0',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -359,51 +364,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  
-                  Row(
-                    children: [
-                      Text(
-                        '₹${theater.hourlyRate}/hour',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.push(
-                            '/theater/${theater.id}',
-                            extra: {
-                              'selectedDate': _selectedDate!.toIso8601String(),
-                            },
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                        ),
-                        child: const Text(
-                          'Book Now',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                
                 ],
               ),
             ),

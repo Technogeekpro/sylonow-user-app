@@ -50,12 +50,11 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 });
 
 // Booking State Providers
-final userBookingsProvider = FutureProvider<List<BookingModel>>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return [];
-
-  final service = ref.watch(bookingServiceProvider);
-  return service.getUserBookingHistory(user.id);
+final userBookingsProvider = FutureProvider.family<List<BookingModel>, String>((ref, userId) async {
+  if (userId.isEmpty) return [];
+  
+  final repository = ref.watch(bookingRepositoryProvider);
+  return repository.getUserBookings(userId);
 });
 
 final bookingDetailProvider = FutureProvider.family<BookingModel?, String>((ref, bookingId) async {

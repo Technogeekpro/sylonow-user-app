@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/private_theater_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
@@ -197,7 +198,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.location_on, 
+                              const Icon(Ionicons.location, 
                                        color: Colors.grey, size: 16),
                               const SizedBox(width: 4),
                               Expanded(
@@ -320,7 +321,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                   children: [
                     Expanded(
                       child: _buildInfoCard(
-                        icon: Icons.people,
+                        icon: Ionicons.people,
                         title: 'Capacity',
                         value: '${theater.capacity} people',
                       ),
@@ -328,7 +329,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _buildInfoCard(
-                        icon: Icons.access_time,
+                        icon: Ionicons.time_outline,
                         title: 'Duration',
                         value: '3 hours',
                       ),
@@ -352,14 +353,12 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                      ),
+                   
                     ),
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.calendar_today,
+                          Ionicons.calendar_outline,
                           color: AppTheme.primaryColor,
                           size: 20,
                         ),
@@ -505,6 +504,12 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
         final isSelected = _selectedTimeSlot == timeSlotKey;
 
         return InkWell(
+          borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(0),
+                bottomLeft: Radius.circular(0),
+                bottomRight: Radius.circular(24),
+              ),
           onTap: () {
             setState(() {
               _selectedTimeSlot = timeSlotKey;
@@ -513,7 +518,12 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: isSelected ? AppTheme.primaryColor : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(0),
+                bottomLeft: Radius.circular(0),
+                bottomRight: Radius.circular(24),
+              ),
               border: Border.all(
                 color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
                 width: 1.5,

@@ -17,6 +17,12 @@ import '../../features/services/screens/service_detail_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
+import '../../features/profile/screens/booking_history_screen.dart';
+import '../../features/profile/screens/notifications_screen.dart';
+import '../../features/profile/screens/help_support_screen.dart';
+import '../../features/profile/screens/privacy_policy_screen.dart';
+import '../../features/profile/screens/terms_of_service_screen.dart';
+import '../../features/profile/screens/about_screen.dart';
 import '../../features/reviews/screens/reviews_screen.dart';
 import '../../features/categories/screens/all_categories_screen.dart';
 import '../../features/categories/screens/category_services_screen.dart';
@@ -108,20 +114,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddEditAddressScreen(),
       ),
       GoRoute(
-        path: '/profile/payments',
-        builder: (context, state) => const PaymentMethodsScreen(),
-      ),
-      GoRoute(
         path: '/profile/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: '/profile/support',
-        builder: (context, state) => const SupportScreen(),
+        builder: (context, state) => const HelpSupportScreen(),
       ),
       GoRoute(
-        path: '/profile/settings',
-        builder: (context, state) => const SettingsScreen(),
+        path: '/profile/privacy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/profile/terms',
+        builder: (context, state) => const TermsOfServiceScreen(),
+      ),
+      GoRoute(
+        path: '/profile/about',
+        builder: (context, state) => const AboutScreen(),
       ),
       // Service detail route
       GoRoute(
@@ -239,113 +249,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-// Placeholder screens for profile navigation
-class BookingHistoryScreen extends StatelessWidget {
-  const BookingHistoryScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking History'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Booking History Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-class PaymentMethodsScreen extends StatelessWidget {
-  const PaymentMethodsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment Methods'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Payment Methods Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Notifications Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-class SupportScreen extends StatelessWidget {
-  const SupportScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Help & Support'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Support Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Settings Screen\n(To be implemented)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-} 
+ 

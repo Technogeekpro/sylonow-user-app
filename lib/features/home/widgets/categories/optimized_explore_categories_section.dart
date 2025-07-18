@@ -134,17 +134,17 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoriesList(BuildContext context, List<CategoryModel> categories) {
+  Widget _buildCategoriesList(
+    BuildContext context,
+    List<CategoryModel> categories,
+  ) {
     if (categories.isEmpty) {
       return const SizedBox(
         height: 110,
         child: Center(
           child: Text(
             'No categories available.',
-            style: TextStyle(
-              color: Colors.grey,
-              fontFamily: 'Okra',
-            ),
+            style: TextStyle(color: Colors.grey, fontFamily: 'Okra'),
           ),
         ),
       );
@@ -169,7 +169,8 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
   }
 
   Widget _buildCategoryCard(BuildContext context, CategoryModel category) {
-    final Color categoryColor = _parseColor(category.colorCode) ?? AppTheme.primaryColor;
+    final Color categoryColor =
+        _parseColor(category.colorCode) ?? AppTheme.primaryColor;
 
     return Container(
       width: 160,
@@ -180,7 +181,8 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
         },
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(48),
+
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -190,14 +192,19 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+          child: ClipPath(
+            clipper: ShapeBorderClipper(
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.circular(48),
+              ),
+            ),
+
             child: Stack(
               fit: StackFit.expand,
               children: [
                 // Category Image with optimized caching
                 _buildCategoryImage(category, categoryColor),
-                
+
                 // Gradient Overlay
                 Container(
                   decoration: BoxDecoration(
@@ -212,7 +219,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
                     ),
                   ),
                 ),
-                
+
                 // Category Title
                 Positioned(
                   bottom: 12,
@@ -232,7 +239,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                
+
                 // Category color indicator
                 Positioned(
                   top: 8,
@@ -243,10 +250,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: categoryColor,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1),
                     ),
                   ),
                 ),
@@ -266,7 +270,8 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
         memCacheWidth: 320, // Optimize memory usage for small images
         memCacheHeight: 220,
         placeholder: (context, url) => _ShimmerPlaceholder(),
-        errorWidget: (context, url, error) => _buildFallbackImage(fallbackColor),
+        errorWidget: (context, url, error) =>
+            _buildFallbackImage(fallbackColor),
       );
     } else {
       return _buildFallbackImage(fallbackColor);
@@ -276,11 +281,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
   Widget _buildFallbackImage(Color color) {
     return Container(
       color: color.withOpacity(0.1),
-      child: Icon(
-        Icons.category_outlined,
-        color: color,
-        size: 32,
-      ),
+      child: Icon(Icons.category_outlined, color: color, size: 32),
     );
   }
 
@@ -339,11 +340,7 @@ class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
                 _animation.value.clamp(0.0, 1.0),
                 (_animation.value + 1).clamp(0.0, 1.0),
               ],
-              colors: [
-                Colors.grey[200]!,
-                Colors.grey[100]!,
-                Colors.grey[200]!,
-              ],
+              colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
             ),
           ),
         );

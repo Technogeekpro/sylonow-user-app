@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:sylonow_user/features/home/widgets/categories/explore_categories_section.dart';
 import 'package:sylonow_user/features/home/widgets/featured/featured_section.dart';
@@ -11,7 +10,6 @@ import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
-import 'package:sylonow_user/features/address/widgets/address_list_widget.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:uuid/uuid.dart';

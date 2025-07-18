@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../../core/constants/app_constants.dart';
 
 class AuthService {
@@ -63,15 +65,66 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // Sign out from Supabase
       await _supabaseClient.auth.signOut();
+      
+      // Sign out from Google if applicable
+      await signOutFromGoogle();
+      
+      // Clear all local data
+      await _clearAllLocalData();
+      
+      debugPrint('Successfully signed out');
+    } catch (e) {
+      debugPrint('Sign out error: $e');
+      rethrow;
+    }
+  }
+  
+  // Clear all local data including SharedPreferences and cache
+  Future<void> _clearAllLocalData() async {
+    try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // Clear authentication related data
       await prefs.setBool(AppConstants.isLoggedInKey, false);
       await prefs.remove(AppConstants.userEmailKey);
       await prefs.remove(AppConstants.userIdKey);
       await prefs.remove(AppConstants.userPhoneKey);
+      
+      // Clear all app-specific data
+      final keys = prefs.getKeys();
+      for (String key in keys) {
+        if (key.startsWith('sylonow_') || 
+            key.startsWith('user_') || 
+            key.startsWith('profile_') ||
+            key.startsWith('address_') ||
+            key.startsWith('booking_') ||
+            key.startsWith('notification_')) {
+          await prefs.remove(key);
+        }
+      }
+      
+      // Clear cached images
+      await _clearImageCache();
+      
+      debugPrint('All local data cleared');
     } catch (e) {
-      debugPrint('Sign out error: $e');
+      debugPrint('Error clearing local data: $e');
       rethrow;
+    }
+  }
+  
+  // Clear cached images
+  Future<void> _clearImageCache() async {
+    try {
+      // Clear cached network images
+      await CachedNetworkImage.evictFromCache('');
+      await DefaultCacheManager().emptyCache();
+      debugPrint('Image cache cleared');
+    } catch (e) {
+      debugPrint('Error clearing image cache: $e');
+      // Don't rethrow here as this is not critical
     }
   }
   

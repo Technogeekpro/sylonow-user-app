@@ -64,6 +64,7 @@ dependencies:
   
   # Crypto for payment signature verification
   crypto: ^3.0.3
+  figma_squircle: ^0.6.3
   
 dev_dependencies:
   flutter_test:

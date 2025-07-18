@@ -6,6 +6,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
 import '../models/user_profile_model.dart';
+import '../../booking/providers/booking_providers.dart';
+import '../../address/providers/address_providers.dart';
+import '../../auth/services/logout_service.dart';
+import '../../auth/services/logout_test_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -262,13 +266,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'icon': Icons.location_on_outlined,
           'title': 'My Addresses',
           'subtitle': 'Manage delivery addresses',
-          'route': '/profile/addresses',
-        },
-        {
-          'icon': Icons.payment_outlined,
-          'title': 'Payment Methods',
-          'subtitle': 'Manage your payment options',
-          'route': '/profile/payments',
+          'route': '/manage-address',
         },
       ],
     );
@@ -284,12 +282,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'title': 'Notifications',
           'subtitle': 'Manage notification preferences',
           'route': '/profile/notifications',
-        },
-        {
-          'icon': Icons.settings_outlined,
-          'title': 'Settings',
-          'subtitle': 'App preferences and security',
-          'route': '/profile/settings',
         },
         {
           'icon': Icons.help_outline,
@@ -488,13 +480,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Okra'),
           ),
           content: const Text(
-            'Are you sure you want to sign out of your account?',
+            'Are you sure you want to sign out of your account? This will clear all your local data.',
             style: TextStyle(fontFamily: 'Okra'),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                context.pop();
+                Navigator.pop(dialogContext);
               },
               child: Text(
                 'Cancel',
@@ -504,17 +496,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             TextButton(
               onPressed: () async {
                 // Close dialog immediately
-                context.pop();
+                Navigator.pop(dialogContext);
+                
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext loadingContext) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                );
                 
                 try {
-                  // Perform sign out
-                  await ref.read(authControllerProvider.notifier).signOut();
+                  // Perform complete logout with all data clearing
+                  await LogoutService.performCompleteLogout(ref);
+                  
+                  // Close loading dialog
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                  
+                  // Test logout state (for debugging)
+                  await LogoutTestService.printLogoutState();
                   
                   // Navigate to splash screen to handle auth state
                   if (context.mounted) {
                     context.go('/');
                   }
+                  
+                  // Show success message
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Successfully signed out'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
                 } catch (e) {
+                  // Close loading dialog
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                  
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

@@ -8,10 +8,12 @@ class TheaterDateSelectionScreen extends StatefulWidget {
   const TheaterDateSelectionScreen({super.key});
 
   @override
-  State<TheaterDateSelectionScreen> createState() => _TheaterDateSelectionScreenState();
+  State<TheaterDateSelectionScreen> createState() =>
+      _TheaterDateSelectionScreenState();
 }
 
-class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen> {
+class _TheaterDateSelectionScreenState
+    extends State<TheaterDateSelectionScreen> {
   DateTime? selectedDate;
   late DateTime firstDate;
   late DateTime lastDate;
@@ -28,7 +30,7 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenWidth < 400;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -118,7 +120,7 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Date Selection Section
               Container(
                 width: double.infinity,
@@ -151,17 +153,22 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
                     // Date Picker
                     Theme(
                       data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppTheme.primaryColor,
-                          onPrimary: Colors.white,
-                          surface: Colors.white,
-                          onSurface: Colors.black,
-                        ),
+                        colorScheme:
+                            ColorScheme.fromSeed(
+                              seedColor: AppTheme.primaryColor,
+                              brightness: Brightness.light,
+                            ).copyWith(
+                              primary: AppTheme.primaryColor,
+                              onPrimary: Colors.pink,
+                              surface: Colors.pink,
+                              onSurface: Colors.black,
+                            ),
                       ),
                       child: CalendarDatePicker(
                         initialDate: DateTime.now(),
                         firstDate: firstDate,
                         lastDate: lastDate,
+
                         onDateChanged: (date) {
                           setState(() {
                             selectedDate = date;
@@ -172,9 +179,9 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
                   ],
                 ),
               ),
-              
+
               SizedBox(height: screenHeight * 0.05),
-              
+
               // Continue Button
               Container(
                 width: double.infinity,
@@ -203,8 +210,8 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedDate != null 
-                        ? AppTheme.primaryColor 
+                    backgroundColor: selectedDate != null
+                        ? AppTheme.primaryColor
                         : Colors.grey[300],
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -218,18 +225,22 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
                       Icon(
                         Icons.search,
                         size: 20,
-                        color: selectedDate != null ? Colors.white : Colors.grey[600],
+                        color: selectedDate != null
+                            ? Colors.white
+                            : Colors.grey[600],
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        selectedDate != null 
+                        selectedDate != null
                             ? 'Find Theaters - ${_formatDate(selectedDate!)}'
                             : 'Select a date to continue',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 15 : 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Okra',
-                          color: selectedDate != null ? Colors.white : Colors.grey[600],
+                          color: selectedDate != null
+                              ? Colors.white
+                              : Colors.grey[600],
                         ),
                       ),
                     ],
@@ -246,10 +257,20 @@ class _TheaterDateSelectionScreenState extends State<TheaterDateSelectionScreen>
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
-    
+
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 }
