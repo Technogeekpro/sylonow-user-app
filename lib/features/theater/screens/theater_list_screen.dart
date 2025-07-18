@@ -63,99 +63,53 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
       ),
       body: Column(
         children: [
-          // Date and Search Section
+          // Search Bar Section (Sticky at top)
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Date Change Section
-                GestureDetector(
-                  onTap: () => _showDatePicker(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppTheme.primaryColor.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today,
-                          color: AppTheme.primaryColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          _formatDate(_selectedDate!),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                        const Spacer(),
-                        const Icon(
-                          Icons.edit,
-                          color: AppTheme.primaryColor,
-                          size: 18,
-                        ),
-                      ],
-                    ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search theaters...',
+                hintStyle: TextStyle(
+                  color: Colors.grey[600],
+                  fontFamily: 'Okra',
+                ),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppTheme.primaryColor,
+                    width: 2,
                   ),
                 ),
-                const SizedBox(height: 16),
-                
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.toLowerCase();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search theaters...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[600],
-                      fontFamily: 'Okra',
-                    ),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           
-          // Theater List
+          // Theater List with Date Section
           Expanded(
             child: theatersAsync.when(
               data: (theaters) {
@@ -170,13 +124,68 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                   return _buildEmptyState();
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredTheaters.length,
-                  itemBuilder: (context, index) {
-                    final theater = filteredTheaters[index];
-                    return _buildTheaterCard(theater);
-                  },
+                return CustomScrollView(
+                  slivers: [
+                    // Date Change Section (Inside scroll)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: GestureDetector(
+                          onTap: () => _showDatePicker(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.primaryColor.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today,
+                                  color: AppTheme.primaryColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _formatDate(_selectedDate!),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryColor,
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(
+                                  Icons.edit,
+                                  color: AppTheme.primaryColor,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Theater List
+                    SliverPadding(
+                      padding: const EdgeInsets.all(16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final theater = filteredTheaters[index];
+                            return _buildTheaterCard(theater);
+                          },
+                          childCount: filteredTheaters.length,
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
               loading: () => const Center(
@@ -193,6 +202,9 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
   }
 
   Widget _buildTheaterCard(PrivateTheaterModel theater) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -200,9 +212,9 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -221,7 +233,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
           children: [
             // Theater Image
             Container(
-              height: 200,
+              height: isSmallScreen ? 180 : 200,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
@@ -262,7 +274,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
             
             // Theater Details
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -271,8 +283,8 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                       Expanded(
                         child: Text(
                           theater.name,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 16 : 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                             fontFamily: 'Okra',
