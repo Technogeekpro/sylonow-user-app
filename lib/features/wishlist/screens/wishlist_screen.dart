@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/wishlist/providers/wishlist_providers.dart';
 import 'package:sylonow_user/features/wishlist/models/wishlist_model.dart';
-import 'package:sylonow_user/features/services/screens/service_detail_screen.dart';
 
 class WishlistScreen extends ConsumerWidget {
   static const String routeName = '/wishlist';
@@ -38,7 +37,7 @@ class WishlistScreen extends ConsumerWidget {
       body: wishlistAsync.when(
         data: (wishlist) {
           if (wishlist.isEmpty) {
-            return _buildEmptyWishlist();
+            return _buildEmptyWishlist(context);
           }
           return _buildWishlistGrid(wishlist, ref);
         },
@@ -91,7 +90,7 @@ class WishlistScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyWishlist() {
+  Widget _buildEmptyWishlist(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -130,7 +129,7 @@ class WishlistScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () => GoRouter.of(context).go('/'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
@@ -163,20 +162,19 @@ class WishlistScreen extends ConsumerWidget {
         itemCount: wishlist.length,
         itemBuilder: (context, index) {
           final wishlistItem = wishlist[index];
-          return _buildWishlistCard(wishlistItem, ref);
+          return _buildWishlistCard(wishlistItem, ref, context);
         },
       ),
     );
   }
 
-  Widget _buildWishlistCard(WishlistWithService wishlistItem, WidgetRef ref) {
+  Widget _buildWishlistCard(WishlistWithService wishlistItem, WidgetRef ref, BuildContext context) {
     final service = wishlistItem.service;
     
     return GestureDetector(
       onTap: () {
-        context.push(
-          ServiceDetailScreen.routeName,
-          extra: service.id,
+        GoRouter.of(context).push(
+          '/service/${service.id}',
         );
       },
       child: Container(
@@ -185,7 +183,7 @@ class WishlistScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -205,15 +203,15 @@ class WishlistScreen extends ConsumerWidget {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      image: service.imageUrl != null
+                      image: service.image.isNotEmpty
                           ? DecorationImage(
-                              image: NetworkImage(service.imageUrl!),
+                              image: NetworkImage(service.image),
                               fit: BoxFit.cover,
                             )
                           : null,
-                      color: service.imageUrl == null ? Colors.grey[300] : null,
+                      color: service.image.isEmpty ? Colors.grey[300] : null,
                     ),
-                    child: service.imageUrl == null
+                    child: service.image.isEmpty
                         ? const Center(
                             child: Icon(
                               Icons.image_not_supported,
@@ -259,7 +257,7 @@ class WishlistScreen extends ConsumerWidget {
                   children: [
                     // Service Title
                     Text(
-                      service.title,
+                      service.name,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -292,7 +290,7 @@ class WishlistScreen extends ConsumerWidget {
                           ],
                         ),
                         Text(
-                          '₹${service.price}',
+                          '₹${service.offerPrice ?? service.originalPrice ?? 0}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

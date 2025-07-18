@@ -1,13 +1,14 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/wishlist/models/wishlist_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 
 part 'wishlist_repository.g.dart';
 
 @riverpod
-WishlistRepository wishlistRepository(WishlistRepositoryRef ref) {
+WishlistRepository wishlistRepository(Ref ref) {
   return WishlistRepository(ref.read(supabaseClientProvider));
 }
 
@@ -26,13 +27,16 @@ class WishlistRepository {
               id,
               title,
               description,
-              price,
+              original_price,
+              offer_price,
               rating,
               reviews_count,
-              image_url,
-              category_id,
+              cover_photo,
+              photos,
+              category,
               vendor_id,
-              service_type_id,
+              promotional_tag,
+              is_featured,
               created_at,
               updated_at
             )
@@ -100,7 +104,7 @@ class WishlistRepository {
     try {
       final response = await _supabase
           .from('wishlist')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('user_id', userId);
       
       return response.length;
