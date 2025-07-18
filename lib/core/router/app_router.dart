@@ -24,6 +24,7 @@ import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
 import '../../features/theater/screens/theater_detail_screen.dart';
+import '../../features/wishlist/screens/wishlist_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -69,6 +70,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: WalletScreen.routeName,
         builder: (context, state) => const WalletScreen(),
+      ),
+      // Wishlist route
+      GoRoute(
+        path: WishlistScreen.routeName,
+        builder: (context, state) => const WishlistScreen(),
       ),
       // Profile route
       GoRoute(

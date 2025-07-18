@@ -18,6 +18,7 @@ import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
 import 'package:sylonow_user/core/utils/image_cache_manager.dart';
+import 'package:sylonow_user/features/wishlist/screens/wishlist_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -705,18 +706,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 icon: Icon(Icons.wallet, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 8),
-              const CircleAvatar(
-                backgroundColor: Colors.black,
-                radius: 20,
-                child: Text(
-                  "A",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Okra',
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                    side: BorderSide(color: Colors.white),
                   ),
                 ),
+                onPressed: () {
+                  context.go(WishlistScreen.routeName);
+                },
+                icon: Icon(Icons.favorite, color: Colors.white, size: 20),
               ),
             ],
           ),

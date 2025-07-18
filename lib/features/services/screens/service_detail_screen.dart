@@ -8,6 +8,7 @@ import '../../../core/widgets/custom_shimmer.dart';
 import '../../reviews/screens/reviews_screen.dart';
 import '../../home/models/service_listing_model.dart';
 import '../../home/providers/home_providers.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 
 import '../../booking/screens/checkout_screen.dart';
 
@@ -113,7 +114,6 @@ class ServiceDetailScreen extends ConsumerStatefulWidget {
 class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
-  bool _isFavorite = false;
 
   // Placeholder for when no images are available
   final String _placeholderImage = 'https://via.placeholder.com/400x300/f0f0f0/999999?text=No+Image';
@@ -477,24 +477,54 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _isFavorite ? AppTheme.primaryColor : Colors.grey[100],
-                  shape: BoxShape.circle,
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isFavorite = !_isFavorite;
-                    });
-                  },
-                  child: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorite ? Colors.white : Colors.grey[600],
-                    size: 24,
-                  ),
-                ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final isInWishlistAsync = ref.watch(isServiceInWishlistProvider(widget.serviceId));
+                  
+                  return isInWishlistAsync.when(
+                    data: (isInWishlist) => Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isInWishlist ? AppTheme.primaryColor : Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          ref.read(wishlistNotifierProvider.notifier).toggleWishlist(widget.serviceId);
+                        },
+                        child: Icon(
+                          isInWishlist ? Icons.favorite : Icons.favorite_border,
+                          color: isInWishlist ? Colors.white : Colors.grey[600],
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    loading: () => Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.favorite_border,
+                        color: Colors.grey[600],
+                        size: 24,
+                      ),
+                    ),
+                    error: (error, stack) => Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.favorite_border,
+                        color: Colors.grey[600],
+                        size: 24,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
