@@ -20,7 +20,11 @@
       "Bash(/bin/bash -c \"flutter analyze\")",
       "Bash(/mnt/e/flutter/bin/flutter analyze)",
       "Bash(/mnt/e/flutter/bin/flutter packages pub run build_runner build --delete-conflicting-outputs)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(ls:*)",
+      "Bash(npx @modelcontextprotocol/server-supabase describe-table wishlist)",
+      "Bash(npx:*)",
+      "Bash(supabase:*)"
     ],
     "deny": []
   },

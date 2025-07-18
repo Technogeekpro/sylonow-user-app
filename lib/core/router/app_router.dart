@@ -24,6 +24,8 @@ import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
 import '../../features/theater/screens/theater_detail_screen.dart';
+import '../../features/theater/screens/theater_date_selection_screen.dart';
+import '../../features/theater/screens/theater_list_screen.dart';
 import '../../features/wishlist/screens/wishlist_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -195,12 +197,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return CategoryServicesScreen(categoryName: categoryName);
         },
       ),
+      // Theater date selection route
+      GoRoute(
+        path: '/theater/date-selection',
+        builder: (context, state) => const TheaterDateSelectionScreen(),
+      ),
+      // Theater list route
+      GoRoute(
+        path: '/theater/list',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          return TheaterListScreen(selectedDate: selectedDate);
+        },
+      ),
       // Theater detail route
       GoRoute(
         path: '/theater/:theaterId',
         builder: (context, state) {
           final theaterId = state.pathParameters['theaterId']!;
-          return TheaterDetailScreen(theaterId: theaterId);
+          final extra = state.extra as Map<String, dynamic>?;
+          return TheaterDetailScreen(
+            theaterId: theaterId,
+            selectedDate: extra?['selectedDate'] as String?,
+          );
         },
       ),
     ],

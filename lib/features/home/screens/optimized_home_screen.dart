@@ -6,7 +6,6 @@ import 'package:sylonow_user/features/home/widgets/featured/featured_section.dar
 import 'package:sylonow_user/features/home/widgets/collage/image_collage_section.dart';
 import 'package:sylonow_user/features/home/widgets/popular_nearby/popular_nearby_section.dart';
 import 'package:sylonow_user/features/home/widgets/quote/quote_section.dart';
-import 'package:sylonow_user/features/theater/widgets/theater_section.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -233,7 +232,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
               SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(child: FeaturedSection()),
               SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(child: TheaterSection()),
+              SliverToBoxAdapter(child: _NewTheaterSection()),
               SliverToBoxAdapter(child: ImageCollageSection()),
               SliverToBoxAdapter(child: PopularNearbySection()),
             ],
@@ -530,7 +529,7 @@ class _LocationContent extends ConsumerWidget {
             children: [
               _WalletButton(),
               SizedBox(width: 8),
-              _UserAvatar(),
+              _WishlistButton(),
             ],
           ),
         ],
@@ -560,28 +559,23 @@ class _WalletButton extends StatelessWidget {
   }
 }
 
-class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({super.key});
+class _WishlistButton extends StatelessWidget {
+  const _WishlistButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        context.push('/profile');
-      },
-      child: const CircleAvatar(
-        backgroundColor: Colors.black,
-        radius: 20,
-        child: Text(
-          "A",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Okra',
-          ),
+    return IconButton(
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+          side: const BorderSide(color: Colors.white),
         ),
       ),
+      onPressed: () {
+        context.push('/wishlist');
+      },
+      icon: const Icon(Icons.favorite, color: Colors.white, size: 20),
     );
   }
 }
@@ -916,6 +910,163 @@ class _EnableLocationDialog extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// New Theater Section Widget
+class _NewTheaterSection extends StatefulWidget {
+  const _NewTheaterSection({super.key});
+
+  @override
+  State<_NewTheaterSection> createState() => _NewTheaterSectionState();
+}
+
+class _NewTheaterSectionState extends State<_NewTheaterSection>
+    with SingleTickerProviderStateMixin {
+  late PageController _pageController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  int _currentIndex = 0;
+
+  // Sample theater cover images
+  final List<String> _theaterImages = [
+    'https://images.unsplash.com/photo-1489185078074-0d83576b4d1c?w=400&q=80',
+    'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=400&q=80',
+    'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=400&q=80',
+    'https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=400&q=80',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    
+    _startAutoSlide();
+    _animationController.forward();
+  }
+
+  void _startAutoSlide() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _animationController.reverse().then((_) {
+          if (mounted) {
+            setState(() {
+              _currentIndex = (_currentIndex + 1) % _theaterImages.length;
+            });
+            _animationController.forward();
+            _startAutoSlide();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: GestureDetector(
+        onTap: () {
+          context.push('/theater/date-selection');
+        },
+        child: Container(
+          height: 130,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(30),
+              bottomLeft: Radius.circular(30),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(30),
+              bottomLeft: Radius.circular(30),
+            ),
+            child: Stack(
+              children: [
+                // Background image with fade animation
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Container(
+                    width: double.infinity,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(_theaterImages[_currentIndex]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+                // Gradient overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                ),
+                // Content overlay
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Private Theater',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Book your exclusive movie experience',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
