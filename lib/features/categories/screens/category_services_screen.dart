@@ -126,7 +126,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                       padding: const EdgeInsets.all(16),
                       sliver: SliverGrid(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
+                          crossAxisCount: 2,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                           childAspectRatio: 0.65,
@@ -295,53 +295,156 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
           '/service/${service.id}',
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(70),
-              bottomLeft: Radius.circular(8),
-              bottomRight: Radius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(21),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10.9,
+              offset: const Offset(2, 2),
+              spreadRadius: 0,
             ),
-            child: CachedNetworkImage(
-              imageUrl: service.image,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: 116,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[200],
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.pink,
-                    strokeWidth: 2,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(21),
+                topRight: Radius.circular(21),
+                bottomLeft: Radius.circular(0),
+                bottomRight: Radius.circular(0),
+              ),
+              child: CachedNetworkImage(
+                imageUrl: service.image,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 136,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.pink,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[200],
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: Colors.grey,
                   ),
                 ),
               ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[200],
-                child: const Icon(
-                  Icons.image_not_supported,
-                  color: Colors.grey,
-                ),
+            ),
+            
+            // Content Section
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Location
+                  Text(
+                    'At Your Location',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  
+                  // Service Name
+                  Text(
+                    service.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Price and Rating Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Price Section
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (service.offerPrice != null) ...[
+                              Text(
+                                '₹${service.offerPrice!.toInt()}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black.withOpacity(0.66),
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              if (service.originalPrice != null)
+                                Text(
+                                  '₹${service.originalPrice!.toInt()}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black.withOpacity(0.45),
+                                    decoration: TextDecoration.lineThrough,
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
+                            ] else if (service.originalPrice != null) ...[
+                              Text(
+                                '₹${service.originalPrice!.toInt()}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black.withOpacity(0.66),
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      
+                      // Rating Section
+                      if (service.rating != null)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 12,
+                              color: Color(0xFFFFD060),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              service.rating!.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            service.name,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Okra',
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
