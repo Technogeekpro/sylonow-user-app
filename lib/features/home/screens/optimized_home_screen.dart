@@ -470,7 +470,21 @@ class _LocationContent extends ConsumerWidget {
             child: GestureDetector(
               onTap: () {
                 if (isLocationEnabled && selectedAddress != null) {
-                  context.go(ManageAddressScreen.routeName);
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    transitionAnimationController: AnimationController(
+                      duration: const Duration(milliseconds: 300),
+                      vsync: Scaffold.of(context),
+                    ),
+                    builder: (context) => DraggableScrollableSheet(
+                      initialChildSize: 0.9,
+                      minChildSize: 0.5,
+                      maxChildSize: 0.95,
+                      builder: (context, scrollController) => const ManageAddressScreen(),
+                    ),
+                  );
                 }
               },
               child: Column(
@@ -683,79 +697,89 @@ class _AdvertisementSection extends StatelessWidget {
     const double appBarHeight = 130;
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    return Container(
-      height: 260 + appBarHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/splash_screen.jpg'),
-          fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        context.push('/offers');
+      },
+      child: Container(
+        height: 260 + appBarHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          image: const DecorationImage(
+            image: AssetImage('assets/images/splash_screen.jpg'),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: statusBarHeight + appBarHeight + 10,
-          left: 24,
-          right: 24,
-          bottom: 24,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '🎉 Special Offer',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.9),
-                fontFamily: 'Okra',
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: statusBarHeight + appBarHeight + 10,
+            left: 24,
+            right: 24,
+            bottom: 24,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '🎉 Special Offer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.9),
+                  fontFamily: 'Okra',
+                ),
               ),
-            ),
-            Image.asset(
-              'assets/images/sylonow_white_logo.png',
-              width: 100,
-              height: 30,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Get 50% OFF\non Your First Service Booking!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'Okra',
-                height: 1.2,
+              Image.asset(
+                'assets/images/sylonow_white_logo.png',
+                width: 100,
+                height: 30,
               ),
-            ),
-            const SizedBox(height: 16),
-          
-            const Spacer(),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
+              const SizedBox(height: 12),
+              const Text(
+                'Get 50% OFF\non Your First Service Booking!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Okra',
+                  height: 1.2,
+                ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Book Now & Save',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pink,
-                      fontFamily: 'Okra',
-                    ),
+              const SizedBox(height: 16),
+            
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  context.push('/offers');
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: Colors.pink, size: 20),
-                ],
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Book Now & Save',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.pink,
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, color: Colors.pink, size: 20),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

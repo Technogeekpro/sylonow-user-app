@@ -55,28 +55,67 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
     final addressesAsync = ref.watch(addressesProvider);
     final locationService = ref.watch(locationServiceProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[50],
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_downward, color: Colors.black,),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Select a location',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Custom header with drag handle
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Header row with title and close button
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Select a location',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             // Search Bar
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -262,7 +301,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                         onTap: () {
                           // Select this address and return to home
                           ref.read(selectedAddressProvider.notifier).state = address;
-                          context.go('/');
+                          Navigator.of(context).pop();
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -333,7 +372,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                                         );
                                         if (shouldDelete == true) {
                                           try {
-                                            await ref.read(addressServiceProvider).deleteAddress(address.id);
+                                            await ref.read(addressRepositoryProvider).deleteAddress(address.id);
                                             ref.invalidate(addressesProvider);
                                             if (mounted) {
                                               ScaffoldMessenger.of(context).showSnackBar(
@@ -406,8 +445,11 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
             ),
-          ],
-        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
