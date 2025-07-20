@@ -24,9 +24,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  double? _minPrice;
-  double? _maxPrice;
-  double? _minRating;
+  String _selectedFilter = 'All';
 
   @override
   void dispose() {
@@ -34,133 +32,15 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
     super.dispose();
   }
 
-  void _openFilterModal(List<ServiceListingModel> allServices) {
-    double? tempMinPrice = _minPrice;
-    double? tempMaxPrice = _maxPrice;
-    double? tempMinRating = _minRating;
-
-    // Calculate price/rating bounds from data
-    final prices = allServices
-        .map((s) => s.offerPrice ?? s.originalPrice)
-        .whereType<double>()
-        .toList();
-    final minPossiblePrice = prices.isEmpty ? 0.0 : prices.reduce((a, b) => a < b ? a : b);
-    final maxPossiblePrice = prices.isEmpty ? 10000.0 : prices.reduce((a, b) => a > b ? a : b);
-    final ratings = allServices.map((s) => s.rating ?? 0.0).toList();
-    final minPossibleRating = 0.0;
-    final maxPossibleRating = ratings.isEmpty ? 5.0 : ratings.reduce((a, b) => a > b ? a : b);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: MediaQuery.of(context).viewInsets,
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
-              return Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Filter Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    // Price Range
-                    const Text('Price Range (₹)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Min',
-                              border: const OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            controller: TextEditingController(text: tempMinPrice?.toStringAsFixed(0) ?? ''),
-                            onChanged: (v) {
-                              setModalState(() {
-                                tempMinPrice = double.tryParse(v);
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Max',
-                              border: const OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            controller: TextEditingController(text: tempMaxPrice?.toStringAsFixed(0) ?? ''),
-                            onChanged: (v) {
-                              setModalState(() {
-                                tempMaxPrice = double.tryParse(v);
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Rating
-                    const Text('Minimum Rating', style: TextStyle(fontWeight: FontWeight.w600)),
-                    Slider(
-                      value: tempMinRating ?? minPossibleRating,
-                      min: minPossibleRating,
-                      max: 5.0,
-                      divisions: 10,
-                      label: (tempMinRating ?? minPossibleRating).toStringAsFixed(1),
-                      onChanged: (v) {
-                        setModalState(() {
-                          tempMinRating = v;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _minPrice = null;
-                              _maxPrice = null;
-                              _minRating = null;
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Clear'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _minPrice = tempMinPrice;
-                              _maxPrice = tempMaxPrice;
-                              _minRating = tempMinRating;
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Apply'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+  final List<String> _filterOptions = [
+    'All',
+    'Nearby',
+    'Within 5 km',
+    'Popular',
+    'Highest Rated',
+    'Price: Low to High',
+    'Price: High to Low',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -184,13 +64,17 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
           onPressed: () => context.pop(),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
+      body: servicesAsync.when(
+        loading: () => _buildLoadingState(),
+        error: (error, stack) => _buildErrorState(error.toString()),
+        data: (services) {
+          var filtered = _applyFiltering(services);
+          return CustomScrollView(
+            slivers: [
+              // Search Bar
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value) {
@@ -219,49 +103,46 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                servicesAsync.maybeWhen(
-                  data: (allServices) => IconButton(
-                    icon: const Icon(Icons.filter_alt_outlined, color: Color(0xFFF34E5F)),
-                    onPressed: () => _openFilterModal(allServices),
-                  ),
-                  orElse: () => IconButton(
-                    icon: const Icon(Icons.filter_alt_outlined, color: Color(0xFFF34E5F)),
-                    onPressed: null,
-                  ),
+              ),
+              // Filter Header
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _FilterHeaderDelegate(
+                  filterOptions: _filterOptions,
+                  selectedFilter: _selectedFilter,
+                  onFilterChanged: (filter) {
+                    setState(() {
+                      _selectedFilter = filter;
+                    });
+                  },
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: servicesAsync.when(
-              loading: () => _buildLoadingState(),
-              error: (error, stack) => _buildErrorState(error.toString()),
-              data: (services) {
-                var filtered = services;
-                if (_searchQuery.isNotEmpty) {
-                  filtered = filtered.where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-                }
-                if (_minPrice != null) {
-                  filtered = filtered.where((s) {
-                    final price = s.offerPrice ?? s.originalPrice;
-                    return price == null || price >= _minPrice!;
-                  }).toList();
-                }
-                if (_maxPrice != null) {
-                  filtered = filtered.where((s) {
-                    final price = s.offerPrice ?? s.originalPrice;
-                    return price == null || price <= _maxPrice!;
-                  }).toList();
-                }
-                if (_minRating != null) {
-                  filtered = filtered.where((s) => (s.rating ?? 0.0) >= _minRating!).toList();
-                }
-                return _buildServicesList(context, filtered);
-              },
-            ),
-          ),
-        ],
+              ),
+              // Services Grid
+              filtered.isEmpty
+                  ? SliverFillRemaining(
+                      child: _buildEmptyState(),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.all(16),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.65,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final service = filtered[index];
+                            return _buildServiceImage(context, service);
+                          },
+                          childCount: filtered.length,
+                        ),
+                      ),
+                    ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -327,58 +208,83 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
     );
   }
 
-  Widget _buildServicesList(BuildContext context, List<ServiceListingModel> services) {
-    if (services.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.category_outlined,
-                size: 64,
-                color: Colors.grey,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No services in ${widget.categoryName}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Okra',
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Check back later for new services in this category',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontFamily: 'Okra',
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+  List<ServiceListingModel> _applyFiltering(List<ServiceListingModel> services) {
+    var filtered = services;
+    
+    // Apply search query
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
     }
+    
+    // Apply selected filter
+    switch (_selectedFilter) {
+      case 'Nearby':
+        // For now, keep original order (would require location-based sorting)
+        break;
+      case 'Within 5 km':
+        // For now, keep original order (would require location-based filtering)
+        break;
+      case 'Popular':
+        filtered.sort((a, b) => (b.rating ?? 0.0).compareTo(a.rating ?? 0.0));
+        break;
+      case 'Highest Rated':
+        filtered.sort((a, b) => (b.rating ?? 0.0).compareTo(a.rating ?? 0.0));
+        break;
+      case 'Price: Low to High':
+        filtered.sort((a, b) {
+          final priceA = a.offerPrice ?? a.originalPrice ?? double.infinity;
+          final priceB = b.offerPrice ?? b.originalPrice ?? double.infinity;
+          return priceA.compareTo(priceB);
+        });
+        break;
+      case 'Price: High to Low':
+        filtered.sort((a, b) {
+          final priceA = a.offerPrice ?? a.originalPrice ?? 0.0;
+          final priceB = b.offerPrice ?? b.originalPrice ?? 0.0;
+          return priceB.compareTo(priceA);
+        });
+        break;
+      default: // 'All'
+        break;
+    }
+    
+    return filtered;
+  }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.65
-        ,
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.category_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No services found',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Okra',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your search or filters',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontFamily: 'Okra',
+              ),
+            ),
+          ],
+        ),
       ),
-      itemCount: services.length,
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return _buildServiceImage(context, service);
-      },
     );
   }
 
@@ -445,5 +351,105 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]},',
     );
+  }
+}
+
+class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final List<String> filterOptions;
+  final String selectedFilter;
+  final ValueChanged<String> onFilterChanged;
+
+  _FilterHeaderDelegate({
+    required this.filterOptions,
+    required this.selectedFilter,
+    required this.onFilterChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.grey[50],
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            // Filter button with icon
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: Material(
+                borderRadius: BorderRadius.circular(20),
+                elevation: 2,
+                shadowColor: Colors.black.withOpacity(0.05),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    // Show filter options or additional filters
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.filter_list, size: 18, color: Colors.black87),
+                        SizedBox(width: 4),
+                        Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black87),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Filter options
+            ...filterOptions.map((filter) {
+              final isSelected = filter == selectedFilter;
+              return Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(
+                    filter,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87,
+                      fontSize: 13,
+                      fontFamily: 'Okra',
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      onFilterChanged(filter);
+                    }
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFFF34E5F),
+                  side: BorderSide(
+                    color: isSelected ? const Color(0xFFF34E5F) : Colors.grey[300]!,
+                  ),
+                  showCheckmark: false,
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 56;
+
+  @override
+  double get minExtent => 56;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return oldDelegate != this;
   }
 }
