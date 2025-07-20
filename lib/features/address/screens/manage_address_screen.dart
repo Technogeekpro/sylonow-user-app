@@ -61,7 +61,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
         backgroundColor: Colors.grey[50],
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_downward, color: Colors.black,),
           onPressed: () => context.pop(),
         ),
         title: const Text(
@@ -299,25 +299,84 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                                       size: 20,
                                     ),
                                   const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigate to edit this specific address
-                                      context.push(
-                                        '/add-edit-address/${address.id}',
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[100],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Icon(
-                                        Icons.edit,
-                                        color: Colors.grey[600],
-                                        size: 16,
-                                      ),
+                                  PopupMenuButton<String>(
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      color: Colors.grey[600],
+                                      size: 20,
                                     ),
+                                    onSelected: (value) async {
+                                      if (value == 'edit') {
+                                        context.push(
+                                          '/add-edit-address/${address.id}',
+                                        );
+                                      } else if (value == 'delete') {
+                                        final shouldDelete = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Delete Address'),
+                                            content: const Text('Are you sure you want to delete this address?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.of(context).pop(false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.of(context).pop(true),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red,
+                                                ),
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (shouldDelete == true) {
+                                          try {
+                                            await ref.read(addressServiceProvider).deleteAddress(address.id);
+                                            ref.invalidate(addressesProvider);
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Address deleted successfully'),
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Error deleting address: $e'),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      const PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.edit, size: 18),
+                                            SizedBox(width: 8),
+                                            Text('Edit'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.delete, size: 18, color: Colors.red),
+                                            SizedBox(width: 8),
+                                            Text('Delete', style: TextStyle(color: Colors.red)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
