@@ -24,7 +24,10 @@
       "Bash(ls:*)",
       "Bash(npx @modelcontextprotocol/server-supabase describe-table wishlist)",
       "Bash(npx:*)",
-      "Bash(supabase:*)"
+      "Bash(supabase:*)",
+      "Bash(dos2unix:*)",
+      "Bash(mcp run:*)",
+      "mcp__supabase__list_projects"
     ],
     "deny": []
   },

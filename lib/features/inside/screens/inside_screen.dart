@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/user_location_helper.dart';
+import '../../../core/utils/location_utils.dart';
+import '../../home/providers/home_providers.dart';
+import '../../home/models/service_listing_model.dart';
 
 class InsideScreen extends ConsumerStatefulWidget {
   const InsideScreen({super.key});
@@ -66,63 +71,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
     {'title': 'Corporate Events', 'image': 'assets/images/category1.jpg'},
   ];
 
-  // Mock data for venues
-  final List<Map<String, String>> _venues = [
-    {
-      'name': 'Powai, Mumbai',
-      'rating': '4.6',
-      'distance': '38.8 km',
-      'openTime': 'Opens at 12 noon',
-      'price': '₹1200 for two',
-      'offer': 'Flat 10% OFF',
-      'image': 'assets/images/category1.jpg',
-    },
-    {
-      'name': 'Santacruz West, Mumbai',
-      'rating': '4.5',
-      'distance': '40.9 km',
-      'openTime': 'Opens at 12 noon',
-      'price': '₹2500 for two',
-      'offer': 'Flat 10% OFF',
-      'image': 'assets/images/category2.jpg',
-    },
-    {
-      'name': 'Worli, Mumbai',
-      'rating': '4.6',
-      'distance': '43.2 km',
-      'openTime': 'Opens at 12 noon',
-      'price': '₹3200 for two',
-      'offer': 'Flat 10% OFF',
-      'image': 'assets/images/category3.jpg',
-    },
-    {
-      'name': 'Bandra West, Mumbai',
-      'rating': '4.3',
-      'distance': '35.5 km',
-      'openTime': 'Opens at 11 AM',
-      'price': '₹1800 for two',
-      'offer': 'Flat 15% OFF',
-      'image': 'assets/images/category4.jpg',
-    },
-    {
-      'name': 'Andheri East, Mumbai',
-      'rating': '4.4',
-      'distance': '28.3 km',
-      'openTime': 'Opens at 10 AM',
-      'price': '₹2200 for two',
-      'offer': 'Flat 12% OFF',
-      'image': 'assets/images/category5.jpg',
-    },
-    {
-      'name': 'Juhu, Mumbai',
-      'rating': '4.7',
-      'distance': '42.1 km',
-      'openTime': 'Opens at 12 noon',
-      'price': '₹2800 for two',
-      'offer': 'Flat 20% OFF',
-      'image': 'assets/images/category1.jpg',
-    },
-  ];
 
   @override
   void initState() {
@@ -527,181 +475,42 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
 
                       const SizedBox(height: 16),
 
-                      // Venues List
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _venues.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final venue = _venues[index];
-                          return Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  spreadRadius: 0,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                      // Inside Decoration Services List with Location
+                      FutureBuilder<Map<String, dynamic>?>(
+                        future: UserLocationHelper.getDecorationTypeLocationParams(ref, 'inside'),
+                        builder: (context, locationSnapshot) {
+                          if (locationSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
                                 ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                // Venue Image
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade200,
-                                      image: DecorationImage(
-                                        image: AssetImage(venue['image']!),
-                                        fit: BoxFit.cover,
-                                        onError: (exception, stackTrace) {
-                                          // Fallback for missing images
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                              ),
+                            );
+                          }
 
-                                const SizedBox(width: 12),
+                          final locationParams = locationSnapshot.data;
+                          if (locationParams == null) {
+                            // Fallback to non-location based services
+                            return Consumer(
+                              builder: (context, ref, child) {
+                                final servicesAsync = ref.watch(
+                                  servicesByDecorationTypeProvider('inside')
+                                );
+                                return _buildServicesList(servicesAsync, ref, 'inside');
+                              },
+                            );
+                          }
 
-                                // Venue Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Venue Name
-                                      Text(
-                                        venue['name']!,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF2A3143),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-
-                                      const SizedBox(height: 4),
-
-                                      // Rating
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  venue['rating']!,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 2),
-                                                const Icon(
-                                                  Icons.star,
-                                                  size: 10,
-                                                  color: Colors.white,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 6),
-
-                                      // Distance and Opening Time
-                                      Row(
-                                        children: [
-                                          Text(
-                                            venue['distance']!,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                              color: Color(0xFF757575),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Container(
-                                            width: 2,
-                                            height: 2,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF757575),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            venue['openTime']!,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                              color: Color(0xFF757575),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 6),
-
-                                      // Price and Offer
-                                      Row(
-                                        children: [
-                                          Text(
-                                            venue['price']!,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF2A3143),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Container(
-                                            width: 2,
-                                            height: 2,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF757575),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            venue['offer']!,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.blue,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                          // Use location-based services
+                          return Consumer(
+                            builder: (context, ref, child) {
+                              final servicesAsync = ref.watch(
+                                servicesByDecorationTypeWithLocationProvider(locationParams)
+                              );
+                              return _buildServicesList(servicesAsync, ref, 'inside', isLocationBased: true);
+                            },
                           );
                         },
                       ),
@@ -721,6 +530,324 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildServicesList(
+    AsyncValue<List<ServiceListingModel>> servicesAsync,
+    WidgetRef ref,
+    String decorationType, {
+    bool isLocationBased = false,
+  }) {
+    return servicesAsync.when(
+      data: (services) {
+        if (services.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(
+              child: Text(
+                'No services available in your area',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: services.length,
+          itemBuilder: (context, index) {
+            final service = services[index];
+            return _buildServiceCard(service, isLocationBased);
+          },
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      ),
+      error: (error, stack) => Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Center(
+          child: Column(
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load services',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please check your connection and try again',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceCard(ServiceListingModel service, bool isLocationBased) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Service Image
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Container(
+              height: 180,
+              width: double.infinity,
+              child: CachedNetworkImage(
+                imageUrl: service.image,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[200],
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: Colors.grey,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Service Details
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Service Name and Rating
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        service.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (service.rating != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              service.rating!.toStringAsFixed(1),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                // Distance and Location Info (if location-based)
+                if (isLocationBased && service.distanceKm != null) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: AppTheme.primaryColor,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${service.distanceKm!.toStringAsFixed(1)} km away',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      if (service.isPriceAdjusted == true) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.orange,
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            '+₹100 (Distance)',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.orange[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Pricing
+                Row(
+                  children: [
+                    if (service.displayOriginalPrice != null &&
+                        service.displayOfferPrice != null &&
+                        service.displayOriginalPrice! > service.displayOfferPrice!) ...[
+                      Text(
+                        '₹${service.displayOriginalPrice!.toInt()}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (service.displayOfferPrice != null)
+                      Text(
+                        '₹${service.displayOfferPrice!.toInt()}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    if (service.displayOfferPrice == null && service.displayOriginalPrice != null)
+                      Text(
+                        '₹${service.displayOriginalPrice!.toInt()}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    const Spacer(),
+                    if (service.promotionalTag != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          service.promotionalTag!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Book Now Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.push('/service-detail/${service.id}');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

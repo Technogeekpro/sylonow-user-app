@@ -290,4 +290,47 @@ class AuthService {
       rethrow;
     }
   }
+  
+  // Check if user profile is complete
+  Future<bool> isProfileComplete() async {
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) return false;
+      
+      final response = await _supabaseClient
+          .from('user_profiles')
+          .select('full_name, gender')
+          .eq('auth_user_id', user.id)
+          .single();
+      
+      final fullName = response['full_name'] as String?;
+      final gender = response['gender'] as String?;
+      
+      return fullName != null && fullName.trim().isNotEmpty &&
+             gender != null && gender.trim().isNotEmpty;
+    } catch (e) {
+      debugPrint('Profile check error: $e');
+      // If profile doesn't exist or there's an error, assume it's incomplete
+      return false;
+    }
+  }
+  
+  // Get user profile data
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) return null;
+      
+      final response = await _supabaseClient
+          .from('user_profiles')
+          .select('*')
+          .eq('auth_user_id', user.id)
+          .single();
+      
+      return response;
+    } catch (e) {
+      debugPrint('Get user profile error: $e');
+      return null;
+    }
+  }
 } 

@@ -9,18 +9,17 @@ import '../../home/models/service_listing_model.dart';
 class CategoryServicesScreen extends ConsumerStatefulWidget {
   final String categoryName;
 
-  const CategoryServicesScreen({
-    super.key,
-    required this.categoryName,
-  });
+  const CategoryServicesScreen({super.key, required this.categoryName});
 
   static const String routeName = '/category';
 
   @override
-  ConsumerState<CategoryServicesScreen> createState() => _CategoryServicesScreenState();
+  ConsumerState<CategoryServicesScreen> createState() =>
+      _CategoryServicesScreenState();
 }
 
-class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen> {
+class _CategoryServicesScreenState
+    extends ConsumerState<CategoryServicesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -44,7 +43,9 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final servicesAsync = ref.watch(servicesByCategoryProvider(widget.categoryName));
+    final servicesAsync = ref.watch(
+      servicesByCategoryProvider(widget.categoryName),
+    );
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -84,8 +85,14 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                     },
                     decoration: InputDecoration(
                       hintText: 'Search services...',
-                      prefixIcon: const Icon(Icons.search, color: Color(0xFFF34E5F)),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xFFF34E5F),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 16,
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -119,25 +126,21 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
               ),
               // Services Grid
               filtered.isEmpty
-                  ? SliverFillRemaining(
-                      child: _buildEmptyState(),
-                    )
+                  ? SliverFillRemaining(child: _buildEmptyState())
                   : SliverPadding(
                       padding: const EdgeInsets.all(16),
                       sliver: SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.65,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final service = filtered[index];
-                            return _buildServiceImage(context, service);
-                          },
-                          childCount: filtered.length,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.65,
+                            ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final service = filtered[index];
+                          return _buildServiceImage(context, service);
+                        }, childCount: filtered.length),
                       ),
                     ),
             ],
@@ -178,11 +181,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
               'Unable to load services',
@@ -208,14 +207,20 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
     );
   }
 
-  List<ServiceListingModel> _applyFiltering(List<ServiceListingModel> services) {
+  List<ServiceListingModel> _applyFiltering(
+    List<ServiceListingModel> services,
+  ) {
     var filtered = services;
-    
+
     // Apply search query
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+      filtered = filtered
+          .where(
+            (s) => s.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
+          .toList();
     }
-    
+
     // Apply selected filter
     switch (_selectedFilter) {
       case 'Nearby':
@@ -247,7 +252,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
       default: // 'All'
         break;
     }
-    
+
     return filtered;
   }
 
@@ -258,11 +263,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.category_outlined,
-              size: 64,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.category_outlined, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
               'No services found',
@@ -291,9 +292,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
   Widget _buildServiceImage(BuildContext context, ServiceListingModel service) {
     return GestureDetector(
       onTap: () {
-        context.push(
-          '/service/${service.id}',
-        );
+        context.push('/service/${service.id}');
       },
       child: Container(
         decoration: BoxDecoration(
@@ -342,7 +341,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                 ),
               ),
             ),
-            
+
             // Content Section
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -359,7 +358,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                     ),
                   ),
                   const SizedBox(height: 4),
-                  
+
                   // Service Name
                   Text(
                     service.name,
@@ -373,7 +372,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Price and Rating Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -417,7 +416,7 @@ class _CategoryServicesScreenState extends ConsumerState<CategoryServicesScreen>
                           ],
                         ),
                       ),
-                      
+
                       // Rating Section
                       if (service.rating != null)
                         Row(
@@ -469,77 +468,101 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.grey[50],
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            // Filter button with icon
-            Container(
-              margin: const EdgeInsets.only(right: 12),
-              child: Material(
-                borderRadius: BorderRadius.circular(20),
-                elevation: 2,
-                shadowColor: Colors.black.withOpacity(0.05),
-                child: InkWell(
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ClipPath(
+      clipper: ShapeBorderClipper(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(46)),
+      ),
+      child: Container(
+        color: Colors.grey[50],
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              // Filter button with icon
+              Container(
+                margin: const EdgeInsets.only(right: 12),
+                child: Material(
                   borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                    // Show filter options or additional filters
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.filter_list, size: 18, color: Colors.black87),
-                        SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.black87),
-                      ],
+                  elevation: 2,
+                  shadowColor: Colors.black.withOpacity(0.05),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      // Show filter options or additional filtersfirst 
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.filter_list,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 16,
+                            color: Colors.black87,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Filter options
-            ...filterOptions.map((filter) {
-              final isSelected = filter == selectedFilter;
-              return Container(
-                margin: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(
-                    filter,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontSize: 13,
-                      fontFamily: 'Okra',
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              // Filter options
+              ...filterOptions.map((filter) {
+                final isSelected = filter == selectedFilter;
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(
+                      filter,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontSize: 13,
+                        fontFamily: 'Okra',
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        onFilterChanged(filter);
+                      }
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFFF34E5F),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFFF34E5F)
+                          : Colors.grey[300]!,
+                    ),
+                    showCheckmark: false,
                   ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      onFilterChanged(filter);
-                    }
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFFF34E5F),
-                  side: BorderSide(
-                    color: isSelected ? const Color(0xFFF34E5F) : Colors.grey[300]!,
-                  ),
-                  showCheckmark: false,
-                ),
-              );
-            }).toList(),
-          ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );

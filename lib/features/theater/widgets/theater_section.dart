@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/features/theater/models/private_theater_model.dart';
+import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
 
 class TheaterSection extends ConsumerStatefulWidget {
@@ -70,7 +70,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
   }
 
   Widget _buildTheatersList(
-    AsyncValue<List<PrivateTheaterModel>> theatersAsync,
+    AsyncValue<List<TheaterModel>> theatersAsync,
   ) {
     return theatersAsync.when(
       data: (theaters) {
@@ -117,7 +117,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
     );
   }
 
-  Widget _buildTheaterCard(PrivateTheaterModel theater) {
+  Widget _buildTheaterCard(TheaterModel theater) {
     return GestureDetector(
       onTap: () {
         // Navigate to theater detail screen

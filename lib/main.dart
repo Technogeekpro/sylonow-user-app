@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_constants.dart';
@@ -27,11 +28,19 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+
+    //set status bar color
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: AppTheme.primaryColor,
+      ),
+    );
     
     return MaterialApp.router(
       title: 'Sylonow',
       theme: AppTheme.lightTheme(),
       debugShowCheckedModeBanner: false,
+      
       routerConfig: router,
     );
   }

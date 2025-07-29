@@ -30,6 +30,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   
   @override
   bool get wantKeepAlive => true;
+  
 
   late final ScrollController _scrollController;
   late final ValueNotifier<double> _scrollOffsetNotifier;
@@ -640,7 +641,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [

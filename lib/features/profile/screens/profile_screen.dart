@@ -72,6 +72,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
                   profile?.fullName ??

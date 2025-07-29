@@ -163,19 +163,28 @@ class AllCategoriesScreen extends ConsumerWidget {
       onTap: () {
         context.push('/category/${category.name}');
       },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(100),
+              bottomLeft: Radius.circular(100),
+              bottomRight: Radius.circular(16),
             ),
-          ],
+          ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+           
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -219,9 +228,9 @@ class AllCategoriesScreen extends ConsumerWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(1),
                     ],
-                    stops: const [0.4, 1.0],
+                    stops: const [0.1, 1.0],
                   ),
                 ),
               ),

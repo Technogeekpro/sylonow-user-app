@@ -11,7 +11,7 @@ class ReviewsRepository {
     int limit = 50,
     int offset = 0,
   }) async {
-    try {
+    try { 
       final response = await _supabase
           .from('reviews')
           .select()

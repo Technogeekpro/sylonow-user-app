@@ -140,7 +140,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
   ) {
     if (categories.isEmpty) {
       return const SizedBox(
-        height: 110,
+        height: 120,
         child: Center(
           child: Text(
             'No categories available.',
@@ -154,7 +154,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
     final displayCategories = categories.take(8).toList();
 
     return SizedBox(
-      height: 110,
+      height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),

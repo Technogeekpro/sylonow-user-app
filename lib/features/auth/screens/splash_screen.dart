@@ -41,8 +41,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final isAuthenticated = await ref.read(isAuthenticatedProvider.future);
       
       if (isAuthenticated) {
-        // User is logged in, go to main screen
-        context.go(AppConstants.homeRoute);
+        // Check if profile is complete
+        final authService = ref.read(authServiceProvider);
+        final isProfileComplete = await authService.isProfileComplete();
+        
+        if (isProfileComplete) {
+          // Profile is complete, go to main screen
+          context.go(AppConstants.homeRoute);
+        } else {
+          // Profile is incomplete, go to profile completion screen
+          context.go('/profile-completion');
+        }
       } else {
         // User is not logged in, go to login screen
         context.go(AppConstants.loginRoute);

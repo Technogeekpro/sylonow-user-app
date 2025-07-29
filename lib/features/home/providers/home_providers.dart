@@ -139,4 +139,76 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
 final servicesByCategoryProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, categoryName) async {
   final repository = ref.watch(homeRepositoryProvider);
   return repository.getServicesByCategory(categoryName: categoryName);
+});
+
+/// Provider for services by decoration type
+final servicesByDecorationTypeProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, decorationType) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getServicesByDecorationType(decorationType: decorationType);
+});
+
+/// Provider for featured services by decoration type
+final featuredServicesByDecorationTypeProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, decorationType) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getFeaturedServicesByDecorationType(decorationType: decorationType);
+});
+
+/// Provider for popular nearby services by decoration type
+final popularNearbyServicesByDecorationTypeProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, decorationType) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getPopularNearbyServicesByDecorationType(decorationType: decorationType);
+});
+
+/// Provider for home screen data by decoration type
+final homeScreenDataByDecorationTypeProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, decorationType) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getHomeScreenDataByDecorationType(decorationType);
+});
+
+/// Provider for services with location-based filtering and pricing
+/// Params: {decorationType, userLat, userLon, radiusKm}
+final servicesWithLocationProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getServicesWithLocation(
+    userLat: params['userLat'] as double,
+    userLon: params['userLon'] as double,
+    decorationType: params['decorationType'] as String?,
+    radiusKm: params['radiusKm'] as double?,
+  );
+});
+
+/// Provider for services by decoration type with location
+/// Params: {decorationType, userLat, userLon, radiusKm}
+final servicesByDecorationTypeWithLocationProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getServicesByDecorationTypeWithLocation(
+    decorationType: params['decorationType'] as String,
+    userLat: params['userLat'] as double,
+    userLon: params['userLon'] as double,
+    radiusKm: params['radiusKm'] as double?,
+  );
+});
+
+/// Provider for featured services with location
+/// Params: {userLat, userLon, decorationType?, radiusKm?}
+final featuredServicesWithLocationProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getFeaturedServicesWithLocation(
+    userLat: params['userLat'] as double,
+    userLon: params['userLon'] as double,
+    decorationType: params['decorationType'] as String?,
+    radiusKm: params['radiusKm'] as double?,
+  );
+});
+
+/// Provider for popular nearby services with actual location-based filtering
+/// Params: {userLat, userLon, decorationType?, radiusKm?}
+final popularNearbyServicesWithLocationProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, dynamic>>((ref, params) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getPopularNearbyServicesWithLocation(
+    userLat: params['userLat'] as double,
+    userLon: params['userLon'] as double,
+    decorationType: params['decorationType'] as String?,
+    radiusKm: params['radiusKm'] as double? ?? 25.0,
+  );
 }); 

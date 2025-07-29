@@ -7,6 +7,7 @@ import 'package:sylonow_user/features/address/screens/manage_address_screen.dart
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/phone_input_screen.dart';
+import '../../features/auth/screens/profile_completion_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/booking/screens/booking_success_screen.dart';
@@ -30,9 +31,16 @@ import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
 import '../../features/theater/screens/theater_detail_screen.dart';
+import '../../features/theater/screens/theater_detail_screen_new.dart';
 import '../../features/theater/screens/theater_date_selection_screen.dart';
 import '../../features/theater/screens/theater_list_screen.dart';
+import '../../features/theater/screens/theater_decorations_screen.dart';
+import '../../features/theater/screens/theater_occasions_screen.dart';
+import '../../features/theater/screens/theater_addons_screen.dart';
+import '../../features/theater/screens/theater_checkout_screen.dart';
 import '../../features/wishlist/screens/wishlist_screen.dart';
+import '../../features/offers/screens/offers_screen.dart';
+import '../../features/home/screens/nearby_services_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -66,6 +74,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: ProfileCompletionScreen.routeName,
+        builder: (context, state) => const ProfileCompletionScreen(),
+      ),
+      GoRoute(
         path: AppConstants.homeRoute,
         builder: (context, state) => const MainScreen(),
       ),
@@ -73,6 +85,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: SearchScreen.routeName,
         builder: (context, state) => const SearchScreen(),
+      ),
+      // Nearby services route
+      GoRoute(
+        path: NearbyServicesScreen.routeName,
+        builder: (context, state) => const NearbyServicesScreen(),
       ),
       // Wallet route
       GoRoute(
@@ -83,6 +100,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: WishlistScreen.routeName,
         builder: (context, state) => const WishlistScreen(),
+      ),
+      // Offers route
+      GoRoute(
+        path: OffersScreen.routeName,
+        builder: (context, state) => const OffersScreen(),
       ),
       // Profile route
       GoRoute(
@@ -221,15 +243,75 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return TheaterListScreen(selectedDate: selectedDate);
         },
       ),
-      // Theater detail route
+      // Theater decorations selection route (NEW - first step after selecting theater)
       GoRoute(
-        path: '/theater/:theaterId',
+        path: '/theater/:theaterId/decorations',
         builder: (context, state) {
           final theaterId = state.pathParameters['theaterId']!;
-          final extra = state.extra as Map<String, dynamic>?;
-          return TheaterDetailScreen(
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          return TheaterDecorationsScreen(
             theaterId: theaterId,
-            selectedDate: extra?['selectedDate'] as String?,
+            selectedDate: selectedDate,
+          );
+        },
+      ),
+      // Theater detail route (UPDATED - now uses new screen with multi-screen support)
+      GoRoute(
+        path: '/theater/:theaterId/detail',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          return TheaterDetailScreenNew(
+            theaterId: theaterId,
+            selectedDate: selectedDate,
+            selectionData: extra,
+          );
+        },
+      ),
+      // Theater occasions selection route
+      GoRoute(
+        path: '/theater/:theaterId/occasions',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra['selectionData'] as Map<String, dynamic>;
+          return TheaterOccasionsScreen(
+            theaterId: theaterId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
+      ),
+      // Theater add-ons selection route
+      GoRoute(
+        path: '/theater/:theaterId/addons',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra['selectionData'] as Map<String, dynamic>;
+          return TheaterAddonsScreen(
+            theaterId: theaterId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
+      ),
+      // Theater checkout route
+      GoRoute(
+        path: '/theater/:theaterId/checkout',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra['selectionData'] as Map<String, dynamic>;
+          return TheaterCheckoutScreen(
+            theaterId: theaterId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
           );
         },
       ),

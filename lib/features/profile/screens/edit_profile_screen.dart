@@ -35,11 +35,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isLoading = false;
 
   final List<String> _genderOptions = [
-    'male',
-    'female',
-    'other',
-    'prefer_not_to_say',
+    'Male',
+    'Female',
+    'Other',
+    'Prefer not to say',
   ];
+
+  String? _mapGenderValue(String? gender) {
+    if (gender == null) return null;
+    switch (gender.toLowerCase()) {
+      case 'male':
+        return 'Male';
+      case 'female':
+        return 'Female';
+      case 'other':
+        return 'Other';
+      case 'prefer_not_to_say':
+      case 'prefer not to say':
+        return 'Prefer not to say';
+      default:
+        return _genderOptions.contains(gender) ? gender : null;
+    }
+  }
+
+  String? _mapGenderToDatabase(String? gender) {
+    if (gender == null) return null;
+    switch (gender) {
+      case 'Male':
+        return 'male';
+      case 'Female':
+        return 'female';
+      case 'Other':
+        return 'other';
+      case 'Prefer not to say':
+        return 'prefer_not_to_say';
+      default:
+        return gender.toLowerCase();
+    }
+  }
 
   @override
   void initState() {
@@ -65,7 +98,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _emergencyNameController.text = profile.emergencyContactName ?? '';
           _emergencyPhoneController.text = profile.emergencyContactPhone ?? '';
           _selectedDate = profile.dateOfBirth;
-          _selectedGender = profile.gender;
+          _selectedGender = _mapGenderValue(profile.gender);
         });
       }
     });
@@ -144,7 +177,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         emergencyContactName: _emergencyNameController.text.trim().isNotEmpty ? _emergencyNameController.text.trim() : null,
         emergencyContactPhone: _emergencyPhoneController.text.trim().isNotEmpty ? _emergencyPhoneController.text.trim() : null,
         dateOfBirth: _selectedDate,
-        gender: _selectedGender,
+        gender: _mapGenderToDatabase(_selectedGender),
       );
 
       final controller = ref.read(profileControllerProvider.notifier);
@@ -541,7 +574,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           return DropdownMenuItem(
             value: gender,
             child: Text(
-              gender.replaceAll('_', ' ').toUpperCase(),
+              gender,
               style: const TextStyle(fontFamily: 'Okra'),
             ),
           );

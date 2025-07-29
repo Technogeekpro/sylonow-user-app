@@ -30,13 +30,15 @@ class AboutScreen extends ConsumerWidget {
           children: [
             _buildAppInfoSection(),
             const SizedBox(height: 24),
-            _buildCompanyInfoSection(),
+            _buildServicesSection(),
             const SizedBox(height: 24),
-            _buildSocialLinksSection(),
+            _buildFoundersSection(),
             const SizedBox(height: 24),
-            _buildLegalSection(),
+            _buildContactSection(),
             const SizedBox(height: 24),
             _buildVersionInfoSection(),
+            const SizedBox(height: 24),
+            _buildCelebrationSection(),
           ],
         ),
       ),
@@ -87,116 +89,93 @@ class AboutScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Sylonow is your trusted platform for discovering and booking quality services from verified providers. From home services to entertainment, we connect you with professionals who deliver excellence.',
+            'Sylonow is India\'s most heartfelt celebration and surprise platform – crafted to turn your emotions into meaningful memories. We help you book thoughtful experiences like event decorations and private theatre spaces, all executed with care, love, and attention to detail.\n\nWe\'re not here to just "deliver" things. We\'re here to create magic, with people who understand celebration.\n\nEvery surprise is carefully planned and brought to life by real people who care about the moment as much as you do. We believe in quality over speed – because real emotion takes time, thoughtfulness, creativity, and heart.',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[700],
               fontFamily: 'Okra',
               height: 1.5,
             ),
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.start,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCompanyInfoSection() {
+  Widget _buildServicesSection() {
     return _buildSection(
-      title: 'Company Information',
+      title: '🎯 Currently Available Services',
+      children: [
+        _buildServiceTile(
+          icon: '🎉',
+          title: 'Celebrations',
+          subtitle: 'Setups, Decorations for birthdays, anniversaries, proposals & more',
+        ),
+        _buildDivider(),
+        _buildServiceTile(
+          icon: '🎬',
+          title: 'Private Theatre Experiences',
+          subtitle: 'For those once-in-a-lifetime surprises',
+        ),
+        _buildDivider(),
+        _buildServiceTile(
+          icon: '🎂',
+          title: 'Launching Soon',
+          subtitle: 'Cakes, venues, gifts, catering, and personalised surprise add-ons',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFoundersSection() {
+    return _buildSection(
+      title: '👥 Who We Are',
       children: [
         _buildInfoTile(
-          icon: Icons.business,
-          title: 'Company Name',
-          subtitle: 'Sylonow Technologies Pvt. Ltd.',
+          icon: Icons.people,
+          title: 'Founded by Sangameah K. and Srikanth S.',
+          subtitle: 'Sylonow Vision Pvt Ltd. We are bringing depth and meaning back to how we celebrate. We don\'t just send someone to do a job – we bring a feeling to life.',
         ),
-        _buildDivider(),
-        _buildInfoTile(
-          icon: Icons.location_on,
-          title: 'Headquarters',
-          subtitle: '123 Business District, Tech City, TC 12345',
-        ),
-        _buildDivider(),
-        _buildInfoTile(
-          icon: Icons.phone,
-          title: 'Phone',
-          subtitle: '+91-9876543210',
-        ),
-        _buildDivider(),
-        _buildInfoTile(
+      ],
+    );
+  }
+
+  Widget _buildContactSection() {
+    return _buildSection(
+      title: '📞 Connect With Us',
+      children: [
+        _buildContactTile(
           icon: Icons.email,
           title: 'Email',
           subtitle: 'info@sylonow.com',
+          url: 'mailto:info@sylonow.com',
         ),
         _buildDivider(),
-        _buildInfoTile(
+        _buildContactTile(
           icon: Icons.language,
-          title: 'Website',
-          subtitle: 'www.sylonow.com',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialLinksSection() {
-    return _buildSection(
-      title: 'Connect With Us',
-      children: [
-        _buildSocialTile(
-          icon: Icons.facebook,
-          title: 'Facebook',
-          subtitle: '@sylonow',
-          url: 'https://facebook.com/sylonow',
-        ),
-        _buildDivider(),
-        _buildSocialTile(
-          icon: Icons.alternate_email,
-          title: 'Twitter',
-          subtitle: '@sylonow',
-          url: 'https://twitter.com/sylonow',
-        ),
-        _buildDivider(),
-        _buildSocialTile(
-          icon: Icons.camera_alt,
           title: 'Instagram',
-          subtitle: '@sylonow',
+          subtitle: 'https://instagram.com/sylonow',
           url: 'https://instagram.com/sylonow',
         ),
         _buildDivider(),
-        _buildSocialTile(
+        _buildContactTile(
+          icon: Icons.facebook,
+          title: 'Facebook',
+          subtitle: 'https://facebook.com/sylonow',
+          url: 'https://facebook.com/sylonow',
+        ),
+        _buildDivider(),
+        _buildContactTile(
           icon: Icons.business,
           title: 'LinkedIn',
-          subtitle: 'Sylonow Technologies',
-          url: 'https://linkedin.com/company/sylonow',
+          subtitle: 'https://www.linkedin.com/company/sylonow-main/',
+          url: 'https://www.linkedin.com/company/sylonow-main/',
         ),
       ],
     );
   }
 
-  Widget _buildLegalSection() {
-    return _buildSection(
-      title: 'Legal',
-      children: [
-        _buildInfoTile(
-          icon: Icons.copyright,
-          title: 'Copyright',
-          subtitle: '© 2025 Sylonow Technologies Pvt. Ltd.',
-        ),
-        _buildDivider(),
-        _buildInfoTile(
-          icon: Icons.balance,
-          title: 'License',
-          subtitle: 'All rights reserved under applicable law',
-        ),
-        _buildDivider(),
-        _buildInfoTile(
-          icon: Icons.security,
-          title: 'Security',
-          subtitle: 'Your data is protected with enterprise-grade security',
-        ),
-      ],
-    );
-  }
 
   Widget _buildVersionInfoSection() {
     return _buildSection(
@@ -308,7 +287,63 @@ class AboutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSocialTile({
+
+  Widget _buildDivider() {
+    return Divider(height: 1, color: Colors.grey[200], indent: 60);
+  }
+
+  Widget _buildServiceTile({
+    required String icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              icon,
+              style: const TextStyle(fontSize: 24),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactTile({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -368,8 +403,47 @@ class AboutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDivider() {
-    return Divider(height: 1, color: Colors.grey[200], indent: 60);
+  Widget _buildCelebrationSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withOpacity(0.1),
+            AppTheme.primaryColor.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '❤️ Let\'s Celebrate – the Sylonow Way.',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Okra',
+              color: AppTheme.primaryColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Not delivered. Not rushed.\nNot just another order.\nRemembered.',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Okra',
+              color: Colors.grey[700],
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _launchURL(String url) async {

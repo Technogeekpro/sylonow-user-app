@@ -41,7 +41,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
       CurvedAnimation(parent: _indicatorController, curve: Curves.elasticOut),
     );
     _indicatorController.forward();
+    
+    // Tutorial is now handled in OptimizedHomeScreen
   }
+
 
   @override
   void dispose() {
@@ -117,7 +120,7 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
       curve: Curves.decelerate, 
     ));
   }
-
+ 
   @override
   void didUpdateWidget(_CustomBottomNavigationBar oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -296,6 +299,7 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
           },
         ),
       ),
+    
     );
   }
 } 

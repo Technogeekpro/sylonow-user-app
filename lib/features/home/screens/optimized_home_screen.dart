@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sylonow_user/features/home/widgets/categories/optimized_explore_categories_section.dart';
 import 'package:sylonow_user/features/home/widgets/featured/featured_section.dart';
 import 'package:sylonow_user/features/home/widgets/collage/image_collage_section.dart';
 import 'package:sylonow_user/features/home/widgets/popular_nearby/popular_nearby_section.dart';
-import 'package:sylonow_user/features/home/widgets/quote/quote_section.dart';
+import 'package:sylonow_user/features/home/widgets/welcome/welcome_overlay.dart';
+import 'package:sylonow_user/features/home/widgets/location/location_widgets.dart';
+import 'package:sylonow_user/features/home/widgets/app_bar/custom_app_bar.dart';
+import 'package:sylonow_user/features/home/widgets/theater/theater_section.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -13,20 +16,18 @@ import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:uuid/uuid.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
 
 /// Optimized home screen with performance improvements
 class OptimizedHomeScreen extends ConsumerStatefulWidget {
   const OptimizedHomeScreen({super.key});
 
   @override
-  ConsumerState<OptimizedHomeScreen> createState() => _OptimizedHomeScreenState();
+  ConsumerState<OptimizedHomeScreen> createState() =>
+      _OptimizedHomeScreenState();
 }
 
-class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen> 
+class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     with AutomaticKeepAliveClientMixin {
-  
   // Performance optimization: Keep state alive to prevent rebuilds
   @override
   bool get wantKeepAlive => true;
@@ -36,10 +37,20 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   bool _isLocationEnabled = false;
   bool _isLocationLoading = true;
 
+  // Global keys for UI elements
+  static final GlobalKey locationKey = GlobalKey();
+  static final GlobalKey searchKey = GlobalKey();
+  static final GlobalKey profileKey = GlobalKey();
+  static final GlobalKey categoriesKey = GlobalKey();
+  static final GlobalKey theaterKey = GlobalKey();
+  
+  // Welcome overlay state
+  bool _showWelcomeOverlay = false;
+
   // Memoized search texts - only create once
   static const List<String> _searchTexts = [
     'Birthday Decoration',
-    'Anniversary Setup', 
+    'Anniversary Setup',
     'Wedding Decoration',
     'Baby Shower',
     'Corporate Events',
@@ -51,14 +62,52 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     super.initState();
     _scrollController = ScrollController();
     _scrollOffsetNotifier = ValueNotifier(0.0);
-    
+
+    // Tutorial completion will be handled in the tutorial coach mark
+
     // Performance optimization: Use value notifier instead of setState for scroll
     _scrollController.addListener(_onScroll);
-    
+
     // Performance optimization: Move location operations to next frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkLocationPermissionAsync();
+      _checkAndShowWelcomeOverlay();
     });
+  }
+
+  Future<void> _checkAndShowWelcomeOverlay() async {
+    try {
+      debugPrint('🎯 OptimizedHomeScreen checking welcome overlay...');
+      // Wait for UI to be fully built
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final prefs = await SharedPreferences.getInstance();
+      // For testing - always show the overlay (comment out the next line in production)
+      final hasShownWelcome = false;
+      // final hasShownWelcome = prefs.getBool('has_shown_welcome_overlay') ?? false;
+      
+      if (!hasShownWelcome && mounted) {
+        debugPrint('🎯 Showing welcome overlay...');
+        setState(() {
+          _showWelcomeOverlay = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Welcome overlay check error: $e');
+    }
+  }
+
+  Future<void> _markWelcomeCompleted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_shown_welcome_overlay', true);
+      setState(() {
+        _showWelcomeOverlay = false;
+      });
+      debugPrint('🎯 Welcome overlay marked as completed');
+    } catch (e) {
+      debugPrint('Error marking welcome completed: $e');
+    }
   }
 
   @override
@@ -91,11 +140,12 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     }
   }
 
+
   Future<void> _checkLocationPermission() async {
     final locationService = ref.read(locationServiceProvider);
     final permissionStatus = await locationService.getPermissionStatus();
-    
-    if (permissionStatus == LocationPermission.denied || 
+
+    if (permissionStatus == LocationPermission.denied ||
         permissionStatus == LocationPermission.deniedForever) {
       setState(() {
         _isLocationLoading = false;
@@ -104,8 +154,8 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showLocationPermissionDialog();
       });
-    } else if (permissionStatus == LocationPermission.whileInUse || 
-               permissionStatus == LocationPermission.always) {
+    } else if (permissionStatus == LocationPermission.whileInUse ||
+        permissionStatus == LocationPermission.always) {
       _checkLocationService();
     } else {
       setState(() {
@@ -121,7 +171,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   Future<void> _checkLocationService() async {
     final locationService = ref.read(locationServiceProvider);
     final serviceEnabled = await locationService.isLocationServiceEnabled();
-    
+
     if (!serviceEnabled) {
       setState(() {
         _isLocationLoading = false;
@@ -138,9 +188,10 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   Future<void> _getCurrentLocation() async {
     try {
       final locationService = ref.read(locationServiceProvider);
-      final position = await locationService.getCurrentLocation()
-          .timeout(const Duration(seconds: 30));
-      
+      final position = await locationService.getCurrentLocation().timeout(
+        const Duration(seconds: 30),
+      );
+
       if (position != null && mounted) {
         // Performance optimization: Run geocoding on background isolate
         _processLocationData(position);
@@ -167,22 +218,22 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
         position.latitude,
         position.longitude,
       );
-      
+
       if (mounted) {
         final placemark = placemarks.isNotEmpty ? placemarks.first : null;
         final currentAddress = Address(
           id: const Uuid().v4(),
           userId: ref.read(currentUserProvider)?.id ?? 'guest',
           addressFor: AddressType.home,
-          address: placemark != null 
+          address: placemark != null
               ? '${placemark.street ?? ''}, ${placemark.locality ?? 'Unknown Location'}'
               : 'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}',
           area: placemark?.subLocality ?? placemark?.locality ?? 'Unknown Area',
           name: 'Current Location',
         );
-        
+
         ref.read(selectedAddressProvider.notifier).state = currentAddress;
-        
+
         setState(() {
           _isLocationEnabled = true;
           _isLocationLoading = false;
@@ -202,53 +253,69 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
+
     if (_isLocationLoading) {
-      return const _LocationLoadingScreen();
+      return const LocationLoadingScreen();
     }
-    
+
     if (!_isLocationEnabled) {
-      return _LocationBlockedScreen(
-        onRetry: _checkLocationPermissionAsync,
-      );
+      return LocationBlockedScreen(onRetry: _checkLocationPermissionAsync);
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Main scrollable content
-          CustomScrollView(
-            controller: _scrollController,
-            // Performance optimization: Use const widgets where possible
-            slivers: const [
-              SliverToBoxAdapter(child: _AdvertisementSection()),
-             // SliverToBoxAdapter(child: SizedBox(height: 40)),
-             // SliverToBoxAdapter(child: QuoteSection()),
-              SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(child: OptimizedExploreCategoriesSection()),
-              SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(child: FeaturedSection()),
-              SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(child: _NewTheaterSection()),
-              SliverToBoxAdapter(child: ImageCollageSection()),
-              SliverToBoxAdapter(child: PopularNearbySection()),
-            ],
-          ),
-          // Custom App Bar as an overlay
-          ValueListenableBuilder<double>(
-            valueListenable: _scrollOffsetNotifier,
-            builder: (context, scrollOffset, child) {
-              return _CustomAppBarOverlay(
-                scrollOffset: scrollOffset,
-                isLocationEnabled: _isLocationEnabled,
-              );
-            },
-          ),
-        ],
-      ),
+        backgroundColor: Colors.grey[100],
+        extendBody: true,
+        extendBodyBehindAppBar: true,
+        body: Stack(
+          children: [
+            // Main scrollable content
+            CustomScrollView(
+              controller: _scrollController,
+              // Performance optimization: Use const widgets where possible
+              slivers: [
+                const SliverToBoxAdapter(child: AdvertisementSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: Container(
+                    key: categoriesKey,
+                    child: const OptimizedExploreCategoriesSection(),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(child: FeaturedSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: Container(
+                    key: theaterKey,
+                    child: const TheaterSection(),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: ImageCollageSection()),
+                const SliverToBoxAdapter(child: PopularNearbySection()),
+              ],
+            ),
+            // Custom App Bar as an overlay
+            ValueListenableBuilder<double>(
+              valueListenable: _scrollOffsetNotifier,
+              builder: (context, scrollOffset, child) {
+                return CustomAppBarOverlay(
+                  scrollOffset: scrollOffset,
+                  isLocationEnabled: _isLocationEnabled,
+                  profileKey: profileKey,
+                  locationKey: locationKey,
+                  searchKey: searchKey,
+                );
+              },
+            ),
+            // Welcome overlay
+            if (_showWelcomeOverlay)
+              WelcomeOverlay(
+                onSkip: _markWelcomeCompleted,
+                onNext: _markWelcomeCompleted,
+              ),
+          ],
+        ),
+      
     );
   }
 
@@ -257,7 +324,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _LocationPermissionDialog(
+      builder: (context) => LocationPermissionDialog(
         onPermissionGranted: () {
           Navigator.of(context).pop();
           _checkLocationService();
@@ -275,10 +342,13 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _OpenSettingsDialog(
+      builder: (context) => OpenSettingsDialog(
         onSettingsOpened: () {
           Navigator.of(context).pop();
-          Future.delayed(const Duration(seconds: 1), _checkLocationPermissionAsync);
+          Future.delayed(
+            const Duration(seconds: 1),
+            _checkLocationPermissionAsync,
+          );
         },
         locationService: ref.read(locationServiceProvider),
       ),
@@ -289,807 +359,12 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _EnableLocationDialog(
+      builder: (context) => EnableLocationDialog(
         onLocationEnabled: () {
           Navigator.of(context).pop();
           Future.delayed(const Duration(seconds: 1), _checkLocationService);
         },
         locationService: ref.read(locationServiceProvider),
-      ),
-    );
-  }
-}
-
-// Performance optimization: Separate stateless widgets for reusability and const optimization
-class _LocationLoadingScreen extends StatelessWidget {
-  const _LocationLoadingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: Colors.pink),
-            SizedBox(height: 24),
-            Text(
-              'Getting your location...',
-              style: TextStyle(
-                fontSize: 16,
-                fontFamily: 'Okra',
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LocationBlockedScreen extends StatelessWidget {
-  const _LocationBlockedScreen({super.key, required this.onRetry});
-  
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.location_off, size: 100, color: Colors.grey),
-              const SizedBox(height: 24),
-              const Text(
-                'Location Required',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Okra',
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'This app requires location access to function properly. Please enable location services to continue.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontFamily: 'Okra',
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onRetry,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'Enable Location',
-                    style: TextStyle(fontSize: 16, fontFamily: 'Okra'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Performance optimization: Extract complex widgets to separate classes
-class _CustomAppBarOverlay extends ConsumerWidget {
-  const _CustomAppBarOverlay({
-    super.key,
-    required this.scrollOffset,
-    required this.isLocationEnabled,
-  });
-
-  final double scrollOffset;
-  final bool isLocationEnabled;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final statusBarHeight = MediaQuery.of(context).padding.top;
-    const locationSectionHeight = 70.0;
-    const searchSectionHeight = 60.0;
-
-    final locationScrollRatio = (scrollOffset / locationSectionHeight).clamp(0.0, 1.0);
-    final appBarOpacity = (scrollOffset / 50).clamp(0.0, 1.0);
-
-    return Container(
-      height: statusBarHeight + locationSectionHeight + searchSectionHeight -
-          (locationSectionHeight * locationScrollRatio),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(appBarOpacity),
-        boxShadow: appBarOpacity > 0.5
-            ? [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: statusBarHeight - (locationSectionHeight * locationScrollRatio),
-            left: 0,
-            right: 0,
-            height: locationSectionHeight,
-            child: Opacity(
-              opacity: 1 - locationScrollRatio,
-              child: _LocationContent(isLocationEnabled: isLocationEnabled),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: searchSectionHeight,
-            child: Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const _SearchSection(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationContent extends ConsumerWidget {
-  const _LocationContent({super.key, required this.isLocationEnabled});
-  
-  final bool isLocationEnabled;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedAddress = ref.watch(selectedAddressProvider);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (isLocationEnabled && selectedAddress != null) {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    transitionAnimationController: AnimationController(
-                      duration: const Duration(milliseconds: 300),
-                      vsync: Scaffold.of(context),
-                    ),
-                    builder: (context) => DraggableScrollableSheet(
-                      initialChildSize: 0.9,
-                      minChildSize: 0.5,
-                      maxChildSize: 0.95,
-                      builder: (context, scrollController) => const ManageAddressScreen(),
-                    ),
-                  );
-                }
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Transform.rotate(
-                        angle: 1,
-                        child: const Icon(
-                          Icons.navigation,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          selectedAddress?.area ?? 'Accurate location detected',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Okra',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isLocationEnabled && selectedAddress != null)
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    selectedAddress?.address ?? 'Current Location',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 12,
-                      fontFamily: 'Okra',
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Row(
-            children: [
-              _WalletButton(),
-              SizedBox(width: 8),
-              _WishlistButton(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WalletButton extends StatelessWidget {
-  const _WalletButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-          side: const BorderSide(color: Colors.white),
-        ),
-      ),
-      onPressed: () {
-        context.push('/wallet');
-      },
-      icon: const Icon(Icons.wallet, color: Colors.white, size: 20),
-    );
-  }
-}
-
-class _WishlistButton extends StatelessWidget {
-  const _WishlistButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-          side: const BorderSide(color: Colors.white),
-        ),
-      ),
-      onPressed: () {
-        context.push('/wishlist');
-      },
-      icon: const Icon(Icons.favorite, color: Colors.white, size: 20),
-    );
-  }
-}
-
-class _SearchSection extends StatelessWidget {
-  const _SearchSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to search screen
-        context.push('/search');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(5, 4),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 16, right: 8),
-              child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
-            ),
-            Expanded(
-              child: Container(
-                height: 45,
-                alignment: Alignment.centerLeft,
-                child: const Row(
-                  children: [
-                    Text(
-                      'Search "',
-                      style: TextStyle(
-                        color: Color(0xFF737680),
-                        fontSize: 14,
-                        fontFamily: 'Okra',
-                      ),
-                    ),
-                    Expanded(child: _AnimatedSearchText()),
-                    Text(
-                      '"',
-                      style: TextStyle(
-                        color: Color(0xFF737680),
-                        fontSize: 14,
-                        fontFamily: 'Okra',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Performance optimization: Separate animated text to avoid rebuilding parent
-class _AnimatedSearchText extends StatelessWidget {
-  const _AnimatedSearchText({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTextStyle(
-      style: const TextStyle(
-        color: Color(0xFF737680),
-        fontSize: 14,
-        fontFamily: 'Okra',
-      ),
-      child: AnimatedTextKit(
-        animatedTexts: _OptimizedHomeScreenState._searchTexts
-            .map(
-              (text) => TypewriterAnimatedText(
-                text,
-                speed: const Duration(milliseconds: 80),
-                cursor: '',
-              ),
-            )
-            .toList(),
-        repeatForever: true,
-        pause: const Duration(milliseconds: 1000),
-        displayFullTextOnTap: true,
-      ),
-    );
-  }
-}
-
-// Performance optimization: Simplify advertisement section - remove heavy Lottie
-class _AdvertisementSection extends StatelessWidget {
-  const _AdvertisementSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    const double appBarHeight = 130;
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
-
-    return GestureDetector(
-      onTap: () {
-        context.push('/offers');
-      },
-      child: Container(
-        height: 260 + appBarHeight,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          image: const DecorationImage(
-            image: AssetImage('assets/images/splash_screen.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            top: statusBarHeight + appBarHeight + 10,
-            left: 24,
-            right: 24,
-            bottom: 24,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '🎉 Special Offer',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.9),
-                  fontFamily: 'Okra',
-                ),
-              ),
-              Image.asset(
-                'assets/images/sylonow_white_logo.png',
-                width: 100,
-                height: 30,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Get 50% OFF\non Your First Service Booking!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Okra',
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 16),
-            
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  context.push('/offers');
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Book Now & Save',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, color: Colors.pink, size: 20),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Optimized dialog widgets with minimal styling for better performance
-class _LocationPermissionDialog extends StatelessWidget {
-  const _LocationPermissionDialog({
-    super.key,
-    required this.onPermissionGranted,
-    required this.onOpenSettings,
-    required this.locationService,
-  });
-
-  final VoidCallback onPermissionGranted;
-  final VoidCallback onOpenSettings;
-  final dynamic locationService;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      content: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.location_on, size: 60, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Location Access Required',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Location access is mandatory to use this app.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ],
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () async {
-              final status = await locationService.requestPermission();
-              if (status.toString().contains('whileInUse') || 
-                  status.toString().contains('always')) {
-                onPermissionGranted();
-              } else if (status.toString().contains('deniedForever')) {
-                onOpenSettings();
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            child: const Text('Allow Location Access'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OpenSettingsDialog extends StatelessWidget {
-  const _OpenSettingsDialog({
-    super.key,
-    required this.onSettingsOpened,
-    required this.locationService,
-  });
-
-  final VoidCallback onSettingsOpened;
-  final dynamic locationService;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      content: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.settings, size: 60, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Location Permission Required',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Please enable location permission in app settings.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ],
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () async {
-              await locationService.openAppSettings();
-              onSettingsOpened();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            child: const Text('Open Settings'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EnableLocationDialog extends StatelessWidget {
-  const _EnableLocationDialog({
-    super.key,
-    required this.onLocationEnabled,
-    required this.locationService,
-  });
-
-  final VoidCallback onLocationEnabled;
-  final dynamic locationService;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      content: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.location_off, size: 60, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Location Service Required',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Please enable device location to continue.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ],
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () async {
-              await locationService.openLocationSettings();
-              onLocationEnabled();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            child: const Text('Enable Location Service'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// New Theater Section Widget
-class _NewTheaterSection extends StatefulWidget {
-  const _NewTheaterSection({super.key});
-
-  @override
-  State<_NewTheaterSection> createState() => _NewTheaterSectionState();
-}
-
-class _NewTheaterSectionState extends State<_NewTheaterSection>
-    with SingleTickerProviderStateMixin {
-  late PageController _pageController;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  int _currentIndex = 0;
-
-  // Sample theater cover images
-  final List<String> _theaterImages = [
-    'https://images.unsplash.com/photo-1489185078074-0d83576b4d1c?w=400&q=80',
-    'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=400&q=80',
-    'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=400&q=80',
-    'https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=400&q=80',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-    
-    _startAutoSlide();
-    _animationController.forward();
-  }
-
-  void _startAutoSlide() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        _animationController.reverse().then((_) {
-          if (mounted) {
-            setState(() {
-              _currentIndex = (_currentIndex + 1) % _theaterImages.length;
-            });
-            _animationController.forward();
-            _startAutoSlide();
-          }
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: GestureDetector(
-        onTap: () {
-          context.push('/theater/date-selection');
-        },
-        child: Container(
-          height: 130,
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(30),
-              bottomLeft: Radius.circular(30),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(30),
-              bottomLeft: Radius.circular(30),
-            ),
-            child: Stack(
-              children: [
-                // Background image with fade animation
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    width: double.infinity,
-                    height: 130,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(_theaterImages[_currentIndex]),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-                // Gradient overlay
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.3),
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                ),
-                // Content overlay
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Private Theater',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Book your private theater experience',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

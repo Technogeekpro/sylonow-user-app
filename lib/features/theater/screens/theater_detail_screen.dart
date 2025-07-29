@@ -4,18 +4,21 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/features/theater/models/private_theater_model.dart';
+import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
+
 
 class TheaterDetailScreen extends ConsumerStatefulWidget {
   const TheaterDetailScreen({
     super.key, 
     required this.theaterId,
     this.selectedDate,
+    this.selectionData,
   });
 
   final String theaterId;
   final String? selectedDate;
+  final Map<String, dynamic>? selectionData;
   static const routeName = '/theater';
 
   @override
@@ -44,12 +47,16 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('🎬 DEBUG: Building theater detail screen for theater ID: ${widget.theaterId}');
     final theaterAsync = ref.watch(theaterByIdProvider(widget.theaterId));
+    
+    print('🎬 DEBUG: Theater async state: ${theaterAsync.runtimeType}');
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: theaterAsync.when(
         data: (theater) {
+          print('🎬 DEBUG: Theater data received: ${theater?.name ?? "null"}');
           if (theater == null) {
             return const Center(
               child: Text(
@@ -60,10 +67,15 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
           }
           return _buildTheaterDetail(theater);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
-        ),
-        error: (error, stack) => Center(
+        loading: () {
+          print('🎬 DEBUG: Theater loading...');
+          return const Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryColor),
+          );
+        },
+        error: (error, stack) {
+          print('🎬 DEBUG: Theater error: $error');
+          return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -80,14 +92,17 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
               ),
             ],
           ),
-        ),
+        );
+      },
       ),
     );
   }
 
-  Widget _buildTheaterDetail(PrivateTheaterModel theater) {
-    return CustomScrollView(
-      slivers: [
+  Widget _buildTheaterDetail(TheaterModel theater) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        slivers: [
         // Image carousel app bar
         SliverAppBar(
           expandedHeight: 300,
@@ -136,10 +151,10 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.3),
+                      colors: const [
+                        Color.fromRGBO(0, 0, 0, 0.3),
                         Colors.transparent,
-                        Colors.black.withOpacity(0.3),
+                        Color.fromRGBO(0, 0, 0, 0.3),
                       ],
                     ),
                   ),
@@ -182,7 +197,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                 // Theater name and rating
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: [ 
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,49 +403,64 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildTimeSlotGrid(theater),
-                const SizedBox(height: 24),
-                // Booking button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _selectedTimeSlot != null
-                        ? () {
-                            // Navigate to booking screen with selected details
-                            _showBookingConfirmation(theater);
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Book Now - ₹${theater.hourlyRate.toInt()}/hr',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 100), // Add space for bottom button
               ],
             ),
           ),
         ),
       ],
+    ),
+      bottomNavigationBar: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(16),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _selectedTimeSlot != null
+                  ? () {
+                      // Navigate to occasions selection screen
+                      final updatedSelectionData = Map<String, dynamic>.from(widget.selectionData ?? {});
+                      updatedSelectionData['selectedTimeSlot'] = _selectedTimeSlot;
+                      
+                      context.push(
+                        '/theater/${widget.theaterId}/occasions',
+                        extra: {
+                          'selectedDate': widget.selectedDate!,
+                          'selectionData': updatedSelectionData,
+                        },
+                      );
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+                disabledBackgroundColor: Colors.grey[300],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Continue to Occasions',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -477,168 +507,238 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
     );
   }
 
-  Widget _buildTimeSlotGrid(PrivateTheaterModel theater) {
-    // Sample time slots - in real app, these would come from theater.availableTimeSlots
-    final timeSlots = [
-      {'start_time': '09:00', 'end_time': '11:00', 'label': 'Morning Show'},
-      {'start_time': '11:30', 'end_time': '13:30', 'label': 'Matinee Show'},
-      {'start_time': '14:00', 'end_time': '16:00', 'label': 'Afternoon Show'},
-      {'start_time': '16:30', 'end_time': '18:30', 'label': 'Evening Show'},
-      {'start_time': '19:00', 'end_time': '21:00', 'label': 'Night Show'},
-      {'start_time': '21:30', 'end_time': '23:30', 'label': 'Late Night Show'},
-    ];
+  Widget _buildTimeSlotGrid(TheaterModel theater) {
+    if (widget.selectedDate == null) {
+      return const Center(
+        child: Text(
+          'Please select a date first',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontFamily: 'Okra',
+          ),
+        ),
+      );
+    }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 2.5,
-      ),
-      itemCount: timeSlots.length,
-      itemBuilder: (context, index) {
-        final timeSlot = timeSlots[index];
-        final timeSlotKey = '${timeSlot['start_time']}-${timeSlot['end_time']}';
-        final isSelected = _selectedTimeSlot == timeSlotKey;
+    print('🎬 DEBUG: Theater ID: ${widget.theaterId}');
+    print('🎬 DEBUG: Selected Date: ${widget.selectedDate}');
 
-        return InkWell(
-          borderRadius: BorderRadius.only(
+    final timeSlotsAsync = ref.watch(theaterTimeSlotsProvider({
+      'theaterId': widget.theaterId,
+      'date': widget.selectedDate!,
+    }));
+
+    return timeSlotsAsync.when(
+      data: (timeSlots) {
+        print('🎬 DEBUG: Received ${timeSlots.length} time slots');
+        for (int i = 0; i < timeSlots.length; i++) {
+          final slot = timeSlots[i];
+          print('🎬 DEBUG: Slot $i: ${slot.startTime} - ${slot.endTime}, Status: ${slot.status}, Price: ${slot.slotPrice}');
+        }
+        
+        if (timeSlots.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Column(
+                children: [
+                  Icon(Icons.schedule, size: 48, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No time slots available for this date',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      fontFamily: 'Okra',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.0,
+          ),
+          itemCount: timeSlots.length,
+          itemBuilder: (context, index) {
+            final timeSlot = timeSlots[index];
+            final timeSlotKey = '${timeSlot.startTime}-${timeSlot.endTime}';
+            final isSelected = _selectedTimeSlot == timeSlotKey;
+            final isAvailable = timeSlot.status == 'available';
+            final price = timeSlot.slotPrice.toInt();
+
+            return InkWell(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(0),
                 bottomLeft: Radius.circular(0),
                 bottomRight: Radius.circular(24),
               ),
-          onTap: () {
-            setState(() {
-              _selectedTimeSlot = timeSlotKey;
-            });
+              onTap: isAvailable ? () {
+                setState(() {
+                  _selectedTimeSlot = timeSlotKey;
+                });
+              } : null,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: !isAvailable 
+                      ? Colors.grey[200] 
+                      : isSelected 
+                          ? AppTheme.primaryColor 
+                          : Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(0),
+                    bottomLeft: Radius.circular(0),
+                    bottomRight: Radius.circular(24),
+                  ),
+                  border: Border.all(
+                    color: !isAvailable 
+                        ? Colors.grey[300]!
+                        : isSelected 
+                            ? AppTheme.primaryColor 
+                            : Colors.grey[300]!,
+                    width: 1.5,
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    if (!isAvailable)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[600],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'BOOKED',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                        ),
+                      ),
+                    Column( 
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _formatTimeRange(timeSlotKey),
+                          style: TextStyle( 
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: !isAvailable  
+                                ? Colors.grey[500]
+                                : isSelected 
+                                    ? Colors.white 
+                                    : Colors.black,
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${timeSlot.startTime} - ${timeSlot.endTime}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: !isAvailable 
+                                ? Colors.grey[400]
+                                : isSelected 
+                                    ? Colors.white.withOpacity(0.9) 
+                                    : Colors.grey[600],
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (isAvailable)
+                          Text(
+                            '₹$price',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected 
+                                  ? Colors.white 
+                                  : AppTheme.primaryColor,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
           },
-          child: Container(
-            decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryColor : Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(0),
-                bottomLeft: Radius.circular(0),
-                bottomRight: Radius.circular(24),
-              ),
-              border: Border.all(
-                color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  timeSlot['label']!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : Colors.black,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${timeSlot['start_time']} - ${timeSlot['end_time']}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isSelected ? Colors.white.withOpacity(0.9) : Colors.grey[600],
-                    fontFamily: 'Okra',
-                  ),
-                ),
-              ],
-            ),
+        );
+      },
+      loading: () {
+        print('🎬 DEBUG: Time slots loading...');
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(color: AppTheme.primaryColor),
           ),
         );
       },
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    
-    return '${date.day} ${months[date.month - 1]}, ${date.year}';
-  }
-
-  void _showBookingConfirmation(PrivateTheaterModel theater) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Booking Confirmation',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Okra',
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildBookingDetailRow('Theater', theater.name),
-            _buildBookingDetailRow('Date', _formatDate(_selectedDate!)),
-            _buildBookingDetailRow('Time', _getTimeSlotLabel()),
-            _buildBookingDetailRow('Duration', '2 hours'),
-            _buildBookingDetailRow('Price', '₹${theater.hourlyRate.toInt() * 2}'),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _processBooking(theater);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Confirm & Pay',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Okra',
-                  ),
+      error: (error, stackTrace) {
+        print('🎬 DEBUG: Time slots error: $error');
+        print('🎬 DEBUG: Stack trace: $stackTrace');
+        return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load time slots',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontFamily: 'Okra',
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => ref.refresh(theaterTimeSlotsProvider({
+                  'theaterId': widget.theaterId,
+                  'date': widget.selectedDate!,
+                })),
+                child: const Text('Retry'),
+              ), 
+            ],
+          ),
         ),
-      ),
+      );
+    },
     );
   }
 
   Widget _buildBookingDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Colors.grey,
               fontFamily: 'Okra',
             ),
           ),
@@ -655,21 +755,150 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
     );
   }
 
-  String _getTimeSlotLabel() {
-    if (_selectedTimeSlot == null) return '';
+  String _formatTimeRange(String timeSlot) {
+    if (timeSlot.isEmpty) return '';
     
-    final parts = _selectedTimeSlot!.split('-');
-    return '${parts[0]} - ${parts[1]}';
+    try {
+      final parts = timeSlot.split('-');
+      if (parts.length >= 2) {
+        return '${parts[0].trim()} - ${parts[1].trim()}';
+      }
+      return timeSlot;
+    } catch (e) {
+      return timeSlot;
+    }
   }
 
-  void _processBooking(PrivateTheaterModel theater) {
-    // Here you would integrate with Razorpay for payment
-    // For now, just show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Booking confirmed! Payment integration pending.'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+  String _formatDate(DateTime date) {
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    
+    return '${date.day} ${months[date.month - 1]}, ${date.year}';
+  }
+
+  // Called when the book now button is pressed
+  void _onBookNowPressed(TheaterModel theater) {
+    if (_selectedTimeSlot == null || _selectedTimeSlot!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a time slot first'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    _processBooking(theater);
+  }
+
+  // Helper to calculate duration in hours from time range (e.g., '14:00-16:00' -> 2.0)
+  double _calculateDurationHours(String timeRange) {
+    try {
+      final parts = timeRange.split('-');
+      if (parts.length != 2) return 2.0; // Default to 2 hours if format is invalid
+      
+      final startTime = _parseTime(parts[0]);
+      final endTime = _parseTime(parts[1]);
+      
+      if (startTime == null || endTime == null) return 2.0;
+      
+      final duration = endTime.difference(startTime);
+      return duration.inMinutes / 60.0; // Convert to hours
+    } catch (e) {
+      return 2.0; // Default to 2 hours on error
+    }
+  }
+  
+  // Helper to parse time string (HH:mm) to DateTime
+  DateTime? _parseTime(String timeStr) {
+    try {
+      final parts = timeStr.trim().split(':');
+      if (parts.length != 2) return null;
+      
+      final now = DateTime.now();
+      return DateTime(
+        now.year, 
+        now.month, 
+        now.day, 
+        int.parse(parts[0]), 
+        int.parse(parts[1]),
+      );
+    } catch (e) {
+      return null;
+    } 
+  }
+  
+  Future<void> _processBooking(TheaterModel theater) async {
+    if (_selectedTimeSlot == null || _selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a time slot first'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    try {
+      // Calculate duration and price
+      final durationHours = _calculateDurationHours(_selectedTimeSlot!);
+      final totalPrice = theater.hourlyRate * durationHours;
+      
+      // Show booking confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirm Booking'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildBookingDetailRow('Theater', theater.name),
+              _buildBookingDetailRow('Date', _formatDate(_selectedDate!)),
+              _buildBookingDetailRow('Time', _formatTimeRange(_selectedTimeSlot ?? '')),
+              _buildBookingDetailRow('Duration', '${durationHours.toStringAsFixed(1)} hours'),
+              _buildBookingDetailRow('Total Price', '₹${totalPrice.toInt()}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), 
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm & Pay'),
+            ),
+          ],
+        ),
+      );
+      
+      if (confirmed == true) {
+        // Here you would integrate with Razorpay for payment
+        // For now, just show a success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Booking confirmed! Payment integration pending.'),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to process booking. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

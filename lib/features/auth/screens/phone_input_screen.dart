@@ -102,6 +102,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
     
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -152,7 +153,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                   children: [
                     // +91 Prefix Container
                     Container(
-                      height: 60,
+                      height: 67,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],

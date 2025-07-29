@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'private_theater_model.dart';
+part of 'theater_model.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,12 +14,12 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-PrivateTheaterModel _$PrivateTheaterModelFromJson(Map<String, dynamic> json) {
-  return _PrivateTheaterModel.fromJson(json);
+TheaterModel _$TheaterModelFromJson(Map<String, dynamic> json) {
+  return _TheaterModel.fromJson(json);
 }
 
 /// @nodoc
-mixin _$PrivateTheaterModel {
+mixin _$TheaterModel {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
@@ -47,21 +47,21 @@ mixin _$PrivateTheaterModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this PrivateTheaterModel to a JSON map.
+  /// Serializes this TheaterModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
-  /// Create a copy of PrivateTheaterModel
+  /// Create a copy of TheaterModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $PrivateTheaterModelCopyWith<PrivateTheaterModel> get copyWith =>
+  $TheaterModelCopyWith<TheaterModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $PrivateTheaterModelCopyWith<$Res> {
-  factory $PrivateTheaterModelCopyWith(
-          PrivateTheaterModel value, $Res Function(PrivateTheaterModel) then) =
-      _$PrivateTheaterModelCopyWithImpl<$Res, PrivateTheaterModel>;
+abstract class $TheaterModelCopyWith<$Res> {
+  factory $TheaterModelCopyWith(
+          TheaterModel value, $Res Function(TheaterModel) then) =
+      _$TheaterModelCopyWithImpl<$Res, TheaterModel>;
   @useResult
   $Res call(
       {String id,
@@ -86,16 +86,16 @@ abstract class $PrivateTheaterModelCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$PrivateTheaterModelCopyWithImpl<$Res, $Val extends PrivateTheaterModel>
-    implements $PrivateTheaterModelCopyWith<$Res> {
-  _$PrivateTheaterModelCopyWithImpl(this._value, this._then);
+class _$TheaterModelCopyWithImpl<$Res, $Val extends TheaterModel>
+    implements $TheaterModelCopyWith<$Res> {
+  _$TheaterModelCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of PrivateTheaterModel
+  /// Create a copy of TheaterModel
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -202,11 +202,11 @@ class _$PrivateTheaterModelCopyWithImpl<$Res, $Val extends PrivateTheaterModel>
 }
 
 /// @nodoc
-abstract class _$$PrivateTheaterModelImplCopyWith<$Res>
-    implements $PrivateTheaterModelCopyWith<$Res> {
-  factory _$$PrivateTheaterModelImplCopyWith(_$PrivateTheaterModelImpl value,
-          $Res Function(_$PrivateTheaterModelImpl) then) =
-      __$$PrivateTheaterModelImplCopyWithImpl<$Res>;
+abstract class _$$TheaterModelImplCopyWith<$Res>
+    implements $TheaterModelCopyWith<$Res> {
+  factory _$$TheaterModelImplCopyWith(
+          _$TheaterModelImpl value, $Res Function(_$TheaterModelImpl) then) =
+      __$$TheaterModelImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -232,14 +232,14 @@ abstract class _$$PrivateTheaterModelImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$PrivateTheaterModelImplCopyWithImpl<$Res>
-    extends _$PrivateTheaterModelCopyWithImpl<$Res, _$PrivateTheaterModelImpl>
-    implements _$$PrivateTheaterModelImplCopyWith<$Res> {
-  __$$PrivateTheaterModelImplCopyWithImpl(_$PrivateTheaterModelImpl _value,
-      $Res Function(_$PrivateTheaterModelImpl) _then)
+class __$$TheaterModelImplCopyWithImpl<$Res>
+    extends _$TheaterModelCopyWithImpl<$Res, _$TheaterModelImpl>
+    implements _$$TheaterModelImplCopyWith<$Res> {
+  __$$TheaterModelImplCopyWithImpl(
+      _$TheaterModelImpl _value, $Res Function(_$TheaterModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of PrivateTheaterModel
+  /// Create a copy of TheaterModel
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -264,7 +264,7 @@ class __$$PrivateTheaterModelImplCopyWithImpl<$Res>
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(_$PrivateTheaterModelImpl(
+    return _then(_$TheaterModelImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -347,8 +347,8 @@ class __$$PrivateTheaterModelImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$PrivateTheaterModelImpl implements _PrivateTheaterModel {
-  const _$PrivateTheaterModelImpl(
+class _$TheaterModelImpl implements _TheaterModel {
+  const _$TheaterModelImpl(
       {required this.id,
       required this.name,
       this.description,
@@ -371,8 +371,8 @@ class _$PrivateTheaterModelImpl implements _PrivateTheaterModel {
       : _amenities = amenities,
         _images = images;
 
-  factory _$PrivateTheaterModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$PrivateTheaterModelImplFromJson(json);
+  factory _$TheaterModelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TheaterModelImplFromJson(json);
 
   @override
   final String id;
@@ -434,14 +434,14 @@ class _$PrivateTheaterModelImpl implements _PrivateTheaterModel {
 
   @override
   String toString() {
-    return 'PrivateTheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PrivateTheaterModelImpl &&
+            other is _$TheaterModelImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
@@ -498,25 +498,24 @@ class _$PrivateTheaterModelImpl implements _PrivateTheaterModel {
         updatedAt
       ]);
 
-  /// Create a copy of PrivateTheaterModel
+  /// Create a copy of TheaterModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$PrivateTheaterModelImplCopyWith<_$PrivateTheaterModelImpl> get copyWith =>
-      __$$PrivateTheaterModelImplCopyWithImpl<_$PrivateTheaterModelImpl>(
-          this, _$identity);
+  _$$TheaterModelImplCopyWith<_$TheaterModelImpl> get copyWith =>
+      __$$TheaterModelImplCopyWithImpl<_$TheaterModelImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$PrivateTheaterModelImplToJson(
+    return _$$TheaterModelImplToJson(
       this,
     );
   }
 }
 
-abstract class _PrivateTheaterModel implements PrivateTheaterModel {
-  const factory _PrivateTheaterModel(
+abstract class _TheaterModel implements TheaterModel {
+  const factory _TheaterModel(
           {required final String id,
           required final String name,
           final String? description,
@@ -536,10 +535,10 @@ abstract class _PrivateTheaterModel implements PrivateTheaterModel {
           @JsonKey(name: 'owner_id') final String? ownerId,
           @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
-      _$PrivateTheaterModelImpl;
+      _$TheaterModelImpl;
 
-  factory _PrivateTheaterModel.fromJson(Map<String, dynamic> json) =
-      _$PrivateTheaterModelImpl.fromJson;
+  factory _TheaterModel.fromJson(Map<String, dynamic> json) =
+      _$TheaterModelImpl.fromJson;
 
   @override
   String get id;
@@ -587,10 +586,10 @@ abstract class _PrivateTheaterModel implements PrivateTheaterModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
 
-  /// Create a copy of PrivateTheaterModel
+  /// Create a copy of TheaterModel
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$PrivateTheaterModelImplCopyWith<_$PrivateTheaterModelImpl> get copyWith =>
+  _$$TheaterModelImplCopyWith<_$TheaterModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

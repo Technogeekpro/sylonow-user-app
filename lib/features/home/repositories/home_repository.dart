@@ -4,6 +4,7 @@ import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/models/category_model.dart';
+import 'package:sylonow_user/core/utils/location_utils.dart';
 
 /// Repository class for handling home screen data operations
 /// 
@@ -134,25 +135,29 @@ class HomeRepository {
   /// Limited to [limit] number of services (default: 6)
   Future<List<ServiceListingModel>> getPopularNearbyServices({int limit = 6}) async {
     try {
+      print('🔍 Repository: getPopularNearbyServices (fallback) called');
+      
       final response = await _supabase
           .from('service_listings')
           .select('''
             *,
-            vendors!inner(
+            vendors(
               rating,
               total_reviews,
               total_jobs_completed
             )
           ''')
           .eq('is_active', true)
-          .order('vendors.rating', ascending: false)
-          .order('vendors.total_reviews', ascending: false)
+          .order('created_at', ascending: false)
           .limit(limit);
+
+      print('🔍 Repository: Fallback service count: ${(response as List).length}');
 
       return response
           .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
     } catch (e) {
+      print('🔍 Repository: Error in getPopularNearbyServices: $e');
       throw Exception('Failed to fetch popular nearby services: $e');
     }
   }
@@ -316,6 +321,110 @@ class HomeRepository {
     }
   }
 
+  /// Fetches services by decoration type
+  /// 
+  /// Returns a list of services filtered by decoration type ('inside', 'outside', or 'both')
+  /// Used to differentiate between inside and outside decoration services
+  Future<List<ServiceListingModel>> getServicesByDecorationType({
+    required String decorationType,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('is_active', true)
+          .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
+          .limit(limit)
+          .range(offset, offset + limit - 1)
+          .order('rating', ascending: false);
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch services by decoration type: $e');
+    }
+  }
+
+  /// Fetches featured services by decoration type
+  /// 
+  /// Returns a list of featured services filtered by decoration type
+  Future<List<ServiceListingModel>> getFeaturedServicesByDecorationType({
+    required String decorationType,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('is_featured', true)
+          .eq('is_active', true)
+          .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
+          .limit(limit)
+          .range(offset, offset + limit - 1)
+          .order('rating', ascending: false);
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch featured services by decoration type: $e');
+    }
+  }
+
+  /// Fetches popular nearby services by decoration type
+  /// 
+  /// Returns a list of popular services filtered by decoration type
+  Future<List<ServiceListingModel>> getPopularNearbyServicesByDecorationType({
+    required String decorationType,
+    int limit = 6,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors!inner(
+              rating,
+              total_reviews,
+              total_jobs_completed
+            )
+          ''')
+          .eq('is_active', true)
+          .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
+          .order('vendors.rating', ascending: false)
+          .order('vendors.total_reviews', ascending: false)
+          .limit(limit);
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch popular nearby services by decoration type: $e');
+    }
+  }
+
   /// Fetches all home screen data at once
   /// 
   /// Returns a map containing all the home screen data
@@ -343,6 +452,270 @@ class HomeRepository {
       };
     } catch (e) {
       throw Exception('Failed to fetch home screen data: $e');
+    }
+  }
+
+  /// Fetches home screen data filtered by decoration type
+  /// 
+  /// Returns a map containing home screen data filtered for specific decoration type
+  Future<Map<String, dynamic>> getHomeScreenDataByDecorationType(String decorationType) async {
+    try {
+      final results = await Future.wait([
+        getDailyQuote(),
+        getFeaturedPartners(),
+        getServiceCategories(),
+        getFeaturedServicesByDecorationType(decorationType: decorationType),
+        getPrivateTheaterServices(),
+        getPopularNearbyServicesByDecorationType(decorationType: decorationType),
+        getCategories(limit: 8),
+      ]);
+
+      return {
+        'dailyQuote': results[0] as QuoteModel?,
+        'featuredPartners': results[1] as List<VendorModel>,
+        'serviceCategories': results[2] as List<ServiceTypeModel>,
+        'featuredServices': results[3] as List<ServiceListingModel>,
+        'privateTheaterServices': results[4] as List<ServiceListingModel>,
+        'popularNearbyServices': results[5] as List<ServiceListingModel>,
+        'categories': results[6] as List<CategoryModel>,
+      };
+    } catch (e) {
+      throw Exception('Failed to fetch home screen data by decoration type: $e');
+    }
+  }
+
+  /// Apply location-based calculations to a list of services
+  /// 
+  /// Calculates distance from user location and adjusts prices for services > 10km away
+  List<ServiceListingModel> _applyLocationCalculations({
+    required List<ServiceListingModel> services,
+    required double? userLat,
+    required double? userLon,
+    bool sortByDistance = false,
+    double? radiusFilter,
+  }) {
+    if (userLat == null || userLon == null) {
+      return services;
+    }
+
+    // Apply location calculations to each service
+    List<ServiceListingModel> processedServices = services
+        .where((service) => service.latitude != null && service.longitude != null)
+        .map((service) => service.copyWithLocationData(
+              userLat: userLat,
+              userLon: userLon,
+            ))
+        .toList();
+
+    // Filter by radius if specified
+    if (radiusFilter != null) {
+      processedServices = processedServices
+          .where((service) => service.distanceKm != null && service.distanceKm! <= radiusFilter)
+          .toList();
+    }
+
+    // Sort by distance if requested
+    if (sortByDistance) {
+      processedServices.sort((a, b) => 
+          (a.distanceKm ?? double.infinity).compareTo(b.distanceKm ?? double.infinity));
+    }
+
+    return processedServices;
+  }
+
+  /// Fetches services with location-based filtering and pricing
+  /// 
+  /// Returns services sorted by distance with location-based price adjustments
+  Future<List<ServiceListingModel>> getServicesWithLocation({
+    required double userLat,
+    required double userLon,
+    String? decorationType,
+    String? category,
+    double? radiusKm,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      var query = _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('is_active', true);
+
+      // Apply decoration type filter
+      if (decorationType != null) {
+        query = query.or('decoration_type.eq.$decorationType,decoration_type.eq.both');
+      }
+
+      // Apply category filter
+      if (category != null) {
+        query = query.eq('category', category);
+      }
+
+      final response = await query
+          .limit(limit)
+          .range(offset, offset + limit - 1);
+
+      final services = response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+
+      // Apply location calculations
+      return _applyLocationCalculations(
+        services: services,
+        userLat: userLat,
+        userLon: userLon,
+        sortByDistance: true,
+        radiusFilter: radiusKm,
+      );
+    } catch (e) {
+      throw Exception('Failed to fetch services with location: $e');
+    }
+  }
+
+  /// Fetches services by decoration type with location calculations
+  /// 
+  /// Enhanced version of getServicesByDecorationType with location features
+  Future<List<ServiceListingModel>> getServicesByDecorationTypeWithLocation({
+    required String decorationType,
+    required double userLat,
+    required double userLon,
+    double? radiusKm,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    return getServicesWithLocation(
+      userLat: userLat,
+      userLon: userLon,
+      decorationType: decorationType,
+      radiusKm: radiusKm,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  /// Fetches featured services with location calculations
+  /// 
+  /// Enhanced version of getFeaturedServices with location features
+  Future<List<ServiceListingModel>> getFeaturedServicesWithLocation({
+    required double userLat,
+    required double userLon,
+    String? decorationType,
+    double? radiusKm,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      var query = _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews
+            )
+          ''')
+          .eq('is_featured', true)
+          .eq('is_active', true);
+
+      // Apply decoration type filter
+      if (decorationType != null) {
+        query = query.or('decoration_type.eq.$decorationType,decoration_type.eq.both');
+      }
+
+      final response = await query
+          .limit(limit)
+          .range(offset, offset + limit - 1);
+
+      final services = response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+
+      // Apply location calculations
+      return _applyLocationCalculations(
+        services: services,
+        userLat: userLat,
+        userLon: userLon,
+        sortByDistance: true,
+        radiusFilter: radiusKm,
+      );
+    } catch (e) {
+      throw Exception('Failed to fetch featured services with location: $e');
+    }
+  }
+
+  /// Fetches popular nearby services with enhanced location calculations
+  /// 
+  /// Enhanced version that actually considers user location for "nearby"
+  Future<List<ServiceListingModel>> getPopularNearbyServicesWithLocation({
+    required double userLat,
+    required double userLon,
+    String? decorationType,
+    double radiusKm = 25.0, // Default 25km radius for "nearby"
+    int limit = 6,
+  }) async {
+    try {
+      print('🔍 Repository: getPopularNearbyServicesWithLocation called with lat: $userLat, lon: $userLon, radius: $radiusKm');
+      
+      var query = _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors(
+              rating,
+              total_reviews,
+              total_jobs_completed
+            )
+          ''')
+          .eq('is_active', true);
+
+      // Apply decoration type filter
+      if (decorationType != null) {
+        query = query.or('decoration_type.eq.$decorationType,decoration_type.eq.both');
+      }
+
+      print('🔍 Repository: Executing query...');
+      final response = await query
+          .order('created_at', ascending: false) // Order by creation date since vendor data might be empty
+          .limit(limit * 3); // Fetch more to have options after radius filtering
+
+      print('🔍 Repository: Raw response count: ${(response as List).length}');
+
+      final services = response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+
+      print('🔍 Repository: Parsed services count: ${services.length}');
+
+      // Apply location calculations with radius filter
+      final locationFilteredServices = _applyLocationCalculations(
+        services: services,
+        userLat: userLat,
+        userLon: userLon,
+        sortByDistance: true,
+        radiusFilter: radiusKm,
+      );
+
+      print('🔍 Repository: Location filtered services count: ${locationFilteredServices.length}');
+
+      // Return only the requested limit
+      final result = locationFilteredServices.take(limit).toList();
+      print('🔍 Repository: Final result count: ${result.length}');
+      return result;
+    } catch (e) {
+      print('🔍 Repository: Error in getPopularNearbyServicesWithLocation: $e');
+      throw Exception('Failed to fetch popular nearby services with location: $e');
     }
   }
 } 

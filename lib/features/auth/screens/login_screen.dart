@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -28,23 +29,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final authService = ref.read(authServiceProvider);
-      
+
       // Sign in with Google
       final response = await authService.signInWithGoogle();
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-        
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
         if (response != null && response.user != null) {
           // Successfully signed in, navigate to home
-      context.go(AppConstants.homeRoute);
+          context.go(AppConstants.homeRoute);
         } else {
           // User canceled the sign-in
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign in was canceled')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Sign in was canceled')));
         }
       }
     } catch (e) {
@@ -59,17 +60,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     return Scaffold(
       body: Column(
         children: [
           // Top Half - Primary Background with Logo
           Container(
-            height: screenHeight * 0.6, // 60% of screen height
+            height: screenHeight * 0.5, // 60% of screen height
             width: double.infinity,
             decoration: BoxDecoration(
               color: AppTheme.primaryColor,
@@ -79,49 +79,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
             child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
                   Image.asset(
                     'assets/images/sylonow_white_logo.png',
                     width: MediaQuery.of(context).size.width * 0.5,
-              ),
+                  ),
                   const SizedBox(height: 24),
-              
+      
                   // Welcome Text
-              const Text(
+                  const Text(
                     'Welcome to Sylonow',
-                style: TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Okra',
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              // Subtitle
-              Text(
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+      
+                  // Subtitle
+                  Text(
                     'Your one-stop solution for all services',
-                style: TextStyle(
+                    style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                  fontSize: 16,
+                      fontSize: 16,
                       fontFamily: 'Okra',
                     ),
                   ),
                 ],
-                ),
-            ),
               ),
-              
+            ),
+          ),
+      
           // Bottom Half - Login Options
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: Column(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 32,
+              ),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                children: [
                   const Text(
                     'Choose your login method',
                     style: TextStyle(
@@ -132,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                    
+      
                   // Continue with Phone Button
                   SizedBox(
                     height: 56,
@@ -163,18 +166,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                       ),
                     ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
+                  ),
+      
+                  const SizedBox(height: 16),
+      
                   // OR Divider
                   Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          height: 1,
-                          color: Colors.grey[300],
-                        ),
+                        child: Container(height: 1, color: Colors.grey[300]),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -188,20 +188,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       Expanded(
-                        child: Container(
-                          height: 1,
-                          color: Colors.grey[300],
-                        ),
+                        child: Container(height: 1, color: Colors.grey[300]),
                       ),
                     ],
-                    ),
-                    
+                  ),
+      
                   const SizedBox(height: 16),
-                    
+      
                   // Continue with Google Button
-                    SizedBox(
+                  SizedBox(
                     height: 56,
-                      width: double.infinity,
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _continueWithGoogle,
                       style: ElevatedButton.styleFrom(
@@ -225,11 +222,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  'assets/images/app_icon.png', // You can replace with Google logo
-                                  width: 24,
-                                  height: 24,
-                                ),
+                                const Icon(FontAwesomeIcons.google, size: 24),
                                 const SizedBox(width: 12),
                                 const Text(
                                   'Continue with Google',
@@ -237,15 +230,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Okra',
-                      ),
-                    ),
-                  ],
+                                  ),
+                                ),
+                              ],
                             ),
-                ),
-              ),
-              
+                    ),
+                  ),
+      
                   const SizedBox(height: 32),
-              
+      
                   // Terms and Privacy
                   Text(
                     'By continuing, you agree to our Terms of Service\nand Privacy Policy',
@@ -264,4 +257,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-} 
+}

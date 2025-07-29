@@ -29,15 +29,13 @@ class ProfileRepository {
   /// Create a new user profile
   Future<UserProfileModel> createUserProfile(UserProfileModel profile) async {
     try {
-      // First check if a profile already exists
-      final existingProfile = await getUserProfile(profile.authUserId);
-      if (existingProfile != null) {
-        return existingProfile;
-      }
-
+      // Use UPSERT operation to handle existing profiles
       final response = await _supabaseClient
           .from('user_profiles')
-          .insert(profile.toJson())
+          .upsert(
+            profile.toJson(),
+            onConflict: 'auth_user_id',
+          )
           .select()
           .single();
 
@@ -107,12 +105,6 @@ class ProfileRepository {
   /// Create user profile from auth user
   Future<UserProfileModel> createUserProfileFromAuth(User authUser) async {
     try {
-      // First check if a profile already exists
-      final existingProfile = await getUserProfile(authUser.id);
-      if (existingProfile != null) {
-        return existingProfile;
-      }
-
       // Create profile data without ID (let Supabase generate it)
       final profileData = {
         'auth_user_id': authUser.id,
@@ -124,10 +116,13 @@ class ProfileRepository {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      // Insert the new profile
+      // Use UPSERT operation to handle existing profiles
       final response = await _supabaseClient
           .from('user_profiles')
-          .insert(profileData)
+          .upsert(
+            profileData,
+            onConflict: 'auth_user_id',
+          )
           .select()
           .single();
 

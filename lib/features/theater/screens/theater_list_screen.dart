@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
-import 'package:sylonow_user/features/theater/models/private_theater_model.dart';
+import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class TheaterListScreen extends ConsumerStatefulWidget {
@@ -201,7 +201,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
     );
   }
 
-  Widget _buildTheaterCard(PrivateTheaterModel theater) {
+  Widget _buildTheaterCard(TheaterModel theater) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
     
@@ -221,7 +221,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
       child: InkWell(
         onTap: () {
           context.push(
-            '/theater/${theater.id}',
+            '/theater/${theater.id}/detail',
             extra: {
               'selectedDate': _selectedDate!.toIso8601String(),
             },

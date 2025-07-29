@@ -1,14 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'private_theater_model.dart';
+part of 'theater_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$PrivateTheaterModelImpl _$$PrivateTheaterModelImplFromJson(
-        Map<String, dynamic> json) =>
-    _$PrivateTheaterModelImpl(
+_$TheaterModelImpl _$$TheaterModelImplFromJson(Map<String, dynamic> json) =>
+    _$TheaterModelImpl(
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
@@ -36,8 +35,7 @@ _$PrivateTheaterModelImpl _$$PrivateTheaterModelImplFromJson(
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$PrivateTheaterModelImplToJson(
-        _$PrivateTheaterModelImpl instance) =>
+Map<String, dynamic> _$$TheaterModelImplToJson(_$TheaterModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,

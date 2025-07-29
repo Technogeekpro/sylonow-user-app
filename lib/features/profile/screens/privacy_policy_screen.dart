@@ -64,16 +64,17 @@ class PrivacyPolicyScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Last updated: January 15, 2025',
+            'Effective Date: May 12, 2025\nLast Updated: July 2, 2025\nOwned by: Sylonow Vision Private Limited',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
               fontFamily: 'Okra',
+              height: 1.3,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            'This Privacy Policy describes how Sylonow collects, uses, and protects your personal information when you use our service marketplace platform.',
+            'Sylonow Vision Private Limited is committed to protecting your privacy and ensuring the safety of your personal data. This Privacy Policy explains how we collect, use, share, and store your information when you use the Sylonow User App.',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[700],
@@ -98,144 +99,135 @@ class PrivacyPolicyScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSection(
-            title: '1. Information We Collect',
+            title: '1. Introduction',
+            content: [
+              _buildSubSection(
+                subtitle: 'Agreement',
+                text: 'By downloading, installing, or using the App, you agree to this Privacy Policy and consent to the handling of your data in accordance with the Information Technology Act, 2000, the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011, and the Consumer Protection (E-Commerce) Rules, 2020.',
+              ),
+            ],
+          ),
+          _buildSection(
+            title: '2. Information We Collect',
             content: [
               _buildSubSection(
                 subtitle: 'Personal Information',
-                text: 'We collect information you provide directly to us, such as when you create an account, make a booking, or contact us for support. This includes your name, email address, phone number, and address.',
+                text: '• Full name\n• Mobile number\n• Email address (optional)\n• GPS-based location\n• Delivery address\n• Payment details (via secure third-party gateways)\n• Identity proof (if required for certain services)',
               ),
               _buildSubSection(
-                subtitle: 'Usage Information',
-                text: 'We collect information about how you use our services, including the pages you visit, the services you book, and the actions you take.',
+                subtitle: 'Device & Usage Data',
+                text: '• IP address\n• Device type, OS version\n• App activity logs, clicks, and crash reports',
               ),
               _buildSubSection(
-                subtitle: 'Device Information',
-                text: 'We collect information about the device you use to access our services, including device type, operating system, and unique device identifiers.',
-              ),
-              _buildSubSection(
-                subtitle: 'Location Information',
-                text: 'With your permission, we collect location information to provide location-based services and improve our offerings.',
+                subtitle: 'Third-Party Login Data',
+                text: '• Google account information (name, email, profile image) if login is via Google',
               ),
             ],
           ),
           _buildSection(
-            title: '2. How We Use Your Information',
+            title: '3. Use of Information',
             content: [
-              _buildBulletPoint('Provide and maintain our services'),
+              _buildBulletPoint('Register and manage your account'),
               _buildBulletPoint('Process bookings and payments'),
-              _buildBulletPoint('Send you important service notifications'),
-              _buildBulletPoint('Improve our services and user experience'),
-              _buildBulletPoint('Prevent fraud and ensure security'),
-              _buildBulletPoint('Comply with legal obligations'),
+              _buildBulletPoint('Enable QR-based vendor verification'),
+              _buildBulletPoint('Provide customer support'),
+              _buildBulletPoint('Send booking updates and important notifications'),
+              _buildBulletPoint('Improve app security, performance, and functionality'),
+              _buildBulletPoint('Detect fraud and ensure regulatory compliance'),
+              _buildBulletPoint('Send promotional messages (opt-out available anytime)'),
             ],
           ),
           _buildSection(
-            title: '3. Information Sharing',
+            title: '4. Data Sharing & Disclosure',
             content: [
               _buildSubSection(
-                subtitle: 'Service Providers',
-                text: 'We share your information with service providers who help us operate our platform, process payments, and deliver services to you.',
+                subtitle: 'Policy',
+                text: 'We never sell or rent your personal data.',
               ),
               _buildSubSection(
-                subtitle: 'Business Partners',
-                text: 'We may share information with trusted business partners who provide services on our platform, but only as necessary to fulfill your bookings.',
-              ),
-              _buildSubSection(
-                subtitle: 'Legal Requirements',
-                text: 'We may disclose your information if required by law, regulation, or legal process, or if we believe disclosure is necessary to protect our rights or safety.',
+                subtitle: 'We may share information with',
+                text: '• Verified vendors (only relevant booking details like your name and location)\n• Delivery partners\n• Payment processors (Razorpay, Paytm, etc.)\n• Cloud hosting and SMS/email service providers\n• Legal authorities if required under law\n\nAll sharing is strictly controlled through secure agreements.',
               ),
             ],
           ),
           _buildSection(
-            title: '4. Data Security',
+            title: '5. QR-Based Vendor Security',
+            content: [
+              _buildBulletPoint('Vendor identity is shared shortly before their arrival'),
+              _buildBulletPoint('QR code scanning is mandatory for vendor verification'),
+              _buildBulletPoint('The user is solely responsible for granting access after a successful QR scan'),
+              _buildBulletPoint('No interaction data with vendors is recorded by Sylonow'),
+            ],
+          ),
+          _buildSection(
+            title: '6. Data Security',
             content: [
               _buildSubSection(
                 subtitle: 'Security Measures',
-                text: 'We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.',
+                text: 'We apply industry-standard security measures including:\n• SSL/TLS encrypted data transmission\n• Secure cloud storage with limited access\n• OTP-based user login\n• Regular security audits and threat detection',
               ),
               _buildSubSection(
-                subtitle: 'Encryption',
-                text: 'All sensitive information is encrypted both in transit and at rest using industry-standard encryption protocols.',
-              ),
-              _buildSubSection(
-                subtitle: 'Access Controls',
-                text: 'We limit access to your personal information to employees and contractors who need it to perform their job functions.',
+                subtitle: 'Data Breach Notification',
+                text: 'In the event of a data breach, users will be informed within 72 hours in accordance with Indian laws.',
               ),
             ],
           ),
           _buildSection(
-            title: '5. Your Rights',
-            content: [
-              _buildBulletPoint('Access and review your personal information'),
-              _buildBulletPoint('Correct or update inaccurate information'),
-              _buildBulletPoint('Delete your account and personal information'),
-              _buildBulletPoint('Opt-out of marketing communications'),
-              _buildBulletPoint('Request data portability'),
-              _buildBulletPoint('Withdraw consent for data processing'),
-            ],
-          ),
-          _buildSection(
-            title: '6. Data Retention',
+            title: '7. Data Retention',
             content: [
               _buildSubSection(
                 subtitle: 'Retention Period',
-                text: 'We retain your personal information for as long as necessary to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements.',
-              ),
-              _buildSubSection(
-                subtitle: 'Deletion',
-                text: 'When you delete your account, we will delete or anonymize your personal information, except where we are required to retain it by law.',
+                text: 'We retain your data:\n• As long as your account is active\n• To comply with legal, accounting, fraud-prevention, and tax obligations\n• Or until you request deletion of your data',
               ),
             ],
           ),
           _buildSection(
-            title: '7. Cookies and Tracking',
+            title: '8. Cookies & Tracking',
             content: [
               _buildSubSection(
-                subtitle: 'Cookies',
-                text: 'We use cookies and similar tracking technologies to improve our services, analyze usage patterns, and personalize your experience.',
-              ),
-              _buildSubSection(
-                subtitle: 'Analytics',
-                text: 'We may use third-party analytics services to help us understand how our services are used and improve user experience.',
+                subtitle: 'Usage',
+                text: 'The App uses cookies and tracking technologies to:\n• Improve app performance\n• Analyze user behavior\n• Personalize advertising (where applicable)',
               ),
             ],
           ),
           _buildSection(
-            title: '8. Third-Party Services',
+            title: '9. Your Rights Under Indian Law',
             content: [
               _buildSubSection(
-                subtitle: 'Integration',
-                text: 'Our services may integrate with third-party services such as payment processors, mapping services, and social media platforms.',
-              ),
-              _buildSubSection(
-                subtitle: 'Privacy Policies',
-                text: 'These third-party services have their own privacy policies, and we encourage you to review them before using these services.',
+                subtitle: 'Your Rights',
+                text: 'As per Indian law and the SPDI Rules, you may:\n• Access your personal data\n• Correct or update your information\n• Withdraw consent at any time (may impact service availability)\n• Request data or account deletion\n\nFor any such request, contact us at: info@sylonow.com',
               ),
             ],
           ),
           _buildSection(
-            title: '9. Changes to This Policy',
+            title: '10. Children\'s Privacy',
+            content: [
+              _buildSubSection(
+                subtitle: 'Age Restriction',
+                text: 'The Sylonow User App is not intended for individuals under the age of 18. We do not knowingly collect data from minors.',
+              ),
+            ],
+          ),
+          _buildSection(
+            title: '11. Changes to This Policy',
             content: [
               _buildSubSection(
                 subtitle: 'Updates',
-                text: 'We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our app and updating the "last updated" date.',
-              ),
-              _buildSubSection(
-                subtitle: 'Continued Use',
-                text: 'Your continued use of our services after any changes constitutes acceptance of the new Privacy Policy.',
+                text: 'We may update this Privacy Policy to reflect legal updates or app changes. Users will be notified of updates via the app, and changes will be reflected in the "Last Updated" date.',
               ),
             ],
           ),
           _buildSection(
-            title: '10. Contact Us',
+            title: '12. Contact Information',
             content: [
               _buildSubSection(
-                subtitle: 'Questions',
-                text: 'If you have any questions about this Privacy Policy or our privacy practices, please contact us:',
+                subtitle: 'Support & Complaints',
+                text: 'For questions, support, or complaints, contact:',
               ),
-              _buildBulletPoint('Email: privacy@sylonow.com'),
-              _buildBulletPoint('Phone: +91-9876543210'),
-              _buildBulletPoint('Address: 123 Business District, Tech City, TC 12345'),
+              _buildBulletPoint('Sylonow Vision Private Limited'),
+              _buildBulletPoint('Address: Bengaluru, Karnataka, India'),
+              _buildBulletPoint('Email: info@sylonow.com'),
+              _buildBulletPoint('Helpline: 9741338102 / 8867266638'),
             ],
           ),
         ],

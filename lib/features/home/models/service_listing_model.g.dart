@@ -51,6 +51,9 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
           ?.map((e) => e as String)
           .toList(),
       videoUrl: json['video_url'] as String?,
+      decorationType: json['decoration_type'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$ServiceListingModelImplToJson(
@@ -83,4 +86,7 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'customization_note': instance.customizationNote,
       'service_environment': instance.serviceEnvironment,
       'video_url': instance.videoUrl,
+      'decoration_type': instance.decorationType,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
     };
