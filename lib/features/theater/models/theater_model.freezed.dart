@@ -20,26 +20,27 @@ TheaterModel _$TheaterModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$TheaterModel {
-  String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
+  String? get id => throw _privateConstructorUsedError;
+  String? get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
-  String get address => throw _privateConstructorUsedError;
-  String get city => throw _privateConstructorUsedError;
-  String get state => throw _privateConstructorUsedError;
+  String? get address => throw _privateConstructorUsedError;
+  String? get city => throw _privateConstructorUsedError;
+  String? get state => throw _privateConstructorUsedError;
   @JsonKey(name: 'pin_code')
-  String get pinCode => throw _privateConstructorUsedError;
+  String? get pinCode => throw _privateConstructorUsedError;
   double? get latitude => throw _privateConstructorUsedError;
   double? get longitude => throw _privateConstructorUsedError;
-  int get capacity => throw _privateConstructorUsedError;
-  List<String> get amenities => throw _privateConstructorUsedError;
-  List<String> get images => throw _privateConstructorUsedError;
+  int? get capacity => throw _privateConstructorUsedError;
+  int? get screens => throw _privateConstructorUsedError;
+  List<String>? get amenities => throw _privateConstructorUsedError;
+  List<String>? get images => throw _privateConstructorUsedError;
   @JsonKey(name: 'hourly_rate')
-  double get hourlyRate => throw _privateConstructorUsedError;
-  double get rating => throw _privateConstructorUsedError;
+  double? get hourlyRate => throw _privateConstructorUsedError;
+  double? get rating => throw _privateConstructorUsedError;
   @JsonKey(name: 'total_reviews')
-  int get totalReviews => throw _privateConstructorUsedError;
+  int? get totalReviews => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
-  bool get isActive => throw _privateConstructorUsedError;
+  bool? get isActive => throw _privateConstructorUsedError;
   @JsonKey(name: 'owner_id')
   String? get ownerId => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -47,12 +48,8 @@ mixin _$TheaterModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this TheaterModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TheaterModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TheaterModelCopyWith<TheaterModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -64,22 +61,23 @@ abstract class $TheaterModelCopyWith<$Res> {
       _$TheaterModelCopyWithImpl<$Res, TheaterModel>;
   @useResult
   $Res call(
-      {String id,
-      String name,
+      {String? id,
+      String? name,
       String? description,
-      String address,
-      String city,
-      String state,
-      @JsonKey(name: 'pin_code') String pinCode,
+      String? address,
+      String? city,
+      String? state,
+      @JsonKey(name: 'pin_code') String? pinCode,
       double? latitude,
       double? longitude,
-      int capacity,
-      List<String> amenities,
-      List<String> images,
-      @JsonKey(name: 'hourly_rate') double hourlyRate,
-      double rating,
-      @JsonKey(name: 'total_reviews') int totalReviews,
-      @JsonKey(name: 'is_active') bool isActive,
+      int? capacity,
+      int? screens,
+      List<String>? amenities,
+      List<String>? images,
+      @JsonKey(name: 'hourly_rate') double? hourlyRate,
+      double? rating,
+      @JsonKey(name: 'total_reviews') int? totalReviews,
+      @JsonKey(name: 'is_active') bool? isActive,
       @JsonKey(name: 'owner_id') String? ownerId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -95,60 +93,59 @@ class _$TheaterModelCopyWithImpl<$Res, $Val extends TheaterModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TheaterModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? name = null,
+    Object? id = freezed,
+    Object? name = freezed,
     Object? description = freezed,
-    Object? address = null,
-    Object? city = null,
-    Object? state = null,
-    Object? pinCode = null,
+    Object? address = freezed,
+    Object? city = freezed,
+    Object? state = freezed,
+    Object? pinCode = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
-    Object? capacity = null,
-    Object? amenities = null,
-    Object? images = null,
-    Object? hourlyRate = null,
-    Object? rating = null,
-    Object? totalReviews = null,
-    Object? isActive = null,
+    Object? capacity = freezed,
+    Object? screens = freezed,
+    Object? amenities = freezed,
+    Object? images = freezed,
+    Object? hourlyRate = freezed,
+    Object? rating = freezed,
+    Object? totalReviews = freezed,
+    Object? isActive = freezed,
     Object? ownerId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
     return _then(_value.copyWith(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
+              as String?,
+      name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      address: null == address
+      address: freezed == address
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
-              as String,
-      city: null == city
+              as String?,
+      city: freezed == city
           ? _value.city
           : city // ignore: cast_nullable_to_non_nullable
-              as String,
-      state: null == state
+              as String?,
+      state: freezed == state
           ? _value.state
           : state // ignore: cast_nullable_to_non_nullable
-              as String,
-      pinCode: null == pinCode
+              as String?,
+      pinCode: freezed == pinCode
           ? _value.pinCode
           : pinCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       latitude: freezed == latitude
           ? _value.latitude
           : latitude // ignore: cast_nullable_to_non_nullable
@@ -157,34 +154,38 @@ class _$TheaterModelCopyWithImpl<$Res, $Val extends TheaterModel>
           ? _value.longitude
           : longitude // ignore: cast_nullable_to_non_nullable
               as double?,
-      capacity: null == capacity
+      capacity: freezed == capacity
           ? _value.capacity
           : capacity // ignore: cast_nullable_to_non_nullable
-              as int,
-      amenities: null == amenities
+              as int?,
+      screens: freezed == screens
+          ? _value.screens
+          : screens // ignore: cast_nullable_to_non_nullable
+              as int?,
+      amenities: freezed == amenities
           ? _value.amenities
           : amenities // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      images: null == images
+              as List<String>?,
+      images: freezed == images
           ? _value.images
           : images // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      hourlyRate: null == hourlyRate
+              as List<String>?,
+      hourlyRate: freezed == hourlyRate
           ? _value.hourlyRate
           : hourlyRate // ignore: cast_nullable_to_non_nullable
-              as double,
-      rating: null == rating
+              as double?,
+      rating: freezed == rating
           ? _value.rating
           : rating // ignore: cast_nullable_to_non_nullable
-              as double,
-      totalReviews: null == totalReviews
+              as double?,
+      totalReviews: freezed == totalReviews
           ? _value.totalReviews
           : totalReviews // ignore: cast_nullable_to_non_nullable
-              as int,
-      isActive: null == isActive
+              as int?,
+      isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as bool?,
       ownerId: freezed == ownerId
           ? _value.ownerId
           : ownerId // ignore: cast_nullable_to_non_nullable
@@ -210,22 +211,23 @@ abstract class _$$TheaterModelImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
-      String name,
+      {String? id,
+      String? name,
       String? description,
-      String address,
-      String city,
-      String state,
-      @JsonKey(name: 'pin_code') String pinCode,
+      String? address,
+      String? city,
+      String? state,
+      @JsonKey(name: 'pin_code') String? pinCode,
       double? latitude,
       double? longitude,
-      int capacity,
-      List<String> amenities,
-      List<String> images,
-      @JsonKey(name: 'hourly_rate') double hourlyRate,
-      double rating,
-      @JsonKey(name: 'total_reviews') int totalReviews,
-      @JsonKey(name: 'is_active') bool isActive,
+      int? capacity,
+      int? screens,
+      List<String>? amenities,
+      List<String>? images,
+      @JsonKey(name: 'hourly_rate') double? hourlyRate,
+      double? rating,
+      @JsonKey(name: 'total_reviews') int? totalReviews,
+      @JsonKey(name: 'is_active') bool? isActive,
       @JsonKey(name: 'owner_id') String? ownerId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -239,60 +241,59 @@ class __$$TheaterModelImplCopyWithImpl<$Res>
       _$TheaterModelImpl _value, $Res Function(_$TheaterModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TheaterModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? name = null,
+    Object? id = freezed,
+    Object? name = freezed,
     Object? description = freezed,
-    Object? address = null,
-    Object? city = null,
-    Object? state = null,
-    Object? pinCode = null,
+    Object? address = freezed,
+    Object? city = freezed,
+    Object? state = freezed,
+    Object? pinCode = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
-    Object? capacity = null,
-    Object? amenities = null,
-    Object? images = null,
-    Object? hourlyRate = null,
-    Object? rating = null,
-    Object? totalReviews = null,
-    Object? isActive = null,
+    Object? capacity = freezed,
+    Object? screens = freezed,
+    Object? amenities = freezed,
+    Object? images = freezed,
+    Object? hourlyRate = freezed,
+    Object? rating = freezed,
+    Object? totalReviews = freezed,
+    Object? isActive = freezed,
     Object? ownerId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
     return _then(_$TheaterModelImpl(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
+              as String?,
+      name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      address: null == address
+      address: freezed == address
           ? _value.address
           : address // ignore: cast_nullable_to_non_nullable
-              as String,
-      city: null == city
+              as String?,
+      city: freezed == city
           ? _value.city
           : city // ignore: cast_nullable_to_non_nullable
-              as String,
-      state: null == state
+              as String?,
+      state: freezed == state
           ? _value.state
           : state // ignore: cast_nullable_to_non_nullable
-              as String,
-      pinCode: null == pinCode
+              as String?,
+      pinCode: freezed == pinCode
           ? _value.pinCode
           : pinCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       latitude: freezed == latitude
           ? _value.latitude
           : latitude // ignore: cast_nullable_to_non_nullable
@@ -301,34 +302,38 @@ class __$$TheaterModelImplCopyWithImpl<$Res>
           ? _value.longitude
           : longitude // ignore: cast_nullable_to_non_nullable
               as double?,
-      capacity: null == capacity
+      capacity: freezed == capacity
           ? _value.capacity
           : capacity // ignore: cast_nullable_to_non_nullable
-              as int,
-      amenities: null == amenities
+              as int?,
+      screens: freezed == screens
+          ? _value.screens
+          : screens // ignore: cast_nullable_to_non_nullable
+              as int?,
+      amenities: freezed == amenities
           ? _value._amenities
           : amenities // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      images: null == images
+              as List<String>?,
+      images: freezed == images
           ? _value._images
           : images // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      hourlyRate: null == hourlyRate
+              as List<String>?,
+      hourlyRate: freezed == hourlyRate
           ? _value.hourlyRate
           : hourlyRate // ignore: cast_nullable_to_non_nullable
-              as double,
-      rating: null == rating
+              as double?,
+      rating: freezed == rating
           ? _value.rating
           : rating // ignore: cast_nullable_to_non_nullable
-              as double,
-      totalReviews: null == totalReviews
+              as double?,
+      totalReviews: freezed == totalReviews
           ? _value.totalReviews
           : totalReviews // ignore: cast_nullable_to_non_nullable
-              as int,
-      isActive: null == isActive
+              as int?,
+      isActive: freezed == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
-              as bool,
+              as bool?,
       ownerId: freezed == ownerId
           ? _value.ownerId
           : ownerId // ignore: cast_nullable_to_non_nullable
@@ -349,22 +354,23 @@ class __$$TheaterModelImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$TheaterModelImpl implements _TheaterModel {
   const _$TheaterModelImpl(
-      {required this.id,
-      required this.name,
+      {this.id,
+      this.name,
       this.description,
-      required this.address,
-      required this.city,
-      required this.state,
-      @JsonKey(name: 'pin_code') required this.pinCode,
+      this.address,
+      this.city,
+      this.state,
+      @JsonKey(name: 'pin_code') this.pinCode,
       this.latitude,
       this.longitude,
-      required this.capacity,
-      required final List<String> amenities,
-      required final List<String> images,
-      @JsonKey(name: 'hourly_rate') required this.hourlyRate,
-      required this.rating,
-      @JsonKey(name: 'total_reviews') required this.totalReviews,
-      @JsonKey(name: 'is_active') required this.isActive,
+      this.capacity,
+      this.screens,
+      final List<String>? amenities,
+      final List<String>? images,
+      @JsonKey(name: 'hourly_rate') this.hourlyRate,
+      this.rating,
+      @JsonKey(name: 'total_reviews') this.totalReviews,
+      @JsonKey(name: 'is_active') this.isActive,
       @JsonKey(name: 'owner_id') this.ownerId,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt})
@@ -375,53 +381,59 @@ class _$TheaterModelImpl implements _TheaterModel {
       _$$TheaterModelImplFromJson(json);
 
   @override
-  final String id;
+  final String? id;
   @override
-  final String name;
+  final String? name;
   @override
   final String? description;
   @override
-  final String address;
+  final String? address;
   @override
-  final String city;
+  final String? city;
   @override
-  final String state;
+  final String? state;
   @override
   @JsonKey(name: 'pin_code')
-  final String pinCode;
+  final String? pinCode;
   @override
   final double? latitude;
   @override
   final double? longitude;
   @override
-  final int capacity;
-  final List<String> _amenities;
+  final int? capacity;
   @override
-  List<String> get amenities {
+  final int? screens;
+  final List<String>? _amenities;
+  @override
+  List<String>? get amenities {
+    final value = _amenities;
+    if (value == null) return null;
     if (_amenities is EqualUnmodifiableListView) return _amenities;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_amenities);
+    return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _images;
+  final List<String>? _images;
   @override
-  List<String> get images {
+  List<String>? get images {
+    final value = _images;
+    if (value == null) return null;
     if (_images is EqualUnmodifiableListView) return _images;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_images);
+    return EqualUnmodifiableListView(value);
   }
 
   @override
   @JsonKey(name: 'hourly_rate')
-  final double hourlyRate;
+  final double? hourlyRate;
   @override
-  final double rating;
+  final double? rating;
   @override
   @JsonKey(name: 'total_reviews')
-  final int totalReviews;
+  final int? totalReviews;
   @override
   @JsonKey(name: 'is_active')
-  final bool isActive;
+  final bool? isActive;
   @override
   @JsonKey(name: 'owner_id')
   final String? ownerId;
@@ -434,7 +446,7 @@ class _$TheaterModelImpl implements _TheaterModel {
 
   @override
   String toString() {
-    return 'TheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, screens: $screens, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -456,6 +468,7 @@ class _$TheaterModelImpl implements _TheaterModel {
                 other.longitude == longitude) &&
             (identical(other.capacity, capacity) ||
                 other.capacity == capacity) &&
+            (identical(other.screens, screens) || other.screens == screens) &&
             const DeepCollectionEquality()
                 .equals(other._amenities, _amenities) &&
             const DeepCollectionEquality().equals(other._images, _images) &&
@@ -473,7 +486,7 @@ class _$TheaterModelImpl implements _TheaterModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -487,6 +500,7 @@ class _$TheaterModelImpl implements _TheaterModel {
         latitude,
         longitude,
         capacity,
+        screens,
         const DeepCollectionEquality().hash(_amenities),
         const DeepCollectionEquality().hash(_images),
         hourlyRate,
@@ -498,9 +512,7 @@ class _$TheaterModelImpl implements _TheaterModel {
         updatedAt
       ]);
 
-  /// Create a copy of TheaterModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TheaterModelImplCopyWith<_$TheaterModelImpl> get copyWith =>
@@ -516,22 +528,23 @@ class _$TheaterModelImpl implements _TheaterModel {
 
 abstract class _TheaterModel implements TheaterModel {
   const factory _TheaterModel(
-          {required final String id,
-          required final String name,
+          {final String? id,
+          final String? name,
           final String? description,
-          required final String address,
-          required final String city,
-          required final String state,
-          @JsonKey(name: 'pin_code') required final String pinCode,
+          final String? address,
+          final String? city,
+          final String? state,
+          @JsonKey(name: 'pin_code') final String? pinCode,
           final double? latitude,
           final double? longitude,
-          required final int capacity,
-          required final List<String> amenities,
-          required final List<String> images,
-          @JsonKey(name: 'hourly_rate') required final double hourlyRate,
-          required final double rating,
-          @JsonKey(name: 'total_reviews') required final int totalReviews,
-          @JsonKey(name: 'is_active') required final bool isActive,
+          final int? capacity,
+          final int? screens,
+          final List<String>? amenities,
+          final List<String>? images,
+          @JsonKey(name: 'hourly_rate') final double? hourlyRate,
+          final double? rating,
+          @JsonKey(name: 'total_reviews') final int? totalReviews,
+          @JsonKey(name: 'is_active') final bool? isActive,
           @JsonKey(name: 'owner_id') final String? ownerId,
           @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
@@ -541,41 +554,43 @@ abstract class _TheaterModel implements TheaterModel {
       _$TheaterModelImpl.fromJson;
 
   @override
-  String get id;
+  String? get id;
   @override
-  String get name;
+  String? get name;
   @override
   String? get description;
   @override
-  String get address;
+  String? get address;
   @override
-  String get city;
+  String? get city;
   @override
-  String get state;
+  String? get state;
   @override
   @JsonKey(name: 'pin_code')
-  String get pinCode;
+  String? get pinCode;
   @override
   double? get latitude;
   @override
   double? get longitude;
   @override
-  int get capacity;
+  int? get capacity;
   @override
-  List<String> get amenities;
+  int? get screens;
   @override
-  List<String> get images;
+  List<String>? get amenities;
+  @override
+  List<String>? get images;
   @override
   @JsonKey(name: 'hourly_rate')
-  double get hourlyRate;
+  double? get hourlyRate;
   @override
-  double get rating;
+  double? get rating;
   @override
   @JsonKey(name: 'total_reviews')
-  int get totalReviews;
+  int? get totalReviews;
   @override
   @JsonKey(name: 'is_active')
-  bool get isActive;
+  bool? get isActive;
   @override
   @JsonKey(name: 'owner_id')
   String? get ownerId;
@@ -585,11 +600,8 @@ abstract class _TheaterModel implements TheaterModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of TheaterModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TheaterModelImplCopyWith<_$TheaterModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

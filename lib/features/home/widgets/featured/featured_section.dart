@@ -247,7 +247,7 @@ class _FeaturedSectionState extends ConsumerState<FeaturedSection> {
                   topRight: Radius.circular(15),
                 ),
                 child: CachedNetworkImage(
-                  imageUrl: service.image,
+                  imageUrl: service.image ?? '',
                   height: 122,
                   width: double.infinity,
                   fit: BoxFit.cover,

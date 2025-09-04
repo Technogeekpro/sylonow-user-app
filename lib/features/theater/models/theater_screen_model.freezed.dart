@@ -37,13 +37,22 @@ mixin _$TheaterScreenModel {
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'total_capacity')
+  int get totalCapacity => throw _privateConstructorUsedError;
+  @JsonKey(name: 'allowed_capacity')
+  int get allowedCapacity => throw _privateConstructorUsedError;
+  @JsonKey(name: 'charges_extra_per_person')
+  double get chargesExtraPerPerson => throw _privateConstructorUsedError;
+  @JsonKey(name: 'video_url')
+  String? get videoUrl => throw _privateConstructorUsedError;
+  List<String> get images => throw _privateConstructorUsedError;
+  @JsonKey(name: 'original_hourly_price')
+  double get originalHourlyPrice => throw _privateConstructorUsedError;
+  @JsonKey(name: 'discounted_hourly_price')
+  double get discountedHourlyPrice => throw _privateConstructorUsedError;
 
-  /// Serializes this TheaterScreenModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TheaterScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TheaterScreenModelCopyWith<TheaterScreenModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -64,7 +73,14 @@ abstract class $TheaterScreenModelCopyWith<$Res> {
       @JsonKey(name: 'hourly_rate') double hourlyRate,
       @JsonKey(name: 'is_active') bool isActive,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      @JsonKey(name: 'updated_at') DateTime? updatedAt});
+      @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @JsonKey(name: 'total_capacity') int totalCapacity,
+      @JsonKey(name: 'allowed_capacity') int allowedCapacity,
+      @JsonKey(name: 'charges_extra_per_person') double chargesExtraPerPerson,
+      @JsonKey(name: 'video_url') String? videoUrl,
+      List<String> images,
+      @JsonKey(name: 'original_hourly_price') double originalHourlyPrice,
+      @JsonKey(name: 'discounted_hourly_price') double discountedHourlyPrice});
 }
 
 /// @nodoc
@@ -77,8 +93,6 @@ class _$TheaterScreenModelCopyWithImpl<$Res, $Val extends TheaterScreenModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TheaterScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -92,6 +106,13 @@ class _$TheaterScreenModelCopyWithImpl<$Res, $Val extends TheaterScreenModel>
     Object? isActive = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? totalCapacity = null,
+    Object? allowedCapacity = null,
+    Object? chargesExtraPerPerson = null,
+    Object? videoUrl = freezed,
+    Object? images = null,
+    Object? originalHourlyPrice = null,
+    Object? discountedHourlyPrice = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -134,6 +155,34 @@ class _$TheaterScreenModelCopyWithImpl<$Res, $Val extends TheaterScreenModel>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      totalCapacity: null == totalCapacity
+          ? _value.totalCapacity
+          : totalCapacity // ignore: cast_nullable_to_non_nullable
+              as int,
+      allowedCapacity: null == allowedCapacity
+          ? _value.allowedCapacity
+          : allowedCapacity // ignore: cast_nullable_to_non_nullable
+              as int,
+      chargesExtraPerPerson: null == chargesExtraPerPerson
+          ? _value.chargesExtraPerPerson
+          : chargesExtraPerPerson // ignore: cast_nullable_to_non_nullable
+              as double,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      images: null == images
+          ? _value.images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      originalHourlyPrice: null == originalHourlyPrice
+          ? _value.originalHourlyPrice
+          : originalHourlyPrice // ignore: cast_nullable_to_non_nullable
+              as double,
+      discountedHourlyPrice: null == discountedHourlyPrice
+          ? _value.discountedHourlyPrice
+          : discountedHourlyPrice // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
   }
 }
@@ -156,7 +205,14 @@ abstract class _$$TheaterScreenModelImplCopyWith<$Res>
       @JsonKey(name: 'hourly_rate') double hourlyRate,
       @JsonKey(name: 'is_active') bool isActive,
       @JsonKey(name: 'created_at') DateTime? createdAt,
-      @JsonKey(name: 'updated_at') DateTime? updatedAt});
+      @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @JsonKey(name: 'total_capacity') int totalCapacity,
+      @JsonKey(name: 'allowed_capacity') int allowedCapacity,
+      @JsonKey(name: 'charges_extra_per_person') double chargesExtraPerPerson,
+      @JsonKey(name: 'video_url') String? videoUrl,
+      List<String> images,
+      @JsonKey(name: 'original_hourly_price') double originalHourlyPrice,
+      @JsonKey(name: 'discounted_hourly_price') double discountedHourlyPrice});
 }
 
 /// @nodoc
@@ -167,8 +223,6 @@ class __$$TheaterScreenModelImplCopyWithImpl<$Res>
       $Res Function(_$TheaterScreenModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TheaterScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -182,6 +236,13 @@ class __$$TheaterScreenModelImplCopyWithImpl<$Res>
     Object? isActive = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
+    Object? totalCapacity = null,
+    Object? allowedCapacity = null,
+    Object? chargesExtraPerPerson = null,
+    Object? videoUrl = freezed,
+    Object? images = null,
+    Object? originalHourlyPrice = null,
+    Object? discountedHourlyPrice = null,
   }) {
     return _then(_$TheaterScreenModelImpl(
       id: null == id
@@ -224,6 +285,34 @@ class __$$TheaterScreenModelImplCopyWithImpl<$Res>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      totalCapacity: null == totalCapacity
+          ? _value.totalCapacity
+          : totalCapacity // ignore: cast_nullable_to_non_nullable
+              as int,
+      allowedCapacity: null == allowedCapacity
+          ? _value.allowedCapacity
+          : allowedCapacity // ignore: cast_nullable_to_non_nullable
+              as int,
+      chargesExtraPerPerson: null == chargesExtraPerPerson
+          ? _value.chargesExtraPerPerson
+          : chargesExtraPerPerson // ignore: cast_nullable_to_non_nullable
+              as double,
+      videoUrl: freezed == videoUrl
+          ? _value.videoUrl
+          : videoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      images: null == images
+          ? _value._images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      originalHourlyPrice: null == originalHourlyPrice
+          ? _value.originalHourlyPrice
+          : originalHourlyPrice // ignore: cast_nullable_to_non_nullable
+              as double,
+      discountedHourlyPrice: null == discountedHourlyPrice
+          ? _value.discountedHourlyPrice
+          : discountedHourlyPrice // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -241,8 +330,18 @@ class _$TheaterScreenModelImpl implements _TheaterScreenModel {
       @JsonKey(name: 'hourly_rate') required this.hourlyRate,
       @JsonKey(name: 'is_active') this.isActive = true,
       @JsonKey(name: 'created_at') this.createdAt,
-      @JsonKey(name: 'updated_at') this.updatedAt})
-      : _amenities = amenities;
+      @JsonKey(name: 'updated_at') this.updatedAt,
+      @JsonKey(name: 'total_capacity') this.totalCapacity = 0,
+      @JsonKey(name: 'allowed_capacity') this.allowedCapacity = 0,
+      @JsonKey(name: 'charges_extra_per_person')
+      this.chargesExtraPerPerson = 0.0,
+      @JsonKey(name: 'video_url') this.videoUrl,
+      final List<String> images = const [],
+      @JsonKey(name: 'original_hourly_price') this.originalHourlyPrice = 0.0,
+      @JsonKey(name: 'discounted_hourly_price')
+      this.discountedHourlyPrice = 0.0})
+      : _amenities = amenities,
+        _images = images;
 
   factory _$TheaterScreenModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$TheaterScreenModelImplFromJson(json);
@@ -281,10 +380,37 @@ class _$TheaterScreenModelImpl implements _TheaterScreenModel {
   @override
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
+  @override
+  @JsonKey(name: 'total_capacity')
+  final int totalCapacity;
+  @override
+  @JsonKey(name: 'allowed_capacity')
+  final int allowedCapacity;
+  @override
+  @JsonKey(name: 'charges_extra_per_person')
+  final double chargesExtraPerPerson;
+  @override
+  @JsonKey(name: 'video_url')
+  final String? videoUrl;
+  final List<String> _images;
+  @override
+  @JsonKey()
+  List<String> get images {
+    if (_images is EqualUnmodifiableListView) return _images;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_images);
+  }
+
+  @override
+  @JsonKey(name: 'original_hourly_price')
+  final double originalHourlyPrice;
+  @override
+  @JsonKey(name: 'discounted_hourly_price')
+  final double discountedHourlyPrice;
 
   @override
   String toString() {
-    return 'TheaterScreenModel(id: $id, theaterId: $theaterId, screenName: $screenName, screenNumber: $screenNumber, capacity: $capacity, amenities: $amenities, hourlyRate: $hourlyRate, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TheaterScreenModel(id: $id, theaterId: $theaterId, screenName: $screenName, screenNumber: $screenNumber, capacity: $capacity, amenities: $amenities, hourlyRate: $hourlyRate, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, totalCapacity: $totalCapacity, allowedCapacity: $allowedCapacity, chargesExtraPerPerson: $chargesExtraPerPerson, videoUrl: $videoUrl, images: $images, originalHourlyPrice: $originalHourlyPrice, discountedHourlyPrice: $discountedHourlyPrice)';
   }
 
   @override
@@ -310,10 +436,23 @@ class _$TheaterScreenModelImpl implements _TheaterScreenModel {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.totalCapacity, totalCapacity) ||
+                other.totalCapacity == totalCapacity) &&
+            (identical(other.allowedCapacity, allowedCapacity) ||
+                other.allowedCapacity == allowedCapacity) &&
+            (identical(other.chargesExtraPerPerson, chargesExtraPerPerson) ||
+                other.chargesExtraPerPerson == chargesExtraPerPerson) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl) &&
+            const DeepCollectionEquality().equals(other._images, _images) &&
+            (identical(other.originalHourlyPrice, originalHourlyPrice) ||
+                other.originalHourlyPrice == originalHourlyPrice) &&
+            (identical(other.discountedHourlyPrice, discountedHourlyPrice) ||
+                other.discountedHourlyPrice == discountedHourlyPrice));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -326,11 +465,16 @@ class _$TheaterScreenModelImpl implements _TheaterScreenModel {
       hourlyRate,
       isActive,
       createdAt,
-      updatedAt);
+      updatedAt,
+      totalCapacity,
+      allowedCapacity,
+      chargesExtraPerPerson,
+      videoUrl,
+      const DeepCollectionEquality().hash(_images),
+      originalHourlyPrice,
+      discountedHourlyPrice);
 
-  /// Create a copy of TheaterScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TheaterScreenModelImplCopyWith<_$TheaterScreenModelImpl> get copyWith =>
@@ -347,17 +491,25 @@ class _$TheaterScreenModelImpl implements _TheaterScreenModel {
 
 abstract class _TheaterScreenModel implements TheaterScreenModel {
   const factory _TheaterScreenModel(
-          {required final String id,
-          @JsonKey(name: 'theater_id') required final String theaterId,
-          @JsonKey(name: 'screen_name') required final String screenName,
-          @JsonKey(name: 'screen_number') required final int screenNumber,
-          required final int capacity,
-          final List<String> amenities,
-          @JsonKey(name: 'hourly_rate') required final double hourlyRate,
-          @JsonKey(name: 'is_active') final bool isActive,
-          @JsonKey(name: 'created_at') final DateTime? createdAt,
-          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
-      _$TheaterScreenModelImpl;
+      {required final String id,
+      @JsonKey(name: 'theater_id') required final String theaterId,
+      @JsonKey(name: 'screen_name') required final String screenName,
+      @JsonKey(name: 'screen_number') required final int screenNumber,
+      required final int capacity,
+      final List<String> amenities,
+      @JsonKey(name: 'hourly_rate') required final double hourlyRate,
+      @JsonKey(name: 'is_active') final bool isActive,
+      @JsonKey(name: 'created_at') final DateTime? createdAt,
+      @JsonKey(name: 'updated_at') final DateTime? updatedAt,
+      @JsonKey(name: 'total_capacity') final int totalCapacity,
+      @JsonKey(name: 'allowed_capacity') final int allowedCapacity,
+      @JsonKey(name: 'charges_extra_per_person')
+      final double chargesExtraPerPerson,
+      @JsonKey(name: 'video_url') final String? videoUrl,
+      final List<String> images,
+      @JsonKey(name: 'original_hourly_price') final double originalHourlyPrice,
+      @JsonKey(name: 'discounted_hourly_price')
+      final double discountedHourlyPrice}) = _$TheaterScreenModelImpl;
 
   factory _TheaterScreenModel.fromJson(Map<String, dynamic> json) =
       _$TheaterScreenModelImpl.fromJson;
@@ -389,11 +541,28 @@ abstract class _TheaterScreenModel implements TheaterScreenModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of TheaterScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(name: 'total_capacity')
+  int get totalCapacity;
+  @override
+  @JsonKey(name: 'allowed_capacity')
+  int get allowedCapacity;
+  @override
+  @JsonKey(name: 'charges_extra_per_person')
+  double get chargesExtraPerPerson;
+  @override
+  @JsonKey(name: 'video_url')
+  String? get videoUrl;
+  @override
+  List<String> get images;
+  @override
+  @JsonKey(name: 'original_hourly_price')
+  double get originalHourlyPrice;
+  @override
+  @JsonKey(name: 'discounted_hourly_price')
+  double get discountedHourlyPrice;
+  @override
+  @JsonKey(ignore: true)
   _$$TheaterScreenModelImplCopyWith<_$TheaterScreenModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -450,12 +619,8 @@ mixin _$TheaterTimeSlotWithScreenModel {
   @JsonKey(name: 'screen_hourly_rate')
   double? get screenHourlyRate => throw _privateConstructorUsedError;
 
-  /// Serializes this TheaterTimeSlotWithScreenModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TheaterTimeSlotWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TheaterTimeSlotWithScreenModelCopyWith<TheaterTimeSlotWithScreenModel>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -504,8 +669,6 @@ class _$TheaterTimeSlotWithScreenModelCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TheaterTimeSlotWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -669,8 +832,6 @@ class __$$TheaterTimeSlotWithScreenModelImplCopyWithImpl<$Res>
       $Res Function(_$TheaterTimeSlotWithScreenModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TheaterTimeSlotWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -952,7 +1113,7 @@ class _$TheaterTimeSlotWithScreenModelImpl
                 other.screenHourlyRate == screenHourlyRate));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -980,9 +1141,7 @@ class _$TheaterTimeSlotWithScreenModelImpl
         screenHourlyRate
       ]);
 
-  /// Create a copy of TheaterTimeSlotWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TheaterTimeSlotWithScreenModelImplCopyWith<
@@ -1077,8 +1236,8 @@ abstract class _TheaterTimeSlotWithScreenModel
   DateTime? get createdAt;
   @override
   @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt; // Screen information (joined data)
-  @override
+  DateTime? get updatedAt;
+  @override // Screen information (joined data)
   @JsonKey(name: 'screen_name')
   String? get screenName;
   @override
@@ -1093,11 +1252,8 @@ abstract class _TheaterTimeSlotWithScreenModel
   @override
   @JsonKey(name: 'screen_hourly_rate')
   double? get screenHourlyRate;
-
-  /// Create a copy of TheaterTimeSlotWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TheaterTimeSlotWithScreenModelImplCopyWith<
           _$TheaterTimeSlotWithScreenModelImpl>
       get copyWith => throw _privateConstructorUsedError;
@@ -1143,12 +1299,8 @@ mixin _$TheaterBookingWithScreenModel {
   @JsonKey(name: 'screen_amenities')
   List<String>? get screenAmenities => throw _privateConstructorUsedError;
 
-  /// Serializes this TheaterBookingWithScreenModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TheaterBookingWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TheaterBookingWithScreenModelCopyWith<TheaterBookingWithScreenModel>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -1191,8 +1343,6 @@ class _$TheaterBookingWithScreenModelCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TheaterBookingWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1320,8 +1470,6 @@ class __$$TheaterBookingWithScreenModelImplCopyWithImpl<$Res>
       $Res Function(_$TheaterBookingWithScreenModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TheaterBookingWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1535,7 +1683,7 @@ class _$TheaterBookingWithScreenModelImpl
                 .equals(other._screenAmenities, _screenAmenities));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -1556,9 +1704,7 @@ class _$TheaterBookingWithScreenModelImpl
       screenCapacity,
       const DeepCollectionEquality().hash(_screenAmenities));
 
-  /// Create a copy of TheaterBookingWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TheaterBookingWithScreenModelImplCopyWith<
@@ -1620,8 +1766,8 @@ abstract class _TheaterBookingWithScreenModel
   @JsonKey(name: 'end_time')
   String get endTime;
   @override
-  String get status; // 'available', 'booked', 'blocked', 'maintenance'
-  @override
+  String get status;
+  @override // 'available', 'booked', 'blocked', 'maintenance'
   @JsonKey(name: 'booking_id')
   String? get bookingId;
   @override
@@ -1632,8 +1778,8 @@ abstract class _TheaterBookingWithScreenModel
   DateTime? get createdAt;
   @override
   @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt; // Screen details
-  @override
+  DateTime? get updatedAt;
+  @override // Screen details
   @JsonKey(name: 'screen_name')
   String? get screenName;
   @override
@@ -1645,11 +1791,8 @@ abstract class _TheaterBookingWithScreenModel
   @override
   @JsonKey(name: 'screen_amenities')
   List<String>? get screenAmenities;
-
-  /// Create a copy of TheaterBookingWithScreenModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TheaterBookingWithScreenModelImplCopyWith<
           _$TheaterBookingWithScreenModelImpl>
       get copyWith => throw _privateConstructorUsedError;

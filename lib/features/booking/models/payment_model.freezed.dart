@@ -67,12 +67,8 @@ mixin _$PaymentModel {
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this PaymentModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of PaymentModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $PaymentModelCopyWith<PaymentModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -117,8 +113,6 @@ class _$PaymentModelCopyWithImpl<$Res, $Val extends PaymentModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of PaymentModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -273,8 +267,6 @@ class __$$PaymentModelImplCopyWithImpl<$Res>
       _$PaymentModelImpl _value, $Res Function(_$PaymentModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of PaymentModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -547,7 +539,7 @@ class _$PaymentModelImpl implements _PaymentModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -574,9 +566,7 @@ class _$PaymentModelImpl implements _PaymentModel {
         updatedAt
       ]);
 
-  /// Create a copy of PaymentModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$PaymentModelImplCopyWith<_$PaymentModelImpl> get copyWith =>
@@ -628,16 +618,16 @@ abstract class _PaymentModel implements PaymentModel {
   String get userId;
   @override
   @JsonKey(name: 'vendor_id')
-  String get vendorId; // Payment Details
-  @override
+  String get vendorId;
+  @override // Payment Details
   @JsonKey(name: 'payment_method')
-  String get paymentMethod; // 'razorpay' or 'sylonow_qr'
-  @override
+  String get paymentMethod;
+  @override // 'razorpay' or 'sylonow_qr'
   double get amount;
   @override
   @JsonKey(name: 'currency')
-  String get currency; // Razorpay specific fields
-  @override
+  String get currency;
+  @override // Razorpay specific fields
   @JsonKey(name: 'razorpay_payment_id')
   String? get razorpayPaymentId;
   @override
@@ -645,8 +635,8 @@ abstract class _PaymentModel implements PaymentModel {
   String? get razorpayOrderId;
   @override
   @JsonKey(name: 'razorpay_signature')
-  String? get razorpaySignature; // Sylonow QR specific fields
-  @override
+  String? get razorpaySignature;
+  @override // Sylonow QR specific fields
   @JsonKey(name: 'qr_code_data')
   String? get qrCodeData;
   @override
@@ -654,11 +644,11 @@ abstract class _PaymentModel implements PaymentModel {
   String? get qrPaymentReference;
   @override
   @JsonKey(name: 'qr_verified_by')
-  String? get qrVerifiedBy; // Admin/system who verified the QR payment
+  String? get qrVerifiedBy;
+  @override // Admin/system who verified the QR payment
 // Payment Status
-  @override
-  String get status; // pending, processing, completed, failed, refunded
-  @override
+  String get status;
+  @override // pending, processing, completed, failed, refunded
   @JsonKey(name: 'failure_reason')
   String? get failureReason;
   @override
@@ -666,10 +656,10 @@ abstract class _PaymentModel implements PaymentModel {
   double? get refundAmount;
   @override
   @JsonKey(name: 'refund_id')
-  String? get refundId; // Additional Information
-  @override
-  Map<String, dynamic>? get metadata; // Timestamps
-  @override
+  String? get refundId;
+  @override // Additional Information
+  Map<String, dynamic>? get metadata;
+  @override // Timestamps
   @JsonKey(name: 'processed_at')
   DateTime? get processedAt;
   @override
@@ -678,11 +668,8 @@ abstract class _PaymentModel implements PaymentModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt;
-
-  /// Create a copy of PaymentModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$PaymentModelImplCopyWith<_$PaymentModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -712,12 +699,8 @@ mixin _$PaymentSummaryModel {
   @JsonKey(name: 'sylonow_qr_payment')
   PaymentModel? get sylonowQrPayment => throw _privateConstructorUsedError;
 
-  /// Serializes this PaymentSummaryModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $PaymentSummaryModelCopyWith<PaymentSummaryModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -753,8 +736,6 @@ class _$PaymentSummaryModelCopyWithImpl<$Res, $Val extends PaymentSummaryModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -808,8 +789,6 @@ class _$PaymentSummaryModelCopyWithImpl<$Res, $Val extends PaymentSummaryModel>
     ) as $Val);
   }
 
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $PaymentModelCopyWith<$Res>? get razorpayPayment {
@@ -822,8 +801,6 @@ class _$PaymentSummaryModelCopyWithImpl<$Res, $Val extends PaymentSummaryModel>
     });
   }
 
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $PaymentModelCopyWith<$Res>? get sylonowQrPayment {
@@ -870,8 +847,6 @@ class __$$PaymentSummaryModelImplCopyWithImpl<$Res>
       $Res Function(_$PaymentSummaryModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1001,7 +976,7 @@ class _$PaymentSummaryModelImpl implements _PaymentSummaryModel {
                 other.sylonowQrPayment == sylonowQrPayment));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -1015,9 +990,7 @@ class _$PaymentSummaryModelImpl implements _PaymentSummaryModel {
       razorpayPayment,
       sylonowQrPayment);
 
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$PaymentSummaryModelImplCopyWith<_$PaymentSummaryModelImpl> get copyWith =>
@@ -1075,11 +1048,8 @@ abstract class _PaymentSummaryModel implements PaymentSummaryModel {
   @override
   @JsonKey(name: 'sylonow_qr_payment')
   PaymentModel? get sylonowQrPayment;
-
-  /// Create a copy of PaymentSummaryModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$PaymentSummaryModelImplCopyWith<_$PaymentSummaryModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -29,12 +29,8 @@ mixin _$TheaterBookingSelectionModel {
   List<AddOnModel> get selectedAddOns => throw _privateConstructorUsedError;
   double get totalPrice => throw _privateConstructorUsedError;
 
-  /// Serializes this TheaterBookingSelectionModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TheaterBookingSelectionModelCopyWith<TheaterBookingSelectionModel>
       get copyWith => throw _privateConstructorUsedError;
 }
@@ -71,8 +67,6 @@ class _$TheaterBookingSelectionModelCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -116,8 +110,6 @@ class _$TheaterBookingSelectionModelCopyWithImpl<$Res,
     ) as $Val);
   }
 
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $DecorationModelCopyWith<$Res>? get selectedDecoration {
@@ -130,8 +122,6 @@ class _$TheaterBookingSelectionModelCopyWithImpl<$Res,
     });
   }
 
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $OccasionModelCopyWith<$Res>? get selectedOccasion {
@@ -179,8 +169,6 @@ class __$$TheaterBookingSelectionModelImplCopyWithImpl<$Res>
       $Res Function(_$TheaterBookingSelectionModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -292,7 +280,7 @@ class _$TheaterBookingSelectionModelImpl
                 other.totalPrice == totalPrice));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -304,9 +292,7 @@ class _$TheaterBookingSelectionModelImpl
       const DeepCollectionEquality().hash(_selectedAddOns),
       totalPrice);
 
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TheaterBookingSelectionModelImplCopyWith<
@@ -350,11 +336,8 @@ abstract class _TheaterBookingSelectionModel
   List<AddOnModel> get selectedAddOns;
   @override
   double get totalPrice;
-
-  /// Create a copy of TheaterBookingSelectionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TheaterBookingSelectionModelImplCopyWith<
           _$TheaterBookingSelectionModelImpl>
       get copyWith => throw _privateConstructorUsedError;

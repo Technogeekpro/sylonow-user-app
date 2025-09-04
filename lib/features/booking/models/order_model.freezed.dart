@@ -47,31 +47,35 @@ mixin _$OrderModel {
   double get advanceAmount => throw _privateConstructorUsedError;
   @JsonKey(name: 'remaining_amount')
   double get remainingAmount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'advance_payment_id')
-  String? get advancePaymentId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'remaining_payment_id')
-  String? get remainingPaymentId => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   @JsonKey(name: 'payment_status')
   String get paymentStatus => throw _privateConstructorUsedError;
   @JsonKey(name: 'special_requirements')
   String? get specialRequirements => throw _privateConstructorUsedError;
-  @JsonKey(name: 'venue_address')
-  String? get venueAddress => throw _privateConstructorUsedError;
-  @JsonKey(name: 'venue_coordinates')
-  Map<String, dynamic>? get venueCoordinates =>
-      throw _privateConstructorUsedError;
+  @JsonKey(name: 'address_id')
+  String? get addressId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'place_image_url')
+  String? get placeImageUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 'service_image_url')
+  String? get serviceImageUrl =>
+      throw _privateConstructorUsedError; // Address information from joined addresses table
+  @JsonKey(name: 'address_full')
+  String? get addressFull => throw _privateConstructorUsedError;
+  @JsonKey(name: 'address_area')
+  String? get addressArea => throw _privateConstructorUsedError;
+  @JsonKey(name: 'address_nearby')
+  String? get addressNearby => throw _privateConstructorUsedError;
+  @JsonKey(name: 'address_name')
+  String? get addressName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'address_floor')
+  String? get addressFloor => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this OrderModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of OrderModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $OrderModelCopyWith<OrderModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -97,14 +101,17 @@ abstract class $OrderModelCopyWith<$Res> {
       @JsonKey(name: 'total_amount') double totalAmount,
       @JsonKey(name: 'advance_amount') double advanceAmount,
       @JsonKey(name: 'remaining_amount') double remainingAmount,
-      @JsonKey(name: 'advance_payment_id') String? advancePaymentId,
-      @JsonKey(name: 'remaining_payment_id') String? remainingPaymentId,
       String status,
       @JsonKey(name: 'payment_status') String paymentStatus,
       @JsonKey(name: 'special_requirements') String? specialRequirements,
-      @JsonKey(name: 'venue_address') String? venueAddress,
-      @JsonKey(name: 'venue_coordinates')
-      Map<String, dynamic>? venueCoordinates,
+      @JsonKey(name: 'address_id') String? addressId,
+      @JsonKey(name: 'place_image_url') String? placeImageUrl,
+      @JsonKey(name: 'service_image_url') String? serviceImageUrl,
+      @JsonKey(name: 'address_full') String? addressFull,
+      @JsonKey(name: 'address_area') String? addressArea,
+      @JsonKey(name: 'address_nearby') String? addressNearby,
+      @JsonKey(name: 'address_name') String? addressName,
+      @JsonKey(name: 'address_floor') String? addressFloor,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -119,8 +126,6 @@ class _$OrderModelCopyWithImpl<$Res, $Val extends OrderModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of OrderModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -138,13 +143,17 @@ class _$OrderModelCopyWithImpl<$Res, $Val extends OrderModel>
     Object? totalAmount = null,
     Object? advanceAmount = null,
     Object? remainingAmount = null,
-    Object? advancePaymentId = freezed,
-    Object? remainingPaymentId = freezed,
     Object? status = null,
     Object? paymentStatus = null,
     Object? specialRequirements = freezed,
-    Object? venueAddress = freezed,
-    Object? venueCoordinates = freezed,
+    Object? addressId = freezed,
+    Object? placeImageUrl = freezed,
+    Object? serviceImageUrl = freezed,
+    Object? addressFull = freezed,
+    Object? addressArea = freezed,
+    Object? addressNearby = freezed,
+    Object? addressName = freezed,
+    Object? addressFloor = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -205,14 +214,6 @@ class _$OrderModelCopyWithImpl<$Res, $Val extends OrderModel>
           ? _value.remainingAmount
           : remainingAmount // ignore: cast_nullable_to_non_nullable
               as double,
-      advancePaymentId: freezed == advancePaymentId
-          ? _value.advancePaymentId
-          : advancePaymentId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      remainingPaymentId: freezed == remainingPaymentId
-          ? _value.remainingPaymentId
-          : remainingPaymentId // ignore: cast_nullable_to_non_nullable
-              as String?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -225,14 +226,38 @@ class _$OrderModelCopyWithImpl<$Res, $Val extends OrderModel>
           ? _value.specialRequirements
           : specialRequirements // ignore: cast_nullable_to_non_nullable
               as String?,
-      venueAddress: freezed == venueAddress
-          ? _value.venueAddress
-          : venueAddress // ignore: cast_nullable_to_non_nullable
+      addressId: freezed == addressId
+          ? _value.addressId
+          : addressId // ignore: cast_nullable_to_non_nullable
               as String?,
-      venueCoordinates: freezed == venueCoordinates
-          ? _value.venueCoordinates
-          : venueCoordinates // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+      placeImageUrl: freezed == placeImageUrl
+          ? _value.placeImageUrl
+          : placeImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      serviceImageUrl: freezed == serviceImageUrl
+          ? _value.serviceImageUrl
+          : serviceImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressFull: freezed == addressFull
+          ? _value.addressFull
+          : addressFull // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressArea: freezed == addressArea
+          ? _value.addressArea
+          : addressArea // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressNearby: freezed == addressNearby
+          ? _value.addressNearby
+          : addressNearby // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressName: freezed == addressName
+          ? _value.addressName
+          : addressName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressFloor: freezed == addressFloor
+          ? _value.addressFloor
+          : addressFloor // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -268,14 +293,17 @@ abstract class _$$OrderModelImplCopyWith<$Res>
       @JsonKey(name: 'total_amount') double totalAmount,
       @JsonKey(name: 'advance_amount') double advanceAmount,
       @JsonKey(name: 'remaining_amount') double remainingAmount,
-      @JsonKey(name: 'advance_payment_id') String? advancePaymentId,
-      @JsonKey(name: 'remaining_payment_id') String? remainingPaymentId,
       String status,
       @JsonKey(name: 'payment_status') String paymentStatus,
       @JsonKey(name: 'special_requirements') String? specialRequirements,
-      @JsonKey(name: 'venue_address') String? venueAddress,
-      @JsonKey(name: 'venue_coordinates')
-      Map<String, dynamic>? venueCoordinates,
+      @JsonKey(name: 'address_id') String? addressId,
+      @JsonKey(name: 'place_image_url') String? placeImageUrl,
+      @JsonKey(name: 'service_image_url') String? serviceImageUrl,
+      @JsonKey(name: 'address_full') String? addressFull,
+      @JsonKey(name: 'address_area') String? addressArea,
+      @JsonKey(name: 'address_nearby') String? addressNearby,
+      @JsonKey(name: 'address_name') String? addressName,
+      @JsonKey(name: 'address_floor') String? addressFloor,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -288,8 +316,6 @@ class __$$OrderModelImplCopyWithImpl<$Res>
       _$OrderModelImpl _value, $Res Function(_$OrderModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of OrderModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -307,13 +333,17 @@ class __$$OrderModelImplCopyWithImpl<$Res>
     Object? totalAmount = null,
     Object? advanceAmount = null,
     Object? remainingAmount = null,
-    Object? advancePaymentId = freezed,
-    Object? remainingPaymentId = freezed,
     Object? status = null,
     Object? paymentStatus = null,
     Object? specialRequirements = freezed,
-    Object? venueAddress = freezed,
-    Object? venueCoordinates = freezed,
+    Object? addressId = freezed,
+    Object? placeImageUrl = freezed,
+    Object? serviceImageUrl = freezed,
+    Object? addressFull = freezed,
+    Object? addressArea = freezed,
+    Object? addressNearby = freezed,
+    Object? addressName = freezed,
+    Object? addressFloor = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -374,14 +404,6 @@ class __$$OrderModelImplCopyWithImpl<$Res>
           ? _value.remainingAmount
           : remainingAmount // ignore: cast_nullable_to_non_nullable
               as double,
-      advancePaymentId: freezed == advancePaymentId
-          ? _value.advancePaymentId
-          : advancePaymentId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      remainingPaymentId: freezed == remainingPaymentId
-          ? _value.remainingPaymentId
-          : remainingPaymentId // ignore: cast_nullable_to_non_nullable
-              as String?,
       status: null == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -394,14 +416,38 @@ class __$$OrderModelImplCopyWithImpl<$Res>
           ? _value.specialRequirements
           : specialRequirements // ignore: cast_nullable_to_non_nullable
               as String?,
-      venueAddress: freezed == venueAddress
-          ? _value.venueAddress
-          : venueAddress // ignore: cast_nullable_to_non_nullable
+      addressId: freezed == addressId
+          ? _value.addressId
+          : addressId // ignore: cast_nullable_to_non_nullable
               as String?,
-      venueCoordinates: freezed == venueCoordinates
-          ? _value._venueCoordinates
-          : venueCoordinates // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+      placeImageUrl: freezed == placeImageUrl
+          ? _value.placeImageUrl
+          : placeImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      serviceImageUrl: freezed == serviceImageUrl
+          ? _value.serviceImageUrl
+          : serviceImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressFull: freezed == addressFull
+          ? _value.addressFull
+          : addressFull // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressArea: freezed == addressArea
+          ? _value.addressArea
+          : addressArea // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressNearby: freezed == addressNearby
+          ? _value.addressNearby
+          : addressNearby // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressName: freezed == addressName
+          ? _value.addressName
+          : addressName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      addressFloor: freezed == addressFloor
+          ? _value.addressFloor
+          : addressFloor // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -432,17 +478,19 @@ class _$OrderModelImpl implements _OrderModel {
       @JsonKey(name: 'total_amount') this.totalAmount = 0,
       @JsonKey(name: 'advance_amount') this.advanceAmount = 0,
       @JsonKey(name: 'remaining_amount') this.remainingAmount = 0,
-      @JsonKey(name: 'advance_payment_id') this.advancePaymentId,
-      @JsonKey(name: 'remaining_payment_id') this.remainingPaymentId,
       this.status = 'pending',
       @JsonKey(name: 'payment_status') this.paymentStatus = 'pending',
       @JsonKey(name: 'special_requirements') this.specialRequirements,
-      @JsonKey(name: 'venue_address') this.venueAddress,
-      @JsonKey(name: 'venue_coordinates')
-      final Map<String, dynamic>? venueCoordinates,
+      @JsonKey(name: 'address_id') this.addressId,
+      @JsonKey(name: 'place_image_url') this.placeImageUrl,
+      @JsonKey(name: 'service_image_url') this.serviceImageUrl,
+      @JsonKey(name: 'address_full') this.addressFull,
+      @JsonKey(name: 'address_area') this.addressArea,
+      @JsonKey(name: 'address_nearby') this.addressNearby,
+      @JsonKey(name: 'address_name') this.addressName,
+      @JsonKey(name: 'address_floor') this.addressFloor,
       @JsonKey(name: 'created_at') this.createdAt,
-      @JsonKey(name: 'updated_at') this.updatedAt})
-      : _venueCoordinates = venueCoordinates;
+      @JsonKey(name: 'updated_at') this.updatedAt});
 
   factory _$OrderModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$OrderModelImplFromJson(json);
@@ -489,12 +537,6 @@ class _$OrderModelImpl implements _OrderModel {
   @JsonKey(name: 'remaining_amount')
   final double remainingAmount;
   @override
-  @JsonKey(name: 'advance_payment_id')
-  final String? advancePaymentId;
-  @override
-  @JsonKey(name: 'remaining_payment_id')
-  final String? remainingPaymentId;
-  @override
   @JsonKey()
   final String status;
   @override
@@ -504,19 +546,30 @@ class _$OrderModelImpl implements _OrderModel {
   @JsonKey(name: 'special_requirements')
   final String? specialRequirements;
   @override
-  @JsonKey(name: 'venue_address')
-  final String? venueAddress;
-  final Map<String, dynamic>? _venueCoordinates;
+  @JsonKey(name: 'address_id')
+  final String? addressId;
   @override
-  @JsonKey(name: 'venue_coordinates')
-  Map<String, dynamic>? get venueCoordinates {
-    final value = _venueCoordinates;
-    if (value == null) return null;
-    if (_venueCoordinates is EqualUnmodifiableMapView) return _venueCoordinates;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
+  @JsonKey(name: 'place_image_url')
+  final String? placeImageUrl;
+  @override
+  @JsonKey(name: 'service_image_url')
+  final String? serviceImageUrl;
+// Address information from joined addresses table
+  @override
+  @JsonKey(name: 'address_full')
+  final String? addressFull;
+  @override
+  @JsonKey(name: 'address_area')
+  final String? addressArea;
+  @override
+  @JsonKey(name: 'address_nearby')
+  final String? addressNearby;
+  @override
+  @JsonKey(name: 'address_name')
+  final String? addressName;
+  @override
+  @JsonKey(name: 'address_floor')
+  final String? addressFloor;
   @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -526,7 +579,7 @@ class _$OrderModelImpl implements _OrderModel {
 
   @override
   String toString() {
-    return 'OrderModel(id: $id, userId: $userId, vendorId: $vendorId, customerName: $customerName, customerPhone: $customerPhone, customerEmail: $customerEmail, serviceListingId: $serviceListingId, serviceTitle: $serviceTitle, serviceDescription: $serviceDescription, bookingDate: $bookingDate, bookingTime: $bookingTime, totalAmount: $totalAmount, advanceAmount: $advanceAmount, remainingAmount: $remainingAmount, advancePaymentId: $advancePaymentId, remainingPaymentId: $remainingPaymentId, status: $status, paymentStatus: $paymentStatus, specialRequirements: $specialRequirements, venueAddress: $venueAddress, venueCoordinates: $venueCoordinates, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'OrderModel(id: $id, userId: $userId, vendorId: $vendorId, customerName: $customerName, customerPhone: $customerPhone, customerEmail: $customerEmail, serviceListingId: $serviceListingId, serviceTitle: $serviceTitle, serviceDescription: $serviceDescription, bookingDate: $bookingDate, bookingTime: $bookingTime, totalAmount: $totalAmount, advanceAmount: $advanceAmount, remainingAmount: $remainingAmount, status: $status, paymentStatus: $paymentStatus, specialRequirements: $specialRequirements, addressId: $addressId, placeImageUrl: $placeImageUrl, serviceImageUrl: $serviceImageUrl, addressFull: $addressFull, addressArea: $addressArea, addressNearby: $addressNearby, addressName: $addressName, addressFloor: $addressFloor, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -560,26 +613,34 @@ class _$OrderModelImpl implements _OrderModel {
                 other.advanceAmount == advanceAmount) &&
             (identical(other.remainingAmount, remainingAmount) ||
                 other.remainingAmount == remainingAmount) &&
-            (identical(other.advancePaymentId, advancePaymentId) ||
-                other.advancePaymentId == advancePaymentId) &&
-            (identical(other.remainingPaymentId, remainingPaymentId) ||
-                other.remainingPaymentId == remainingPaymentId) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.paymentStatus, paymentStatus) ||
                 other.paymentStatus == paymentStatus) &&
             (identical(other.specialRequirements, specialRequirements) ||
                 other.specialRequirements == specialRequirements) &&
-            (identical(other.venueAddress, venueAddress) ||
-                other.venueAddress == venueAddress) &&
-            const DeepCollectionEquality()
-                .equals(other._venueCoordinates, _venueCoordinates) &&
+            (identical(other.addressId, addressId) ||
+                other.addressId == addressId) &&
+            (identical(other.placeImageUrl, placeImageUrl) ||
+                other.placeImageUrl == placeImageUrl) &&
+            (identical(other.serviceImageUrl, serviceImageUrl) ||
+                other.serviceImageUrl == serviceImageUrl) &&
+            (identical(other.addressFull, addressFull) ||
+                other.addressFull == addressFull) &&
+            (identical(other.addressArea, addressArea) ||
+                other.addressArea == addressArea) &&
+            (identical(other.addressNearby, addressNearby) ||
+                other.addressNearby == addressNearby) &&
+            (identical(other.addressName, addressName) ||
+                other.addressName == addressName) &&
+            (identical(other.addressFloor, addressFloor) ||
+                other.addressFloor == addressFloor) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -597,20 +658,22 @@ class _$OrderModelImpl implements _OrderModel {
         totalAmount,
         advanceAmount,
         remainingAmount,
-        advancePaymentId,
-        remainingPaymentId,
         status,
         paymentStatus,
         specialRequirements,
-        venueAddress,
-        const DeepCollectionEquality().hash(_venueCoordinates),
+        addressId,
+        placeImageUrl,
+        serviceImageUrl,
+        addressFull,
+        addressArea,
+        addressNearby,
+        addressName,
+        addressFloor,
         createdAt,
         updatedAt
       ]);
 
-  /// Create a copy of OrderModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$OrderModelImplCopyWith<_$OrderModelImpl> get copyWith =>
@@ -640,14 +703,17 @@ abstract class _OrderModel implements OrderModel {
       @JsonKey(name: 'total_amount') final double totalAmount,
       @JsonKey(name: 'advance_amount') final double advanceAmount,
       @JsonKey(name: 'remaining_amount') final double remainingAmount,
-      @JsonKey(name: 'advance_payment_id') final String? advancePaymentId,
-      @JsonKey(name: 'remaining_payment_id') final String? remainingPaymentId,
       final String status,
       @JsonKey(name: 'payment_status') final String paymentStatus,
       @JsonKey(name: 'special_requirements') final String? specialRequirements,
-      @JsonKey(name: 'venue_address') final String? venueAddress,
-      @JsonKey(name: 'venue_coordinates')
-      final Map<String, dynamic>? venueCoordinates,
+      @JsonKey(name: 'address_id') final String? addressId,
+      @JsonKey(name: 'place_image_url') final String? placeImageUrl,
+      @JsonKey(name: 'service_image_url') final String? serviceImageUrl,
+      @JsonKey(name: 'address_full') final String? addressFull,
+      @JsonKey(name: 'address_area') final String? addressArea,
+      @JsonKey(name: 'address_nearby') final String? addressNearby,
+      @JsonKey(name: 'address_name') final String? addressName,
+      @JsonKey(name: 'address_floor') final String? addressFloor,
       @JsonKey(name: 'created_at') final DateTime? createdAt,
       @JsonKey(name: 'updated_at')
       final DateTime? updatedAt}) = _$OrderModelImpl;
@@ -697,12 +763,6 @@ abstract class _OrderModel implements OrderModel {
   @JsonKey(name: 'remaining_amount')
   double get remainingAmount;
   @override
-  @JsonKey(name: 'advance_payment_id')
-  String? get advancePaymentId;
-  @override
-  @JsonKey(name: 'remaining_payment_id')
-  String? get remainingPaymentId;
-  @override
   String get status;
   @override
   @JsonKey(name: 'payment_status')
@@ -711,22 +771,37 @@ abstract class _OrderModel implements OrderModel {
   @JsonKey(name: 'special_requirements')
   String? get specialRequirements;
   @override
-  @JsonKey(name: 'venue_address')
-  String? get venueAddress;
+  @JsonKey(name: 'address_id')
+  String? get addressId;
   @override
-  @JsonKey(name: 'venue_coordinates')
-  Map<String, dynamic>? get venueCoordinates;
+  @JsonKey(name: 'place_image_url')
+  String? get placeImageUrl;
+  @override
+  @JsonKey(name: 'service_image_url')
+  String? get serviceImageUrl;
+  @override // Address information from joined addresses table
+  @JsonKey(name: 'address_full')
+  String? get addressFull;
+  @override
+  @JsonKey(name: 'address_area')
+  String? get addressArea;
+  @override
+  @JsonKey(name: 'address_nearby')
+  String? get addressNearby;
+  @override
+  @JsonKey(name: 'address_name')
+  String? get addressName;
+  @override
+  @JsonKey(name: 'address_floor')
+  String? get addressFloor;
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of OrderModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$OrderModelImplCopyWith<_$OrderModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

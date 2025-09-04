@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../features/address/providers/address_providers.dart';
 import '../providers/core_providers.dart';
+import '../services/logger.dart';
 
 /// Helper class to get user location coordinates for location-based features
 class UserLocationHelper {
@@ -10,46 +11,46 @@ class UserLocationHelper {
   /// Returns a map with 'latitude' and 'longitude' keys, or null if location unavailable
   static Future<Map<String, double>?> getUserCoordinates(WidgetRef ref) async {
     try {
-      print('🎯 getUserCoordinates: Starting...');
+      Logger.debug('getUserCoordinates: Starting...', tag: 'UserLocationHelper');
       
       // First try to get coordinates from selectedAddress if it has them
       final selectedAddress = ref.read(selectedAddressProvider);
-      print('🎯 getUserCoordinates: selectedAddress = $selectedAddress');
+      Logger.debug('getUserCoordinates: selectedAddress = $selectedAddress', tag: 'UserLocationHelper');
       
       // For now, we'll get current location using the location service
       // In the future, you might want to store coordinates in the address model
       final locationService = ref.read(locationServiceProvider);
-      print('🎯 getUserCoordinates: locationService obtained');
+      Logger.debug('getUserCoordinates: locationService obtained', tag: 'UserLocationHelper');
       
       // Check if we have permission
-      print('🎯 getUserCoordinates: Checking permissions...');
+      Logger.debug('getUserCoordinates: Checking permissions...', tag: 'UserLocationHelper');
       final permission = await locationService.getPermissionStatus();
-      print('🎯 getUserCoordinates: Permission status = $permission');
+      Logger.debug('getUserCoordinates: Permission status = $permission', tag: 'UserLocationHelper');
       
       if (permission != LocationPermission.whileInUse && 
           permission != LocationPermission.always) {
-        print('🎯 getUserCoordinates: Insufficient permissions, returning null');
+        Logger.warning('getUserCoordinates: Insufficient permissions, returning null', tag: 'UserLocationHelper');
         return null;
       }
       
       // Get current position
-      print('🎯 getUserCoordinates: Getting current location...');
+      Logger.debug('getUserCoordinates: Getting current location...', tag: 'UserLocationHelper');
       final position = await locationService.getCurrentLocation();
-      print('🎯 getUserCoordinates: Position = $position');
+      Logger.debug('getUserCoordinates: Position = $position', tag: 'UserLocationHelper');
       
       if (position != null) {
         final coordinates = {
           'latitude': position.latitude,
           'longitude': position.longitude,
         };
-        print('🎯 getUserCoordinates: Returning coordinates = $coordinates');
+        Logger.success('getUserCoordinates: Returning coordinates = $coordinates', tag: 'UserLocationHelper');
         return coordinates;
       }
       
-      print('🎯 getUserCoordinates: Position is null, returning null');
+      Logger.warning('getUserCoordinates: Position is null, returning null', tag: 'UserLocationHelper');
       return null;
     } catch (e) {
-      print('🎯 getUserCoordinates: Error getting user coordinates: $e');
+      Logger.error('getUserCoordinates: Error getting user coordinates', tag: 'UserLocationHelper', error: e);
       return null;
     }
   }
@@ -75,12 +76,12 @@ class UserLocationHelper {
     double? radiusKm,
   }) async {
     try {
-      print('🎯 Getting location params...');
+      Logger.debug('Getting location params...', tag: 'UserLocationHelper');
       final coordinates = await getUserCoordinates(ref);
-      print('🎯 Location coordinates result: $coordinates');
+      Logger.debug('Location coordinates result: $coordinates', tag: 'UserLocationHelper');
       
       if (coordinates == null) {
-        print('🎯 No coordinates available, returning null');
+        Logger.warning('No coordinates available, returning null', tag: 'UserLocationHelper');
         return null;
       }
 
@@ -91,10 +92,10 @@ class UserLocationHelper {
         if (radiusKm != null) 'radiusKm': radiusKm,
       };
       
-      print('🎯 Location params created: $params');
+      Logger.success('Location params created: $params', tag: 'UserLocationHelper');
       return params;
     } catch (e) {
-      print('🎯 Error in getLocationParams: $e');
+      Logger.error('Error in getLocationParams', tag: 'UserLocationHelper', error: e);
       return null;
     }
   }

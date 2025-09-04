@@ -32,12 +32,8 @@ mixin _$OccasionModel {
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
-  /// Serializes this OccasionModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of OccasionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $OccasionModelCopyWith<OccasionModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -68,8 +64,6 @@ class _$OccasionModelCopyWithImpl<$Res, $Val extends OccasionModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of OccasionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -140,8 +134,6 @@ class __$$OccasionModelImplCopyWithImpl<$Res>
       _$OccasionModelImpl _value, $Res Function(_$OccasionModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of OccasionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -243,14 +235,12 @@ class _$OccasionModelImpl implements _OccasionModel {
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, description, iconUrl,
       colorCode, isActive, createdAt);
 
-  /// Create a copy of OccasionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$OccasionModelImplCopyWith<_$OccasionModelImpl> get copyWith =>
@@ -296,11 +286,8 @@ abstract class _OccasionModel implements OccasionModel {
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
-
-  /// Create a copy of OccasionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$OccasionModelImplCopyWith<_$OccasionModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

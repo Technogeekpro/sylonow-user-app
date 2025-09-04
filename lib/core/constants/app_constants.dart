@@ -16,6 +16,7 @@ class AppConstants {
   
   // Routes
   static const String splashRoute = '/';
+  static const String welcomeRoute = '/welcome';
   static const String loginRoute = '/login';
   static const String registerRoute = '/register';
   static const String otpVerificationRoute = '/otp-verification';

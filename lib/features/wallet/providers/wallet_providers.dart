@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/core/providers/core_providers.dart' as core;
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/wallet/models/transaction_model.dart';
 import 'package:sylonow_user/features/wallet/models/wallet_model.dart';
@@ -7,7 +7,7 @@ import 'package:sylonow_user/features/wallet/repositories/wallet_repository.dart
 
 // Wallet Repository Provider
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
-  final supabase = ref.watch(supabaseClientProvider);
+  final supabase = ref.watch(core.supabaseClientProvider);
   return WalletRepository(supabase);
 });
 

@@ -50,12 +50,8 @@ mixin _$PromotionModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this PromotionModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of PromotionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $PromotionModelCopyWith<PromotionModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -103,8 +99,6 @@ class _$PromotionModelCopyWithImpl<$Res, $Val extends PromotionModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of PromotionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -277,8 +271,6 @@ class __$$PromotionModelImplCopyWithImpl<$Res>
       _$PromotionModelImpl _value, $Res Function(_$PromotionModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of PromotionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -569,7 +561,7 @@ class _$PromotionModelImpl implements _PromotionModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -599,9 +591,7 @@ class _$PromotionModelImpl implements _PromotionModel {
         updatedAt
       ]);
 
-  /// Create a copy of PromotionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$PromotionModelImplCopyWith<_$PromotionModelImpl> get copyWith =>
@@ -662,8 +652,8 @@ abstract class _PromotionModel implements PromotionModel {
   @override
   double get discountValue;
   @override
-  String get discountType; // 'percentage', 'fixed'
-  @override
+  String get discountType;
+  @override // 'percentage', 'fixed'
   DateTime get startDate;
   @override
   DateTime get endDate;
@@ -672,8 +662,8 @@ abstract class _PromotionModel implements PromotionModel {
   @override
   bool get isFeatured;
   @override
-  String get promotionType; // 'first_time', 'seasonal', 'category_specific'
-  @override
+  String get promotionType;
+  @override // 'first_time', 'seasonal', 'category_specific'
   String? get categoryId;
   @override
   double? get minOrderValue;
@@ -688,8 +678,8 @@ abstract class _PromotionModel implements PromotionModel {
   @override
   String? get termsAndConditions;
   @override
-  List<String>? get targetUserTypes; // 'new', 'existing', 'premium'
-  @override
+  List<String>? get targetUserTypes;
+  @override // 'new', 'existing', 'premium'
   Map<String, dynamic>? get metadata;
   @override
   @JsonKey(name: 'created_at')
@@ -697,11 +687,8 @@ abstract class _PromotionModel implements PromotionModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of PromotionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$PromotionModelImplCopyWith<_$PromotionModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

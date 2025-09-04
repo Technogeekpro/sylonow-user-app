@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sylonow_user/core/widgets/gredient_elevated_button.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
@@ -253,72 +254,68 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                 const SizedBox(height: 24),
                 
                 // Info Text
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: AppTheme.primaryColor,
+                      size: 20,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: AppTheme.primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Enter your 10-digit mobile number. We support all Indian networks.',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 14,
-                            fontFamily: 'Okra',
-                          ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Enter your 10-digit mobile number. We support all Indian networks.',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 14,
+                          fontFamily: 'Okra',
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 
                 const Spacer(),
                 
                 // Continue Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendOTP,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                      disabledBackgroundColor: Colors.grey[300],
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Send Verification Code',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Okra',
-                            ),
-                          ),
-                  ),
+                // SizedBox(
+                //   width: double.infinity,
+                //   height: 56,
+                //   child: ElevatedButton(
+                //     onPressed: _isLoading ? null : _sendOTP,
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: AppTheme.primaryColor,
+                //       foregroundColor: Colors.white,
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(16),
+                //       ),
+                //       elevation: 0,
+                //       disabledBackgroundColor: Colors.grey[300],
+                //     ),
+                //     child: _isLoading
+                //         ? const SizedBox(
+                //             width: 24,
+                //             height: 24,
+                //             child: CircularProgressIndicator(
+                //               strokeWidth: 2,
+                //               color: Colors.white,
+                //             ),
+                //           )
+                //         : const Text(
+                //             'Send Verification Code',
+                //             style: TextStyle(
+                //               fontSize: 16,
+                //               fontWeight: FontWeight.w600,
+                //               fontFamily: 'Okra',
+                //             ),
+                //           ),
+                //   ),
+                // ),
+                GradientElevatedButton(
+                  text: 'Send Verification Code',
+                  icon: Icon(Icons.arrow_forward),
+                  onPressed: _isLoading ? null : _sendOTP,
                 ),
                 
                 const SizedBox(height: 20),

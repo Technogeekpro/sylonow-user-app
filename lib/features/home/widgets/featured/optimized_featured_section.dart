@@ -244,7 +244,7 @@ class _OptimizedFeaturedSectionState extends ConsumerState<OptimizedFeaturedSect
                         width: double.infinity,
                         height: double.infinity,
                         child: CachedNetworkImage(
-                          imageUrl: service.image,
+                          imageUrl: service.image ?? '',
                           fit: BoxFit.cover,
                           memCacheWidth: 400, // Optimize memory usage
                           memCacheHeight: 240,

@@ -18,122 +18,169 @@ class TheaterRepository {
     int limit = 50,
     int offset = 0,
   }) async {
-    print('🎬 DEBUG: getTheaters called');
-    
-    // TEMPORARY FIX: Return hard-coded test theaters to make the flow work
-    final testTheaters = [
-      const TheaterModel(
-        id: 'ececf43e-b0ab-49b2-831b-bc87dd409f65',
-        name: 'Elite Cinema Experience',
-        description: 'Premium private theater with multiple screens and luxury amenities',
-        address: '123 Theater Street, Entertainment District',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pinCode: '400001',
-        latitude: 19.0760,
-        longitude: 72.8777,
-        capacity: 25,
-        amenities: ['4K Projection', 'Dolby Atmos', 'Recliner Seats', 'Snack Bar', 'Air Conditioning'],
-        images: [
-          'https://images.unsplash.com/photo-1489185078074-0d83576b4d1c?w=400&q=80',
-          'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=400&q=80',
-          'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=400&q=80',
-        ],
-        hourlyRate: 3500.0,
-        rating: 4.8,
-        totalReviews: 124,
-        isActive: true,
-      ),
-      const TheaterModel(
-        id: 'ececf43e-b0ab-49b2-831b-bc87dd409f65', // Same UUID as first theater to use same time slots
-        name: 'Royal Theater Room',
-        description: 'Cozy private theater perfect for intimate gatherings',
-        address: '456 Cinema Avenue, Movie District',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pinCode: '400002',
-        latitude: 19.0850,
-        longitude: 72.8850,
-        capacity: 15,
-        amenities: ['HD Projection', 'Surround Sound', 'Comfortable Seating', 'Snacks'],
-        images: [
-          'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=400&q=80',
-          'https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=400&q=80',
-        ],
-        hourlyRate: 2500.0,
-        rating: 4.5,
-        totalReviews: 89,
-        isActive: true,
-      ),
-    ];
+    try {
+      print('🎬 DEBUG: getTheaters called with city: $city, limit: $limit, offset: $offset');
+      
+      // First try with strict conditions (is_active = true)
+      try {
+        var strictQuery = _supabase
+            .from('private_theaters')
+            .select('''
+              id,
+              name,
+              description,
+              address,
+              city,
+              state,
+              pin_code,
+              latitude,
+              longitude,
+              capacity,
+              amenities,
+              images,
+              hourly_rate,
+              rating,
+              total_reviews,
+              is_active,
+              screens
+            ''')
+            .eq('is_active', true);
 
-    print('🎬 DEBUG: Returning ${testTheaters.length} test theaters');
-    return testTheaters;
+        if (city != null) {
+          strictQuery = strictQuery.eq('city', city);
+        }
 
-    // TODO: Replace with actual database query once theater data is properly set up
-    /*
-    var query = _supabase
-        .from('service_listings')
-        .select()
-        .eq('is_active', true)
-        .ilike('category', '%theater%');
+        final strictResponse = await strictQuery
+            .order('rating', ascending: false)
+            .range(offset, offset + limit - 1);
+        
+        print('🎬 DEBUG: Found ${(strictResponse as List).length} theaters with strict conditions (is_active=true)');
+        
+        if ((strictResponse as List).isNotEmpty) {
+          return _convertToTheaterModels(strictResponse as List);
+        }
+      } catch (strictError) {
+        print('🎬 DEBUG: Error with strict conditions: $strictError');
+      }
 
-    if (city != null) {
-      query = query.eq('city', city);
+      // If no theaters found with strict conditions, try with relaxed conditions for debugging
+      try {
+        print('🎬 DEBUG: No theaters found with strict conditions, trying relaxed conditions...');
+        
+        var relaxedQuery = _supabase
+            .from('private_theaters')
+            .select('''
+              id,
+              name,
+              description,
+              address,
+              city,
+              state,
+              pin_code,
+              latitude,
+              longitude,
+              capacity,
+              amenities,
+              images,
+              hourly_rate,
+              rating,
+              total_reviews,
+              is_active,
+              screens
+            ''');
+
+        if (city != null) {
+          relaxedQuery = relaxedQuery.eq('city', city);
+        }
+
+        final relaxedResponse = await relaxedQuery
+            .order('rating', ascending: false)
+            .range(offset, offset + limit - 1);
+        
+        print('🎬 DEBUG: Found ${(relaxedResponse as List).length} theaters with relaxed conditions (no is_active filter)');
+        
+        // Debug output for each theater
+        for (final theater in relaxedResponse as List) {
+          print('🎬 DEBUG: Theater: ${theater['name']}, is_active: ${theater['is_active']}, city: ${theater['city']}');
+        }
+        
+        return _convertToTheaterModels(relaxedResponse as List);
+      } catch (relaxedError) {
+        print('🎬 DEBUG: Error even with relaxed conditions: $relaxedError');
+      }
+
+      // If still no results, check table existence
+      try {
+        print('🎬 DEBUG: Checking if private_theaters table has any data...');
+        final countResponse = await _supabase
+            .from('private_theaters')
+            .select('id')
+            .limit(50); // Get up to 50 to count manually
+        
+        print('🎬 DEBUG: Total theaters in table (first 50): ${(countResponse as List).length}');
+      } catch (countError) {
+        print('🎬 DEBUG: Error checking table count: $countError');
+      }
+      
+      return [];
+    } catch (e) {
+      print('🎬 ERROR: Failed to fetch theaters from database: $e');
+      rethrow;
     }
+  }
 
-    final response = await query
-        .order('rating', ascending: false)
-        .range(offset, offset + limit - 1);
-    
-    return (response as List)
-        .map((json) => TheaterModel.fromJson(json))
-        .toList();
-    */
+  List<TheaterModel> _convertToTheaterModels(List<dynamic> theatersData) {
+    return theatersData.map((json) {
+      // Convert to TheaterModel compatible format
+      return TheaterModel.fromJson({
+        'id': json['id']?.toString(),
+        'name': json['name']?.toString(),
+        'description': json['description'],
+        'address': json['address']?.toString(),
+        'city': json['city']?.toString(),
+        'state': json['state']?.toString(),
+        'pinCode': json['pin_code']?.toString(),
+        'latitude': _parseNumeric(json['latitude'], 0.0),
+        'longitude': _parseNumeric(json['longitude'], 0.0),
+        'capacity': json['capacity'],
+        'amenities': json['amenities'] != null ? List<String>.from(json['amenities']) : null,
+        'images': json['images'] != null ? List<String>.from(json['images']) : null,
+        'hourlyRate': _parseNumeric(json['hourly_rate'], 0.0),
+        'rating': _parseNumeric(json['rating'], 0.0),
+        'totalReviews': json['total_reviews'],
+        'isActive': json['is_active'],
+        'screens': json['screens'],
+      });
+    }).toList();
   }
 
   Future<TheaterModel?> getTheaterById(String id) async {
     try {
       print('🎬 DEBUG: Fetching theater with ID: "$id"');
-      print('🎬 DEBUG: ID length: ${id.length}');
-      print('🎬 DEBUG: ID type: ${id.runtimeType}');
-      
-      // TEMPORARY FIX: Hard-code test theater data to make the flow work
-      if (id == 'ececf43e-b0ab-49b2-831b-bc87dd409f65') {
-        print('🎬 DEBUG: Returning hard-coded Elite Cinema theater');
-        return const TheaterModel(
-          id: 'ececf43e-b0ab-49b2-831b-bc87dd409f65',
-          name: 'Elite Cinema Experience',
-          description: 'Premium private theater with multiple screens and luxury amenities',
-          address: '123 Theater Street, Entertainment District',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pinCode: '400001',
-          latitude: 19.0760,
-          longitude: 72.8777,
-          capacity: 25,
-          amenities: ['4K Projection', 'Dolby Atmos', 'Recliner Seats', 'Snack Bar', 'Air Conditioning'],
-          images: [
-            'https://images.unsplash.com/photo-1489185078074-0d83576b4d1c?w=400&q=80',
-            'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=400&q=80',
-            'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=400&q=80',
-          ],
-          hourlyRate: 3500.0,
-          rating: 4.8,
-          totalReviews: 124,
-          isActive: true,
-        );
-      }
-      
-      
-      print('🎬 DEBUG: No matching hard-coded theater found for ID: "$id"');
       
       final response = await _supabase
-          .from('service_listings')
-          .select()
+          .from('private_theaters')
+          .select('''
+            id,
+            name,
+            description,
+            address,
+            city,
+            state,
+            pin_code,
+            latitude,
+            longitude,
+            capacity,
+            amenities,
+            images,
+            hourly_rate,
+            rating,
+            total_reviews,
+            is_active,
+            screens
+          ''')
           .eq('id', id)
           .eq('is_active', true)
-          .ilike('category', '%theater%')
           .maybeSingle();
 
       if (response == null) {
@@ -141,8 +188,27 @@ class TheaterRepository {
         return null;
       }
 
-      print('🎬 DEBUG: Found theater data: $response');
-      return TheaterModel.fromJson(response);
+      print('🎬 DEBUG: Found theater data: ${response['name']}');
+      
+      return TheaterModel.fromJson({
+        'id': response['id'],
+        'name': response['name'],
+        'description': response['description'],
+        'address': response['address'],
+        'city': response['city'],
+        'state': response['state'],
+        'pinCode': response['pin_code'],
+        'latitude': _parseNumeric(response['latitude'], 0.0),
+        'longitude': _parseNumeric(response['longitude'], 0.0),
+        'capacity': response['capacity'],
+        'amenities': response['amenities'] != null ? List<String>.from(response['amenities']) : null,
+        'images': response['images'] != null ? List<String>.from(response['images']) : null,
+        'hourlyRate': _parseNumeric(response['hourly_rate'], 0.0),
+        'rating': _parseNumeric(response['rating'], 0.0),
+        'totalReviews': response['total_reviews'],
+        'isActive': response['is_active'],
+        'screens': response['screens'],
+      });
     } catch (e) {
       print('🎬 DEBUG: Error fetching theater: $e');
       return null;
@@ -150,18 +216,60 @@ class TheaterRepository {
   }
 
   Future<List<TheaterModel>> searchTheaters(String query) async {
-    final response = await _supabase
-        .from('service_listings')
-        .select()
-        .eq('is_active', true)
-        .ilike('category', '%theater%')
-        .or('title.ilike.%$query%,description.ilike.%$query%,address.ilike.%$query%')
-        .order('rating', ascending: false)
-        .limit(20);
+    try {
+      final response = await _supabase
+          .from('private_theaters')
+          .select('''
+            id,
+            name,
+            description,
+            address,
+            city,
+            state,
+            pin_code,
+            latitude,
+            longitude,
+            capacity,
+            amenities,
+            images,
+            hourly_rate,
+            rating,
+            total_reviews,
+            is_active,
+            screens
+          ''')
+          .eq('is_active', true)
+          .or('name.ilike.%$query%,description.ilike.%$query%,address.ilike.%$query%,city.ilike.%$query%')
+          .order('rating', ascending: false)
+          .limit(20);
 
-    return (response as List)
-        .map((json) => TheaterModel.fromJson(json))
+          return (response as List)
+        .map((json) {
+          return TheaterModel.fromJson({
+            'id': json['id']?.toString(),
+            'name': json['name']?.toString(),
+            'description': json['description'],
+            'address': json['address']?.toString(),
+            'city': json['city']?.toString(),
+            'state': json['state']?.toString(),
+            'pinCode': json['pin_code']?.toString(),
+            'latitude': _parseNumeric(json['latitude'], 0.0),
+            'longitude': _parseNumeric(json['longitude'], 0.0),
+            'capacity': json['capacity'],
+            'amenities': json['amenities'] != null ? List<String>.from(json['amenities']) : null,
+            'images': json['images'] != null ? List<String>.from(json['images']) : null,
+            'hourlyRate': _parseNumeric(json['hourly_rate'], 0.0),
+            'rating': _parseNumeric(json['rating'], 0.0),
+            'totalReviews': json['total_reviews'],
+            'isActive': json['is_active'],
+            'screens': json['screens'],
+          });
+        })
         .toList();
+    } catch (e) {
+      print('🎬 ERROR: Failed to search theaters: $e');
+      rethrow;
+    }
   }
 
   Future<List<TheaterModel>> getNearbyTheaters({
@@ -210,16 +318,143 @@ class TheaterRepository {
 
   /// Fetches add-ons available for a specific theater
   Future<List<AddOnModel>> getTheaterAddOns(String theaterId) async {
-    final response = await _supabase
-        .from('add_ons')
-        .select()
-        .eq('theater_id', theaterId)
-        .eq('is_available', true)
-        .order('category, price');
+    try {
+      print('🎬 DEBUG: Fetching add-ons for theater: $theaterId');
+      
+      // First get the theater's owner_id
+      final theaterResponse = await _supabase
+          .from('private_theaters')
+          .select('owner_id')
+          .eq('id', theaterId)
+          .single();
 
-    return (response as List)
-        .map((json) => AddOnModel.fromJson(json))
-        .toList();
+      final ownerId = theaterResponse['owner_id'];
+      print('🎬 DEBUG: Theater owner_id: $ownerId');
+
+      if (ownerId == null) {
+        print('🎬 DEBUG: No owner_id found for theater, returning empty list');
+        return [];
+      }
+
+      // Query add-ons with vendor_id filter
+      final response = await _supabase
+          .from('add_ons')
+          .select()
+          .or('vendor_id.eq.$ownerId,theater_id.eq.$theaterId,vendor_id.is.null') // Include vendor-specific, theater-specific, and global add-ons
+          .eq('is_active', true)
+          .order('category, price');
+
+      print('🎬 DEBUG: Found ${(response as List).length} add-ons for theater owner');
+      
+      // Debug: Show which add-ons were found
+      for (final addon in response as List) {
+        print('🎬 DEBUG: Add-on: ${addon['name']}, vendor_id: ${addon['vendor_id']}, theater_id: ${addon['theater_id']}, category: ${addon['category']}');
+      }
+
+      return (response as List)
+          .map((json) => AddOnModel.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('🎬 ERROR: Failed to fetch theater add-ons: $e');
+      return [];
+    }
+  }
+
+  /// Fetches add-ons available for a specific service listing
+  Future<List<AddOnModel>> getServiceAddOns(String serviceId) async {
+    try {
+      print('🎬 Attempting to fetch service add-ons for service: $serviceId');
+      
+      // Step 1: Get the vendor_id from the service_listings table
+      // The service_add_ons table is linked to vendors, not directly to service listings
+      String? vendorId;
+      
+      try {
+        final serviceResponse = await _supabase
+            .from('service_listings')
+            .select('vendor_id')
+            .eq('id', serviceId)
+            .single();
+            
+        vendorId = serviceResponse['vendor_id'] as String?;
+        print('🎬 Found vendor_id: $vendorId for service: $serviceId');
+      } catch (e) {
+        print('🎬 ❌ Failed to get vendor_id for service: $e');
+      }
+      
+      // Step 2: If we have a vendor_id, get add-ons for that vendor
+      if (vendorId != null) {
+        try {
+          final response = await _supabase
+              .from('service_add_ons')
+              .select()
+              .eq('vendor_id', vendorId)
+              .eq('is_available', true)
+              .order('sort_order, name');
+
+          if (response.isNotEmpty) {
+            print('🎬 ✅ Found ${response.length} service add-ons for vendor: $vendorId');
+            print('🎬 Sample add-on: ${response[0]}');
+            
+            // Convert service_add_ons data to AddOnModel format
+            return (response as List).map((json) {
+              // Map service_add_ons schema to AddOnModel schema
+              final addOnData = <String, dynamic>{
+                'id': json['id'],
+                'name': json['name'],
+                'description': json['description'],
+                'price': (json['discount_price'] ?? json['original_price'] ?? 0.0).toDouble(),
+                'category': json['type'] ?? 'general',
+                'image_url': (json['images'] != null && (json['images'] as List).isNotEmpty) 
+                    ? (json['images'] as List).first 
+                    : null,
+                'is_active': json['is_available'] ?? true,
+                'created_at': json['created_at'],
+                'updated_at': json['updated_at'],
+              };
+              return AddOnModel.fromJson(addOnData);
+            }).toList();
+          } else {
+            print('🎬 No service add-ons found for vendor: $vendorId');
+          }
+          
+        } catch (e1) {
+          print('🎬 ❌ service_add_ons query by vendor_id failed: $e1');
+        }
+      }
+      
+      // Fallback: Use general add-ons from add_ons table
+      // Get non-theater-specific add-ons that could apply to services
+      print('🎬 🔄 Falling back to general add-ons from add_ons table');
+      
+      try {
+        final fallbackResponse = await _supabase
+            .from('add_ons')
+            .select()
+            .eq('is_active', true)
+            .or('theater_id.is.null,vendor_id.is.null')
+            .order('category, price')
+            .limit(8); // Reasonable limit for checkout screen
+
+        if (fallbackResponse.isNotEmpty) {
+          print('🎬 ✅ Using ${fallbackResponse.length} general add-ons as fallback');
+          return (fallbackResponse as List)
+              .map((json) => AddOnModel.fromJson(json))
+              .toList();
+        } else {
+          print('🎬 ⚠️ No general add-ons available either');
+        }
+      } catch (fallbackError) {
+        print('🎬 💥 Fallback to add_ons table also failed: $fallbackError');
+      }
+      
+      print('🎬 ❌ No add-ons found for service: $serviceId');
+      return [];
+      
+    } catch (e) {
+      print('🎬 💥 CRITICAL ERROR in getServiceAddOns: $e');
+      return [];
+    }
   }
 
   /// Fetches all available special services
@@ -261,9 +496,9 @@ class TheaterRepository {
       print('🎬 Fetching time slots for theater: $theaterId, date: $date');
       print('🎬 Formatted date for query: $formattedDate');
       
-      // Query theater_slot_bookings table which has the actual date-specific bookings
+      // Query theater_time_slot_bookings table which has the actual date-specific bookings
       final response = await _supabase
-          .from('theater_slot_bookings')
+          .from('theater_time_slot_bookings')
           .select('''
             id,
             theater_id,
@@ -486,7 +721,14 @@ class TheaterRepository {
             hourly_rate,
             is_active,
             created_at,
-            updated_at
+            updated_at,
+            total_capacity,
+            allowed_capacity,
+            charges_extra_per_person,
+            video_url,
+            images,
+            original_hourly_price,
+            discounted_hourly_price
           ''')
           .eq('theater_id', theaterId)
           .eq('is_active', true)
@@ -519,22 +761,19 @@ class TheaterRepository {
       
       // First check for existing bookings on this date
       final existingBookings = await _supabase
-          .from('theater_slot_bookings')
-          .select('screen_id, start_time, end_time, status')
-          .eq('theater_id', actualTheaterId)
-          .eq('booking_date', formattedDate)
-          .neq('status', 'cancelled');
+          .from('theater_time_slot_bookings')
+          .select('time_slot_id, booked_date')
+          .eq('booked_date', formattedDate);
 
       print('🎬 Existing bookings: ${(existingBookings as List).length}');
 
-      // Get all available time slots for this theater and date
+      // Get all available time slots for this theater (no date filtering needed as slots are templates)
       final timeSlotsResponse = await _supabase
           .from('theater_time_slots')
           .select('''
             id,
             theater_id,
             screen_id,
-            slot_date,
             start_time,
             end_time,
             base_price,
@@ -553,11 +792,14 @@ class TheaterRepository {
               screen_number,
               capacity,
               amenities,
-              hourly_rate
+              original_hourly_price,
+              discounted_hourly_price,
+              total_capacity,
+              allowed_capacity,
+              charges_extra_per_person
             )
           ''')
           .eq('theater_id', actualTheaterId)
-          .eq('slot_date', formattedDate)
           .eq('is_active', true)
           .eq('is_available', true)
           .order('start_time');
@@ -571,26 +813,26 @@ class TheaterRepository {
 
       // Process time slots and mark unavailable ones
       final List<TheaterTimeSlotWithScreenModel> availableSlots = [];
-      final Set<String> bookedSlotKeys = {};
+      final Set<String> bookedTimeSlotIds = {};
 
-      // Create set of booked slot keys (screen_id + start_time)
+      // Create set of booked time slot IDs
       for (final booking in existingBookings as List) {
-        if (booking['status'] == 'booked' || booking['status'] == 'blocked') {
-          bookedSlotKeys.add('${booking['screen_id']}-${booking['start_time']}');
-        }
+        bookedTimeSlotIds.add(booking['time_slot_id'].toString());
       }
 
       for (final slotData in timeSlotsResponse as List) {
         final screenData = slotData['theater_screens'];
-        final slotKey = '${slotData['screen_id']}-${slotData['start_time']}';
+        final timeSlotId = slotData['id'].toString();
         
-        // Skip if this specific screen-time combination is booked
-        if (bookedSlotKeys.contains(slotKey)) {
+        // Skip if this time slot is already booked
+        if (bookedTimeSlotIds.contains(timeSlotId)) {
           continue;
         }
 
-        // Calculate dynamic price
-        final slotPrice = _calculateDynamicSlotPrice(slotData, formattedDate);
+        // Calculate pricing from theater_screens table
+        final double originalPrice = _parseNumeric(screenData['original_hourly_price'], 1500.0);
+        final double discountedPrice = _parseNumeric(screenData['discounted_hourly_price'], 0.0);
+        final double slotPrice = discountedPrice > 0 ? discountedPrice : originalPrice;
 
         print('🎬 DEBUG: Creating slot model for ${slotData['start_time']} - ${slotData['end_time']}');
         
@@ -599,7 +841,7 @@ class TheaterRepository {
           'id': slotData['id'],
           'theater_id': slotData['theater_id'],
           'screen_id': slotData['screen_id'],
-          'slot_date': slotData['slot_date'],
+          'slot_date': formattedDate, // Use the requested date instead of database field
           'start_time': slotData['start_time'],
           'end_time': slotData['end_time'],
           'base_price': slotPrice,
@@ -618,7 +860,7 @@ class TheaterRepository {
           'screen_number': screenData['screen_number'],
           'screen_capacity': screenData['capacity'],
           'screen_amenities': List<String>.from(screenData['amenities'] ?? []),
-          'screen_hourly_rate': _parseNumeric(screenData['hourly_rate'], 0.0),
+          'screen_hourly_rate': slotPrice, // Use calculated price for backward compatibility
         });
 
         print('🎬 DEBUG: Successfully created slot model for ${slotData['start_time']}');
@@ -666,31 +908,102 @@ class TheaterRepository {
     }
   }
 
-  /// Calculates dynamic pricing based on day type and time
-  double _calculateDynamicSlotPrice(Map<String, dynamic> slotData, String date) {
+  /// Fetches time slots directly from theater_time_slots with booking status checking
+  Future<List<Map<String, dynamic>>> getTheaterTimeSlotsDirectWithBookingStatus(String theaterId, String date) async {
     try {
-      final basePrice = _parseNumeric(slotData['base_price'], 1500.0);
-      final pricePerHour = _parseNumeric(slotData['price_per_hour'], 500.0);
-      final maxDuration = slotData['max_duration_hours'] ?? 3;
-      
-      // Determine day type multiplier
-      final slotDate = DateTime.parse(date);
-      final isWeekend = slotDate.weekday == DateTime.saturday || slotDate.weekday == DateTime.sunday;
-      
-      double multiplier = 1.0;
-      if (isWeekend) {
-        multiplier = _parseNumeric(slotData['weekend_multiplier'], 1.2);
-      } else {
-        multiplier = _parseNumeric(slotData['weekday_multiplier'], 1.0);
+      // Normalize date to YYYY-MM-DD
+      String formattedDate = date;
+      if (formattedDate.contains('T')) {
+        formattedDate = formattedDate.split('T')[0];
       }
-      
-      // TODO: Add holiday detection logic here
-      
-      final totalPrice = (basePrice + (pricePerHour * maxDuration)) * multiplier;
-      return totalPrice;
+
+      print('🎬 Fetching direct time slots for theater: $theaterId, date: $formattedDate');
+
+      // Get time slots with screen information
+      final timeSlotsResponse = await _supabase
+          .from('theater_time_slots')
+          .select('''
+            id,
+            theater_id,
+            screen_id,
+            start_time,
+            end_time,
+            is_available,
+            is_active,
+            base_price,
+            price_per_hour,
+            theater_screens!inner(
+              screen_name,
+              screen_number,
+              capacity,
+              amenities,
+              original_hourly_price,
+              discounted_hourly_price,
+              total_capacity,
+              allowed_capacity,
+              charges_extra_per_person
+            )
+          ''')
+          .eq('theater_id', theaterId)
+          .eq('is_active', true)
+          .eq('is_available', true)
+          .order('start_time');
+
+      print('🎬 Found ${(timeSlotsResponse as List).length} time slots');
+
+      // Get booked time slot IDs for this date
+      final bookedSlotsResponse = await _supabase
+          .from('theater_time_slot_bookings')
+          .select('time_slot_id')
+          .eq('booked_date', formattedDate);
+
+      final Set<String> bookedSlotIds = {};
+      for (final booking in bookedSlotsResponse as List) {
+        bookedSlotIds.add(booking['time_slot_id'].toString());
+      }
+
+      print('🎬 Found ${bookedSlotIds.length} booked slots for date: $formattedDate');
+
+      // Process slots with booking status and pricing
+      final List<Map<String, dynamic>> processedSlots = [];
+      for (final slotData in timeSlotsResponse as List) {
+        final screenData = slotData['theater_screens'];
+        final String slotId = slotData['id'];
+        final bool isBooked = bookedSlotIds.contains(slotId);
+
+        // Calculate pricing from theater_screens table
+        final double originalPrice = _parseNumeric(screenData['original_hourly_price'], 500.0);
+        final double discountedPrice = _parseNumeric(screenData['discounted_hourly_price'], 0.0);
+        final double finalPrice = discountedPrice > 0 ? discountedPrice : originalPrice;
+        final bool hasDiscount = discountedPrice > 0 && discountedPrice < originalPrice;
+
+        processedSlots.add({
+          'id': slotId,
+          'theater_id': slotData['theater_id'],
+          'screen_id': slotData['screen_id'],
+          'start_time': slotData['start_time'],
+          'end_time': slotData['end_time'],
+          'is_available': !isBooked && (slotData['is_available'] ?? true),
+          'is_booked': isBooked,
+          'screen_name': screenData['screen_name'],
+          'screen_number': screenData['screen_number'],
+          'screen_capacity': screenData['capacity'],
+          'original_hourly_price': originalPrice,
+          'discounted_hourly_price': discountedPrice,
+          'final_price': finalPrice,
+          'has_discount': hasDiscount,
+          'total_capacity': _parseNumeric(screenData['total_capacity'], 0),
+          'allowed_capacity': _parseNumeric(screenData['allowed_capacity'], 0),
+          'charges_extra_per_person': _parseNumeric(screenData['charges_extra_per_person'], 0.0),
+          'screen_amenities': List<String>.from(screenData['amenities'] ?? []),
+        });
+      }
+
+      print('🎬 Processed ${processedSlots.length} time slots with booking status');
+      return processedSlots;
     } catch (e) {
-      print('🎬 Error calculating dynamic price: $e');
-      return 2500.0; // fallback
+      print('🎬 Error fetching direct time slots with booking status: $e');
+      rethrow;
     }
   }
 
@@ -726,58 +1039,42 @@ class TheaterRepository {
     try {
       print('🎬 Booking time slot with screen: $screenId, slot: $timeSlotId');
       
-      // Create booking record
+      // Create booking record (only use columns that exist in the actual table)
       final bookingResponse = await _supabase
-          .from('theater_slot_bookings')
+          .from('theater_time_slot_bookings')
           .insert({
-            'theater_id': theaterId,
-            'screen_id': screenId,
             'time_slot_id': timeSlotId,
-            'booking_date': bookingDate,
-            'start_time': startTime,
-            'end_time': endTime,
-            'status': 'booked',
-            'slot_price': slotPrice,
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
+            'booked_date': bookingDate,
           })
           .select('''
             id,
-            theater_id,
-            screen_id,
             time_slot_id,
-            booking_date,
-            start_time,
-            end_time,
-            status,
-            booking_id,
-            slot_price,
+            booked_date,
             created_at,
-            updated_at,
-            theater_screens!inner(
-              screen_name,
-              screen_number,
-              capacity,
-              amenities
-            )
+            updated_at
           ''')
           .single();
 
       print('🎬 Booking created successfully: ${bookingResponse['id']}');
 
-      final screenData = bookingResponse['theater_screens'];
+      // Fetch screen data separately since booking table has limited columns
+      final screenData = await _supabase
+          .from('theater_screens')
+          .select('screen_name, screen_number, capacity, amenities')
+          .eq('id', screenId)
+          .single();
       
       return TheaterBookingWithScreenModel.fromJson({
         'id': bookingResponse['id'],
-        'theater_id': bookingResponse['theater_id'],
-        'screen_id': bookingResponse['screen_id'],
+        'theater_id': theaterId,
+        'screen_id': screenId,
         'time_slot_id': bookingResponse['time_slot_id'],
-        'booking_date': bookingResponse['booking_date'],
-        'start_time': bookingResponse['start_time'],
-        'end_time': bookingResponse['end_time'],
-        'status': bookingResponse['status'],
-        'booking_id': bookingResponse['booking_id'],
-        'slot_price': _parseNumeric(bookingResponse['slot_price'], 0.0),
+        'booking_date': bookingResponse['booked_date'],
+        'start_time': startTime,
+        'end_time': endTime,
+        'status': 'booked',
+        'booking_id': null,
+        'slot_price': slotPrice,
         'created_at': bookingResponse['created_at'],
         'updated_at': bookingResponse['updated_at'],
         'screen_name': screenData['screen_name'],
@@ -788,6 +1085,234 @@ class TheaterRepository {
     } catch (e) {
       print('🎬 Error booking time slot with screen: $e');
       rethrow;
+    }
+  }
+
+  /// Gets screen-specific time slots with availability checking
+  Future<List<Map<String, dynamic>>> getScreenTimeSlotsWithAvailability(String screenId, String date) async {
+    try {
+      print('🎬 Fetching time slots for screen: $screenId, date: $date');
+
+      // Normalize date to YYYY-MM-DD
+      String formattedDate = date;
+      if (formattedDate.contains('T')) {
+        formattedDate = formattedDate.split('T')[0];
+      }
+
+      // Get screen details first - focusing on pricing columns
+      final screenData = await _supabase
+          .from('theater_screens')
+          .select('''
+            id,
+            screen_name,
+            screen_number,
+            capacity,
+            amenities,
+            original_hourly_price,
+            discounted_hourly_price,
+            total_capacity,
+            allowed_capacity,
+            charges_extra_per_person
+          ''')
+          .eq('id', screenId)
+          .single();
+
+      // Get template time slots for this screen from theater_time_slots
+      final List<dynamic> timeSlotsResponse = await _supabase
+          .from('theater_time_slots')
+          .select('''
+            id,
+            theater_id,
+            screen_id,
+            start_time,
+            end_time,
+            is_available,
+            is_active,
+            base_price,
+            price_per_hour,
+            weekday_multiplier,
+            weekend_multiplier,
+            holiday_multiplier,
+            max_duration_hours,
+            min_duration_hours
+          ''')
+          .eq('screen_id', screenId)
+          .eq('is_active', true)
+          .order('start_time');
+
+      if (timeSlotsResponse.isEmpty) {
+        print('🎬 No template time slots found for screen: $screenId');
+        return [];
+      }
+
+      // Check bookings for these slots on the given date
+      final List<String> slotIds = timeSlotsResponse.map((e) => e['id'] as String).toList();
+
+      // If there are many slots, split into batches to avoid query limits
+      final Set<String> bookedSlotIds = <String>{};
+      const int batchSize = 100;
+      for (int i = 0; i < slotIds.length; i += batchSize) {
+        final batch = slotIds.sublist(i, i + batchSize > slotIds.length ? slotIds.length : i + batchSize);
+        final List<dynamic> bookings = await _supabase
+            .from('theater_time_slot_bookings')
+            .select('time_slot_id')
+            .eq('booked_date', formattedDate)
+            .filter('time_slot_id', 'in', batch);
+        for (final row in bookings) {
+          final id = row['time_slot_id'] as String?;
+          if (id != null) {
+            bookedSlotIds.add(id);
+          }
+        }
+      }
+
+      print('🎬 Screen template slots: ${timeSlotsResponse.length}, booked on date: ${bookedSlotIds.length}');
+
+      // Build processed slots list
+      final List<Map<String, dynamic>> processedSlots = [];
+      for (final slot in timeSlotsResponse) {
+        final String id = slot['id'] as String;
+        final String startTime = slot['start_time'];
+        final String endTime = slot['end_time'];
+        final bool slotFlagAvailable = (slot['is_available'] as bool?) ?? true;
+        final bool isBooked = bookedSlotIds.contains(id);
+        final bool isAvailable = slotFlagAvailable && !isBooked;
+
+        // Use discounted price if available, otherwise original price
+        final double originalPrice = _parseNumeric(screenData['original_hourly_price'], 1500.0);
+        final double discountedPrice = _parseNumeric(screenData['discounted_hourly_price'], 0.0);
+        final double finalPrice = discountedPrice > 0 ? discountedPrice : originalPrice;
+        
+        processedSlots.add({
+          'id': id,
+          'start_time': startTime,
+          'end_time': endTime,
+          'label': null,
+          'is_available': isAvailable,
+          'screen_id': screenId,
+          'screen_name': screenData['screen_name'],
+          'screen_capacity': screenData['capacity'],
+          'original_hourly_price': originalPrice,
+          'discounted_hourly_price': discountedPrice,
+          'hourly_rate': finalPrice, // For backward compatibility
+          'final_price': finalPrice,
+          'has_discount': discountedPrice > 0 && discountedPrice < originalPrice,
+          'screen_amenities': List<String>.from(screenData['amenities'] ?? []),
+          'total_capacity': _parseNumeric(screenData['total_capacity'], 0),
+          'allowed_capacity': _parseNumeric(screenData['allowed_capacity'], 0),
+          'charges_extra_per_person': _parseNumeric(screenData['charges_extra_per_person'], 0.0),
+        });
+      }
+
+      return processedSlots;
+    } catch (e) {
+      print('🎬 Error fetching screen time slots: $e');
+      rethrow;
+    }
+  }
+
+  // _timesOverlap helper removed as availability now derives from bookings table directly
+
+  /// DEBUG METHOD: Get raw theaters data for debugging (includes inactive theaters)
+  Future<List<Map<String, dynamic>>> getTheatersRaw() async {
+    try {
+      print('🎬 DEBUG: Getting raw theaters data for debugging...');
+      
+      final response = await _supabase
+          .from('private_theaters')
+          .select('*')
+          .order('created_at', ascending: false);
+      
+      print('🎬 DEBUG: Raw theaters count: ${(response as List).length}');
+      
+      for (int i = 0; i < (response as List).length && i < 5; i++) {
+        final theater = (response as List)[i];
+        print('🎬 DEBUG: Theater $i: name="${theater['name']}", is_active=${theater['is_active']}, city="${theater['city']}"');
+      }
+      
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      print('🎬 DEBUG: Error getting raw theaters data: $e');
+      return [];
+    }
+  }
+
+  /// DEBUG METHOD: Create sample theater data if table is empty
+  Future<void> createSampleTheaterData() async {
+    try {
+      print('🎬 DEBUG: Creating sample theater data...');
+      
+      final sampleTheaters = [
+        {
+          'name': 'Luxury Cinema Hub',
+          'description': 'Premium private theater experience with luxury seating',
+          'address': '123 Entertainment District',
+          'city': 'Mumbai',
+          'state': 'Maharashtra',
+          'pin_code': '400001',
+          'latitude': 19.0760,
+          'longitude': 72.8777,
+          'capacity': 15,
+          'amenities': ['Dolby Atmos', 'Luxury Seats', 'AC', 'Snacks'],
+          'images': ['https://example.com/theater1.jpg'],
+          'hourly_rate': 2500.0,
+          'rating': 4.8,
+          'total_reviews': 150,
+          'is_active': true,
+          'screens': 2,
+        },
+        {
+          'name': 'Elite Movie Lounge',
+          'description': 'Cozy private screening room perfect for small groups',
+          'address': '456 Film Street',
+          'city': 'Mumbai',
+          'state': 'Maharashtra',
+          'pin_code': '400002',
+          'latitude': 19.0896,
+          'longitude': 72.8656,
+          'capacity': 8,
+          'amenities': ['HD Projector', 'Surround Sound', 'Comfortable Sofas'],
+          'images': ['https://example.com/theater2.jpg'],
+          'hourly_rate': 1800.0,
+          'rating': 4.5,
+          'total_reviews': 89,
+          'is_active': true,
+          'screens': 1,
+        },
+        {
+          'name': 'Royal Theatre Experience',
+          'description': 'Grand theater with royal ambiance and premium facilities',
+          'address': '789 Cinema Boulevard',
+          'city': 'Delhi',
+          'state': 'Delhi',
+          'pin_code': '110001',
+          'latitude': 28.6139,
+          'longitude': 77.2090,
+          'capacity': 20,
+          'amenities': ['4K Projection', 'Royal Seating', 'Mini Bar', 'Valet Service'],
+          'images': ['https://example.com/theater3.jpg'],
+          'hourly_rate': 3500.0,
+          'rating': 4.9,
+          'total_reviews': 234,
+          'is_active': true,
+          'screens': 3,
+        }
+      ];
+
+      for (final theaterData in sampleTheaters) {
+        try {
+          await _supabase
+              .from('private_theaters')
+              .insert(theaterData);
+          print('🎬 DEBUG: Created theater: ${theaterData['name']}');
+        } catch (e) {
+          print('🎬 DEBUG: Error creating theater ${theaterData['name']}: $e');
+        }
+      }
+      
+      print('🎬 DEBUG: Sample theater data creation completed');
+    } catch (e) {
+      print('🎬 DEBUG: Error in createSampleTheaterData: $e');
     }
   }
 }

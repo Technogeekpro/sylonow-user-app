@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/core/providers/core_providers.dart' as core;
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:sylonow_user/features/theater/models/decoration_model.dart';
@@ -10,10 +10,12 @@ import 'package:sylonow_user/features/theater/models/cake_model.dart';
 import 'package:sylonow_user/features/theater/models/theater_time_slot_model.dart';
 import 'package:sylonow_user/features/theater/models/theater_screen_model.dart';
 import 'package:sylonow_user/features/theater/repositories/theater_repository.dart';
+import 'package:sylonow_user/features/theater/models/theater_booking_model.dart';
+import 'package:sylonow_user/features/theater/repositories/theater_booking_repository.dart';
 
 // Repository provider
 final theaterRepositoryProvider = Provider<TheaterRepository>((ref) {
-  final supabase = ref.watch(supabaseClientProvider);
+  final supabase = ref.watch(core.supabaseClientProvider);
   return TheaterRepository(supabase);
 });
 
@@ -105,6 +107,26 @@ final theaterTimeSlotsWithScreensProvider = FutureProvider.family.autoDispose<Li
   
   final repository = ref.watch(theaterRepositoryProvider);
   return repository.getTheaterTimeSlotsWithScreens(theaterId, date);
+});
+
+// Screen-specific time slots provider with availability checking
+final screenTimeSlotsProvider = FutureProvider.family.autoDispose<List<Map<String, dynamic>>, String>((ref, key) async {
+  final parts = key.split('|');
+  final screenId = parts[0];
+  final date = parts[1];
+  
+  final repository = ref.watch(theaterRepositoryProvider);
+  return repository.getScreenTimeSlotsWithAvailability(screenId, date);
+});
+
+// Direct theater time slots provider with booking status from theater_time_slots table
+final theaterTimeSlotsDirectProvider = FutureProvider.family.autoDispose<List<Map<String, dynamic>>, String>((ref, key) async {
+  final parts = key.split('|');
+  final theaterId = parts[0];
+  final date = parts[1];
+  
+  final repository = ref.watch(theaterRepositoryProvider);
+  return repository.getTheaterTimeSlotsDirectWithBookingStatus(theaterId, date);
 });
 
 // Theater booking selection state provider for managing the booking flow
@@ -258,3 +280,76 @@ class TheaterBookingSelectionNotifier extends StateNotifier<TheaterBookingSelect
     return total;
   }
 }
+
+// ===== THEATER BOOKING PROVIDERS =====
+
+// Theater booking repository provider
+final theaterBookingRepositoryProvider = Provider<TheaterBookingRepository>((ref) {
+  final supabase = ref.watch(core.supabaseClientProvider);
+  return TheaterBookingRepository(supabase);
+});
+
+// User theater bookings provider
+final userTheaterBookingsProvider = FutureProvider<List<TheaterBookingModel>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+  
+  final repository = ref.watch(theaterBookingRepositoryProvider);
+  return repository.getUserTheaterBookings(user.id);
+});
+
+// Theater booking by ID provider
+final theaterBookingByIdProvider = FutureProvider.family<TheaterBookingModel?, String>((ref, bookingId) async {
+  final repository = ref.watch(theaterBookingRepositoryProvider);
+  return repository.getTheaterBookingById(bookingId);
+});
+
+// Theater booking statistics provider
+final theaterBookingStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return {};
+  
+  final repository = ref.watch(theaterBookingRepositoryProvider);
+  return repository.getUserTheaterBookingStats(user.id);
+});
+
+// Theater booking cancellation notifier
+class TheaterBookingCancellationNotifier extends StateNotifier<AsyncValue<void>> {
+  final TheaterBookingRepository _repository;
+
+  TheaterBookingCancellationNotifier(this._repository) : super(const AsyncValue.data(null));
+
+  Future<void> cancelBooking(String bookingId) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      await _repository.cancelTheaterBooking(bookingId);
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+    }
+  }
+
+  void reset() {
+    state = const AsyncValue.data(null);
+  }
+}
+
+final theaterBookingCancellationProvider = StateNotifierProvider<TheaterBookingCancellationNotifier, AsyncValue<void>>((ref) {
+  final repository = ref.watch(theaterBookingRepositoryProvider);
+  return TheaterBookingCancellationNotifier(repository);
+});
+
+// ===== DEBUG PROVIDERS =====
+
+// Debug provider to get raw theater data
+final debugTheatersRawProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final repository = ref.watch(theaterRepositoryProvider);
+  return repository.getTheatersRaw();
+});
+
+// Debug provider to create sample theater data
+final debugCreateSampleTheatersProvider = FutureProvider<void>((ref) async {
+  final repository = ref.watch(theaterRepositoryProvider);
+  await repository.createSampleTheaterData();
+});

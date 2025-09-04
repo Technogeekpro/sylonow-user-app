@@ -8,13 +8,18 @@ import 'package:sylonow_user/core/utils/user_location_helper.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
 
-class NearbyServicesScreen extends ConsumerWidget {
+class NearbyServicesScreen extends ConsumerStatefulWidget {
   const NearbyServicesScreen({super.key});
 
   static const String routeName = '/nearby-services';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NearbyServicesScreen> createState() => _NearbyServicesScreenState();
+}
+
+class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -73,6 +78,60 @@ class NearbyServicesScreen extends ConsumerWidget {
   }
 
   Widget _buildServicesGrid(List<ServiceListingModel> services, {bool isLocationBased = false}) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final service = services[index];
+                return _buildServiceCard(service, isLocationBased: isLocationBased);
+              },
+              childCount: services.length,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServicesContent(Map<String, dynamic>? locationParams) {
+    if (locationParams == null) {
+      // Fallback to featured services
+      final featuredServicesState = ref.watch(featuredServicesProvider);
+      return featuredServicesState.services.isEmpty
+          ? _buildShimmerGrid()
+          : _buildServicesGrid(featuredServicesState.services, isLocationBased: false);
+    }
+
+    // Use location-based services
+    final servicesAsync = ref.watch(
+      popularNearbyServicesWithLocationProvider(locationParams)
+    );
+    
+    return servicesAsync.when(
+      data: (services) {
+        return services.isEmpty 
+            ? _buildEmptyState() 
+            : _buildServicesGrid(services, isLocationBased: true);
+      },
+      loading: () => _buildShimmerGrid(),
+      error: (error, stack) {
+        print('Error loading nearby services: $error');
+        return _buildErrorState();
+      },
+    );
+  }
+
+  Widget _buildShimmerGrid() {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -81,11 +140,8 @@ class NearbyServicesScreen extends ConsumerWidget {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: services.length,
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return _buildServiceCard(service, isLocationBased: isLocationBased);
-      },
+      itemCount: 6,
+      itemBuilder: (context, index) => _buildLoadingCard(),
     );
   }
 
@@ -94,13 +150,13 @@ class NearbyServicesScreen extends ConsumerWidget {
       builder: (context) => GestureDetector(
         onTap: () {
           context.push(
-            '/service/\${service.id}',
+            '/service/${service.id}',
             extra: {
               'serviceName': service.name,
               'price': service.displayOfferPrice != null
-                  ? '₹\${service.displayOfferPrice!.round()}'
+                  ? '₹${service.displayOfferPrice!.round()}'
                   : service.displayOriginalPrice != null
-                  ? '₹\${service.displayOriginalPrice!.round()}'
+                  ? '₹${service.displayOriginalPrice!.round()}'
                   : null,
               'rating': (service.rating ?? 4.9).toStringAsFixed(1),
               'reviewCount': service.reviewsCount ?? 102,
@@ -133,7 +189,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                         topRight: Radius.circular(16),
                       ),
                       child: CachedNetworkImage(
-                        imageUrl: service.image,
+                        imageUrl: service.image ?? '',
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.cover,
@@ -182,7 +238,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                             const SizedBox(width: 2),
                             Text(
                               isLocationBased && service.distanceKm != null
-                                  ? '\${service.distanceKm!.toStringAsFixed(1)} km'
+                                  ? '${service.distanceKm!.toStringAsFixed(1)} km'
                                   : '3.5 km',
                               style: const TextStyle(
                                 color: Colors.white,
@@ -224,7 +280,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                         children: [
                           if (service.displayOfferPrice != null) ...[
                             Text(
-                              '₹\${service.displayOfferPrice!.round()}',
+                              '₹${service.displayOfferPrice!.round()}',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -237,7 +293,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                                     service.displayOfferPrice!) ...[
                               const SizedBox(width: 4),
                               Text(
-                                '₹\${service.displayOriginalPrice!.round()}',
+                                '₹${service.displayOriginalPrice!.round()}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -249,7 +305,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                             ],
                           ] else if (service.displayOriginalPrice != null) ...[
                             Text(
-                              '₹\${service.displayOriginalPrice!.round()}',
+                              '₹${service.displayOriginalPrice!.round()}',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -285,7 +341,7 @@ class NearbyServicesScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '\${(service.rating ?? 4.9).toStringAsFixed(1)}',
+                              (service.rating ?? 4.9).toStringAsFixed(1),
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,

@@ -3,13 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/shimmer_widget.dart';
+import '../../../core/utils/user_location_helper.dart';
 import '../../home/providers/home_providers.dart';
 import '../../home/models/service_listing_model.dart';
 
 class CategoryServicesScreen extends ConsumerStatefulWidget {
   final String categoryName;
+  final String? decorationType;
+  final String? displayName;
 
-  const CategoryServicesScreen({super.key, required this.categoryName});
+  const CategoryServicesScreen({
+    super.key, 
+    required this.categoryName,
+    this.decorationType,
+    this.displayName,
+  });
 
   static const String routeName = '/category';
 
@@ -22,8 +31,8 @@ class _CategoryServicesScreenState
     extends ConsumerState<CategoryServicesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-
   String _selectedFilter = 'All';
+  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void dispose() {
@@ -41,17 +50,29 @@ class _CategoryServicesScreenState
     'Price: High to Low',
   ];
 
+  Future<void> _onRefresh() async {
+    // Invalidate providers to trigger refresh
+    if (widget.decorationType != null) {
+      ref.invalidate(servicesByCategoryAndDecorationTypeProvider);
+    } else {
+      ref.invalidate(servicesByCategoryProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final servicesAsync = ref.watch(
-      servicesByCategoryProvider(widget.categoryName),
-    );
+    print('🔍 CategoryServicesScreen: Building with categoryName: ${widget.categoryName}, decorationType: ${widget.decorationType}, displayName: ${widget.displayName}');
+    
+    // Determine theme colors based on decoration type
+    final isInsideDecoration = widget.decorationType == 'inside';
+    final primaryColor = isInsideDecoration ? AppTheme.primaryColor : Colors.green;
+    final displayTitle = widget.displayName ?? widget.categoryName;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          widget.categoryName,
+          displayTitle,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontFamily: 'Okra',
@@ -65,145 +86,249 @@ class _CategoryServicesScreenState
           onPressed: () => context.pop(),
         ),
       ),
-      body: servicesAsync.when(
-        loading: () => _buildLoadingState(),
-        error: (error, stack) => _buildErrorState(error.toString()),
-        data: (services) {
-          var filtered = _applyFiltering(services);
-          return CustomScrollView(
-            slivers: [
-              // Search Bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value.trim();
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search services...',
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Color(0xFFF34E5F),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 16,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFF34E5F)),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Filter Header
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _FilterHeaderDelegate(
-                  filterOptions: _filterOptions,
-                  selectedFilter: _selectedFilter,
-                  onFilterChanged: (filter) {
-                    setState(() {
-                      _selectedFilter = filter;
-                    });
-                  },
-                ),
-              ),
-              // Services Grid
-              filtered.isEmpty
-                  ? SliverFillRemaining(child: _buildEmptyState())
-                  : SliverPadding(
-                      padding: const EdgeInsets.all(16),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 0.65,
-                            ),
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final service = filtered[index];
-                          return _buildServiceImage(context, service);
-                        }, childCount: filtered.length),
-                      ),
-                    ),
-            ],
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: UserLocationHelper.getLocationParams(ref, radiusKm: 25.0),
+        builder: (context, locationSnapshot) {
+          if (locationSnapshot.connectionState == ConnectionState.waiting) {
+            return _buildShimmerGrid(primaryColor);
+          }
+
+          final locationParams = locationSnapshot.data;
+          
+          return RefreshIndicator(
+            key: _refreshKey,
+            onRefresh: _onRefresh,
+            color: primaryColor,
+            child: _buildServicesContent(locationParams, primaryColor),
           );
         },
       ),
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildServicesContent(Map<String, dynamic>? locationParams, Color primaryColor) {
+    print('🔍 CategoryServicesScreen: _buildServicesContent called with locationParams: $locationParams, decorationType: ${widget.decorationType}');
+    
+    // Use location-enhanced provider if location is available
+    if (locationParams != null && widget.decorationType != null) {
+      final providerParams = {
+        'category': widget.categoryName,
+        'decorationType': widget.decorationType!,
+        'userLat': locationParams['userLat'],
+        'userLon': locationParams['userLon'],
+        'radiusKm': locationParams['radiusKm'],
+      };
+      print('🔍 CategoryServicesScreen: Using location provider with params: $providerParams');
+      
+      final servicesAsync = ref.watch(
+        servicesByCategoryAndDecorationTypeWithLocationProvider(providerParams),
+      );
+      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: true);
+    }
+    
+    // Fallback to basic provider
+    if (widget.decorationType != null) {
+      final providerParams = {
+        'category': widget.categoryName,
+        'decorationType': widget.decorationType!,
+      };
+      print('🔍 CategoryServicesScreen: Using basic combined provider with params: $providerParams');
+      
+      final servicesAsync = ref.watch(
+        servicesByCategoryAndDecorationTypeProvider(providerParams),
+      );
+      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: false);
+    } else {
+      print('🔍 CategoryServicesScreen: Using category-only provider with category: ${widget.categoryName}');
+      
+      final servicesAsync = ref.watch(
+        servicesByCategoryProvider(widget.categoryName),
+      );
+      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: false);
+    }
+  }
+
+  Widget _buildServicesView(
+    AsyncValue<List<ServiceListingModel>> servicesAsync, 
+    Color primaryColor, 
+    {bool isLocationBased = false}
+  ) {
+    print('🔍 CategoryServicesScreen: _buildServicesView called with AsyncValue state: ${servicesAsync.runtimeType}');
+    
+    return servicesAsync.when(
+      loading: () {
+        print('🔍 CategoryServicesScreen: AsyncValue is in loading state, showing shimmer');
+        return _buildShimmerGrid(primaryColor);
+      },
+      error: (error, stack) {
+        print('🔍 CategoryServicesScreen: AsyncValue error: $error');
+        print('🔍 CategoryServicesScreen: Stack trace: $stack');
+        return _buildErrorState(primaryColor);
+      },
+      data: (services) {
+        print('🔍 CategoryServicesScreen: AsyncValue data received with ${services.length} services');
+        var filtered = _applyFiltering(services);
+        print('🔍 CategoryServicesScreen: After filtering: ${filtered.length} services');
+        return _buildServicesGrid(filtered, primaryColor, isLocationBased);
+      },
+    );
+  }
+
+  Widget _buildServicesGrid(
+    List<ServiceListingModel> services, 
+    Color primaryColor, 
+    bool isLocationBased
+  ) {
+    if (services.isEmpty) {
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(child: _buildEmptyState()),
+        ],
+      );
+    }
+
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        // Search Bar
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.trim();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search services...',
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: primaryColor,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE1E2E4)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primaryColor),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Filter Header
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _FilterHeaderDelegate(
+            filterOptions: _filterOptions,
+            selectedFilter: _selectedFilter,
+            primaryColor: primaryColor,
+            onFilterChanged: (filter) {
+              setState(() {
+                _selectedFilter = filter;
+              });
+            },
+          ),
+        ),
+        // Services Grid
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.65,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final service = services[index];
+                return _buildServiceCard(context, service, isLocationBased);
+              },
+              childCount: services.length,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmerGrid(Color primaryColor) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.65,
       ),
       itemCount: 6,
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.pink),
-          ),
-        );
+        return ShimmerWidgets.categoryServiceCard();
       },
     );
   }
 
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'Unable to load services',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Okra',
+  Widget _buildErrorState(Color primaryColor) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverFillRemaining(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Unable to load services',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pull down to refresh',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => _refreshKey.currentState?.show(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Please check your connection and try again',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                fontFamily: 'Okra',
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -237,15 +362,15 @@ class _CategoryServicesScreenState
         break;
       case 'Price: Low to High':
         filtered.sort((a, b) {
-          final priceA = a.offerPrice ?? a.originalPrice ?? double.infinity;
-          final priceB = b.offerPrice ?? b.originalPrice ?? double.infinity;
+          final priceA = a.displayOfferPrice ?? a.displayOriginalPrice ?? double.infinity;
+          final priceB = b.displayOfferPrice ?? b.displayOriginalPrice ?? double.infinity;
           return priceA.compareTo(priceB);
         });
         break;
       case 'Price: High to Low':
         filtered.sort((a, b) {
-          final priceA = a.offerPrice ?? a.originalPrice ?? 0.0;
-          final priceB = b.offerPrice ?? b.originalPrice ?? 0.0;
+          final priceA = a.displayOfferPrice ?? a.displayOriginalPrice ?? 0.0;
+          final priceB = b.displayOfferPrice ?? b.displayOriginalPrice ?? 0.0;
           return priceB.compareTo(priceA);
         });
         break;
@@ -265,9 +390,9 @@ class _CategoryServicesScreenState
           children: [
             const Icon(Icons.category_outlined, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No services found',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Okra',
@@ -289,7 +414,7 @@ class _CategoryServicesScreenState
     );
   }
 
-  Widget _buildServiceImage(BuildContext context, ServiceListingModel service) {
+  Widget _buildServiceCard(BuildContext context, ServiceListingModel service, bool isLocationBased) {
     return GestureDetector(
       onTap: () {
         context.push('/service/${service.id}');
@@ -319,15 +444,15 @@ class _CategoryServicesScreenState
                 bottomRight: Radius.circular(0),
               ),
               child: CachedNetworkImage(
-                imageUrl: service.image,
+                imageUrl: service.image ?? '',
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: 136,
                 placeholder: (context, url) => Container(
                   color: Colors.grey[200],
-                  child: const Center(
+                  child: Center(
                     child: CircularProgressIndicator(
-                      color: Colors.pink,
+                      color: widget.decorationType == 'inside' ? AppTheme.primaryColor : Colors.green,
                       strokeWidth: 2,
                     ),
                   ),
@@ -348,9 +473,11 @@ class _CategoryServicesScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Location
+                  // Location with distance if available
                   Text(
-                    'At Your Location',
+                    isLocationBased && service.distanceKm != null
+                        ? '${service.distanceKm!.toStringAsFixed(1)} km away'
+                        : 'At Your Location',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -381,9 +508,9 @@ class _CategoryServicesScreenState
                       Expanded(
                         child: Row(
                           children: [
-                            if (service.offerPrice != null) ...[
+                            if (service.displayOfferPrice != null) ...[
                               Text(
-                                '₹${service.offerPrice!.toInt()}',
+                                '₹${service.displayOfferPrice!.toInt()}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -392,9 +519,10 @@ class _CategoryServicesScreenState
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              if (service.originalPrice != null)
+                              if (service.displayOriginalPrice != null &&
+                                  service.displayOriginalPrice! > service.displayOfferPrice!)
                                 Text(
-                                  '₹${service.originalPrice!.toInt()}',
+                                  '₹${service.displayOriginalPrice!.toInt()}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.black.withOpacity(0.45),
@@ -402,14 +530,24 @@ class _CategoryServicesScreenState
                                     fontFamily: 'Okra',
                                   ),
                                 ),
-                            ] else if (service.originalPrice != null) ...[
+                            ] else if (service.displayOriginalPrice != null) ...[
                               Text(
-                                '₹${service.originalPrice!.toInt()}',
+                                '₹${service.displayOriginalPrice!.toInt()}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black.withOpacity(0.66),
                                   fontFamily: 'Okra',
+                                ),
+                              ),
+                            ] else ...[
+                              const Text(
+                                'Price on request',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Okra',
+                                  color: Colors.grey,
                                 ),
                               ),
                             ],
@@ -459,11 +597,13 @@ class _CategoryServicesScreenState
 class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   final List<String> filterOptions;
   final String selectedFilter;
+  final Color primaryColor;
   final ValueChanged<String> onFilterChanged;
 
   _FilterHeaderDelegate({
     required this.filterOptions,
     required this.selectedFilter,
+    required this.primaryColor,
     required this.onFilterChanged,
   });
 
@@ -485,48 +625,6 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              // Filter button with icon
-              Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: Material(
-                  borderRadius: BorderRadius.circular(20),
-                  elevation: 2,
-                  shadowColor: Colors.black.withOpacity(0.05),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      // Show filter options or additional filtersfirst 
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.filter_list,
-                            size: 18,
-                            color: Colors.black87,
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            size: 16,
-                            color: Colors.black87,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               // Filter options
               ...filterOptions.map((filter) {
                 final isSelected = filter == selectedFilter;
@@ -551,10 +649,10 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
                       }
                     },
                     backgroundColor: Colors.white,
-                    selectedColor: const Color(0xFFF34E5F),
+                    selectedColor: primaryColor,
                     side: BorderSide(
                       color: isSelected
-                          ? const Color(0xFFF34E5F)
+                          ? primaryColor
                           : Colors.grey[300]!,
                     ),
                     showCheckmark: false,

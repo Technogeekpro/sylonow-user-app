@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
-import '../../../core/providers/core_providers.dart';
+import '../../../core/providers/core_providers.dart' as core;
 import '../models/user_profile_model.dart';
 import '../repositories/profile_repository.dart';
 import '../services/profile_service.dart';
@@ -8,7 +8,7 @@ import '../controllers/profile_controller.dart';
 
 // Profile Repository Provider
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  final supabaseClient = ref.watch(supabaseClientProvider);
+  final supabaseClient = ref.watch(core.supabaseClientProvider);
   return ProfileRepository(supabaseClient);
 });
 

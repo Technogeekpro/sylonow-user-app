@@ -117,43 +117,67 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   PreferredSizeWidget _buildSearchAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
-      elevation: 1,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black),
-        onPressed: () => context.pop(),
-      ),
+      scrolledUnderElevation: 0,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      titleSpacing: 12,
       title: Container(
-        height: 45,
+        height: 48,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey[300]!),
         ),
-        child: TextField(
-          controller: _searchController,
-          focusNode: _focusNode,
-          onChanged: _onSearchChanged,
-          onSubmitted: _performSearch,
-          decoration: InputDecoration(
-            hintText: 'Search for services...',
-            hintStyle: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-              fontFamily: 'Okra',
+        child: Row(
+          children: [
+            // Back button integrated in search bar
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 22),
+              onPressed: () => context.pop(),
+              splashRadius: 20,
             ),
-            prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
-            suffixIcon: _showClearButton
-                ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.grey, size: 20),
-                    onPressed: _clearSearch,
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Okra',
-          ),
+            
+            // Search input
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                focusNode: _focusNode,
+                onChanged: _onSearchChanged,
+                onSubmitted: _performSearch,
+                decoration: InputDecoration(
+                  filled: false,
+                  hintText: 'Search services...',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                    fontFamily: 'Okra',
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Okra',
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            
+            // Clear button or search icon
+            if (_showClearButton)
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.grey, size: 20),
+                onPressed: _clearSearch,
+                splashRadius: 20,
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Icon(Icons.search, color: Colors.grey[600], size: 22),
+              ),
+          ],
         ),
       ),
     );
@@ -278,7 +302,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: services.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final service = services[index];
               return _buildServiceCard(service);
@@ -290,53 +314,72 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildServiceCard(ServiceListingModel service) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         onTap: () {
           ref.read(recentSearchesProvider.notifier).add(_currentQuery);
+          context.push('/service/${service.id}', extra: {
+            'serviceName': service.name,
+            'price': service.offerPrice != null
+                ? '₹${service.offerPrice!.round()}'
+                : service.originalPrice != null
+                ? '₹${service.originalPrice!.round()}'
+                : null,
+            'rating': (service.rating ?? 4.9).toStringAsFixed(1),
+            'reviewCount': service.reviewsCount ?? 0,
+          });
         },
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              // Square image
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: service.image.isNotEmpty
+                borderRadius: BorderRadius.circular(6),
+                child: (service.image?.isNotEmpty ?? false)
                     ? AppImageCacheManager.buildOptimizedNetworkImage(
-                        imageUrl: service.image,
-                        width: 60,
-                        height: 60,
+                        imageUrl: service.image!,
+                        width: 100,
+                        height: 100,
                         fit: BoxFit.cover,
                       )
                     : Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          color: Colors.grey,
+                        width: 50,
+                        height: 50,
+                        color: Colors.grey[100],
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: Colors.grey[400],
+                          size: 20,
                         ),
                       ),
               ),
               const SizedBox(width: 12),
               
+              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text(
                       service.name,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Okra',
+                        color: Colors.black87,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
+                      textAlign: TextAlign.left,
+                    
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
@@ -344,64 +387,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       Text(
                         service.description!,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: Colors.grey[600],
                           fontFamily: 'Okra',
+                          height: 1.3,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if ((service.offerPrice ?? service.originalPrice) != null) ...[
-                          Text(
-                            '₹${service.offerPrice ?? service.originalPrice}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.pink,
-                              fontFamily: 'Okra',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        if (service.rating != null) ...[
-                          Icon(
-                            Icons.star,
-                            size: 14,
-                            color: Colors.amber[600],
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            service.rating!.toStringAsFixed(1),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontFamily: 'Okra',
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
                   ],
-                ),
-              ),
-              
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.pink,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Book',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Okra',
-                  ),
                 ),
               ),
             ],

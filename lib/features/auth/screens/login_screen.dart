@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
@@ -65,195 +66,156 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Column(
-        children: [
-          // Top Half - Primary Background with Logo
-          Container(
-            height: screenHeight * 0.5, // 60% of screen height
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo
-                  Image.asset(
-                    'assets/images/sylonow_white_logo.png',
-                    width: MediaQuery.of(context).size.width * 0.5,
-                  ),
-                  const SizedBox(height: 24),
-      
-                  // Welcome Text
-                  const Text(
-                    'Welcome to Sylonow',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Okra',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-      
-                  // Subtitle
-                  Text(
-                    'Your one-stop solution for all services',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                      fontFamily: 'Okra',
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [const Color(0xFF1683C9), const Color(0xFF0C4366)],
+            begin: Alignment.topLeft,
           ),
-      
-          // Bottom Half - Login Options
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 32,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Top Half - Primary Background with Logo
+            Expanded(
+              flex: 1,
+              child: SvgPicture.asset(
+                'assets/svgs/app_logo.svg',
+                fit: BoxFit.contain,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Choose your login method',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontFamily: 'Okra',
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-      
-                  // Continue with Phone Button
-                  SizedBox(
-                    height: 56,
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _continueWithPhone,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+            ),
+
+          
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                 
+
+                    // Continue with Phone Button
+                    SizedBox(
+                      height: 56,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _continueWithPhone,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(56),
+                          ),
+                          elevation: 2,
                         ),
-                        elevation: 0,
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.phone, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Continue with Phone',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.phone, size: 24),
-                          SizedBox(width: 12),
-                          Text(
-                            'Continue with Phone',
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // OR Divider
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(height: 1, color: Colors.grey[300]),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'OR',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 14,
                               fontFamily: 'Okra',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: Container(height: 1, color: Colors.grey[300]),
+                        ),
+                      ],
                     ),
-                  ),
-      
-                  const SizedBox(height: 16),
-      
-                  // OR Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(height: 1, color: Colors.grey[300]),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                            fontFamily: 'Okra',
+
+                    const SizedBox(height: 16),
+
+                    // Continue with Google Button
+                    SizedBox(
+                      height: 56,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _continueWithGoogle,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black87,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(56),
+                            side: BorderSide(color: Colors.grey[300]!),
                           ),
+                          elevation: 2,
                         ),
-                      ),
-                      Expanded(
-                        child: Container(height: 1, color: Colors.grey[300]),
-                      ),
-                    ],
-                  ),
-      
-                  const SizedBox(height: 16),
-      
-                  // Continue with Google Button
-                  SizedBox(
-                    height: 56,
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _continueWithGoogle,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black54,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(FontAwesomeIcons.google, size: 24),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Okra',
-                                  ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black54,
                                 ),
-                              ],
-                            ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(FontAwesomeIcons.google, size: 24),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Continue with Google',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Okra',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                  ),
-      
-                  const SizedBox(height: 32),
-      
-                  // Terms and Privacy
-                  Text(
-                    'By continuing, you agree to our Terms of Service\nand Privacy Policy',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                      fontFamily: 'Okra',
+
+                    const SizedBox(height: 32),
+
+                    // Terms and Privacy
+                    Text(
+                      'By continuing, you agree to our Terms of Service\nand Privacy Policy',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'Okra',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -11,7 +11,7 @@ class ServiceListingModel with _$ServiceListingModel {
     required String id,
     @JsonKey(name: 'vendor_id') required String? vendorId,
     @JsonKey(name: 'title') required String name,
-    @JsonKey(name: 'cover_photo') required String image,
+    @JsonKey(name: 'cover_photo') String? image,
     String? description,
     double? rating,
     @JsonKey(name: 'reviews_count') int? reviewsCount,
@@ -54,10 +54,12 @@ class ServiceListingModel with _$ServiceListingModel {
 extension ServiceListingModelExtensions on ServiceListingModel {
   /// Check if service has valid location coordinates
   bool get hasValidLocation {
-    return latitude != null && 
-           longitude != null && 
-           latitude! >= -90.0 && latitude! <= 90.0 &&
-           longitude! >= -180.0 && longitude! <= 180.0;
+    final lat = latitude;
+    final lng = longitude;
+    return lat != null && 
+           lng != null && 
+           lat >= -90.0 && lat <= 90.0 &&
+           lng >= -180.0 && lng <= 180.0;
   }
 
   /// Get display price (adjusted if available, otherwise original/offer price)
@@ -83,8 +85,10 @@ extension ServiceListingModelExtensions on ServiceListingModel {
     const earthRadius = 6371.0; // Earth's radius in kilometers
     final lat1Rad = userLat * (3.14159265359 / 180.0);
     final lon1Rad = userLon * (3.14159265359 / 180.0);
-    final lat2Rad = latitude! * (3.14159265359 / 180.0);
-    final lon2Rad = longitude! * (3.14159265359 / 180.0);
+    final serviceLat = latitude ?? 0.0;
+    final serviceLng = longitude ?? 0.0;
+    final lat2Rad = serviceLat * (3.14159265359 / 180.0);
+    final lon2Rad = serviceLng * (3.14159265359 / 180.0);
 
     final dLat = lat2Rad - lat1Rad;
     final dLon = lon2Rad - lon1Rad;
@@ -100,8 +104,8 @@ extension ServiceListingModelExtensions on ServiceListingModel {
 
     return copyWith(
       distanceKm: double.parse(distance.toStringAsFixed(2)),
-      adjustedOfferPrice: offerPrice != null ? offerPrice! + priceIncrease : null,
-      adjustedOriginalPrice: originalPrice != null ? originalPrice! + priceIncrease : null,
+      adjustedOfferPrice: offerPrice != null ? (offerPrice ?? 0.0) + priceIncrease : null,
+      adjustedOriginalPrice: originalPrice != null ? (originalPrice ?? 0.0) + priceIncrease : null,
       isPriceAdjusted: shouldAdjustPrice,
     );
   }

@@ -184,4 +184,3 @@ These placeholder screens are defined inline in the router file and should be mo
 - Supabase API keys are currently in source code (should be moved to environment variables)
 - Row Level Security (RLS) policies should be implemented in Supabase
 - Runtime permissions properly handled for location and camera access
-

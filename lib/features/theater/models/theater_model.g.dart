@@ -8,24 +8,26 @@ part of 'theater_model.dart';
 
 _$TheaterModelImpl _$$TheaterModelImplFromJson(Map<String, dynamic> json) =>
     _$TheaterModelImpl(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String?,
+      name: json['name'] as String?,
       description: json['description'] as String?,
-      address: json['address'] as String,
-      city: json['city'] as String,
-      state: json['state'] as String,
-      pinCode: json['pin_code'] as String,
+      address: json['address'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      pinCode: json['pin_code'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
-      capacity: (json['capacity'] as num).toInt(),
-      amenities:
-          (json['amenities'] as List<dynamic>).map((e) => e as String).toList(),
+      capacity: (json['capacity'] as num?)?.toInt(),
+      screens: (json['screens'] as num?)?.toInt(),
+      amenities: (json['amenities'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       images:
-          (json['images'] as List<dynamic>).map((e) => e as String).toList(),
-      hourlyRate: (json['hourly_rate'] as num).toDouble(),
-      rating: (json['rating'] as num).toDouble(),
-      totalReviews: (json['total_reviews'] as num).toInt(),
-      isActive: json['is_active'] as bool,
+          (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      hourlyRate: (json['hourly_rate'] as num?)?.toDouble(),
+      rating: (json['rating'] as num?)?.toDouble(),
+      totalReviews: (json['total_reviews'] as num?)?.toInt(),
+      isActive: json['is_active'] as bool?,
       ownerId: json['owner_id'] as String?,
       createdAt: json['created_at'] == null
           ? null
@@ -47,6 +49,7 @@ Map<String, dynamic> _$$TheaterModelImplToJson(_$TheaterModelImpl instance) =>
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'capacity': instance.capacity,
+      'screens': instance.screens,
       'amenities': instance.amenities,
       'images': instance.images,
       'hourly_rate': instance.hourlyRate,

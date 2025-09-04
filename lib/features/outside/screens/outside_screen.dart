@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/user_location_helper.dart';
-import '../../../core/utils/location_utils.dart';
-import '../../home/providers/home_providers.dart';
+import '../../../core/widgets/decoration_card.dart';
 import '../../home/models/service_listing_model.dart';
+import '../../home/models/filter_model.dart';
+import '../../home/providers/filter_providers.dart';
+import '../../home/widgets/service_filter_sheet.dart';
 
 class OutsideScreen extends ConsumerStatefulWidget {
   const OutsideScreen({super.key});
@@ -24,7 +23,6 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
   double _scrollOffset = 0.0;
   
   late AnimationController _searchAnimationController;
-  late Animation<double> _slideAnimation;
   
   int _currentSearchIndex = 0;
   final List<String> _searchTexts = [
@@ -61,15 +59,6 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
     },
   ];
 
-  // Mock data for categories - Outside themed
-  final List<Map<String, String>> _categories = [
-    {'title': 'Garden Decoration', 'image': 'assets/images/category1.jpg'},
-    {'title': 'Terrace Setup', 'image': 'assets/images/category2.jpg'},
-    {'title': 'Pool Party', 'image': 'assets/images/category3.jpg'},
-    {'title': 'Outdoor Wedding', 'image': 'assets/images/category4.jpg'},
-    {'title': 'Lawn Events', 'image': 'assets/images/category5.jpg'},
-    {'title': 'Outdoor Lighting', 'image': 'assets/images/category1.jpg'},
-  ];
 
 
   @override
@@ -83,13 +72,6 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
       vsync: this,
     );
     
-    _slideAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _searchAnimationController,
-      curve: Curves.easeInOut,
-    ));
     
     // Start the animation cycle
     _startSearchAnimation();
@@ -142,358 +124,215 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
                
                 // We add a spacer here so the next content isn't hidden behind the search bar initially
                 const SliverToBoxAdapter(child: SizedBox(height: 180)),
-                // Main Content
+                
+                // Carousel and header content
                 SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 20),
 
-            const SizedBox(height: 20),
-
-            // Carousel with custom radius
-            SizedBox(
-              height: 180,
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _carouselItems.length,
-                padEnds: false,
-                clipBehavior: Clip.none,
-                itemBuilder: (context, index) {
-                  final item = _carouselItems[index];
-                  return Container(
-                    margin: EdgeInsets.only(
-                      left: index == 0 ? 16 : 8,
-                      right: index == _carouselItems.length - 1 ? 16 : 8,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(30),
-                        bottomLeft: Radius.circular(30),
-                      ),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.green.withOpacity(0.8),
-                          Colors.green,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Background pattern
-                        Positioned(
-                          right: -20,
-                          top: -20,
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-
-                        // Content
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['subtitle']!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                      // Carousel with custom radius
+                      SizedBox(
+                        height: 180,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: _carouselItems.length,
+                          padEnds: false,
+                          clipBehavior: Clip.none,
+                          itemBuilder: (context, index) {
+                            final item = _carouselItems[index];
+                            return GestureDetector(
+                              onTap: () => _onCarouselTap(item),
+                              child: Container(
+                              margin: EdgeInsets.only(
+                                left: index == 0 ? 16 : 8,
+                                right: index == _carouselItems.length - 1 ? 16 : 8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(30),
+                                  bottomLeft: Radius.circular(30),
+                                ),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.green.withValues(alpha: 0.8),
+                                    Colors.green,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                item['title']!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              child: Stack(
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['discount']!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                  // Background pattern
+                                  Positioned(
+                                    right: -20,
+                                    top: -20,
+                                    child: Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withValues(alpha: 0.1),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                    ),
+                                  ),
+
+                                  // Content
+                                  Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['subtitle'] ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
-                                        child: Text(
-                                          item['code']!,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          item['title'] ?? '',
                                           style: const TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 10,
+                                            color: Colors.white,
+                                            fontSize: 24,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  // Tree/garden icon with decorative elements
-                                  Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: const Icon(
-                                      Icons.park,
-                                      color: Colors.white,
-                                      size: 30,
+                                        const Spacer(),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item['discount'] ?? '',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius: BorderRadius.circular(
+                                                      12,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    item['code'] ?? '',
+                                                    style: const TextStyle(
+                                                      color: Colors.green,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            // Tree/garden icon with decorative elements
+                                            Container(
+                                              width: 60,
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(30),
+                                              ),
+                                              child: const Icon(
+                                                Icons.park,
+                                                color: Colors.white,
+                                                size: 30,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Smooth Page Indicator
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SmoothPageIndicator(
-                  controller: _pageController,
-                  count: _carouselItems.length,
-                  effect: WormEffect(
-                    dotColor: Colors.grey.shade300,
-                    activeDotColor: Colors.green,
-                    dotHeight: 8, 
-                    dotWidth: 8,
-                    spacing: 4, 
-                  ), 
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // What are you looking for section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Text(
-                    'What outdoor service do you need ?',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  //Divider
-                  const SizedBox(width: 10),
-                  Expanded(child: const Divider(color: Color(0xffE8E9EE), thickness: 1)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Categories Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(0),
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 1.0, // Square aspect ratio
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  
-                ),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  final category = _categories[index];
-                  return GestureDetector(
-                    onTap: () {
-                      // Handle category tap
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Selected: ${category['title']}'),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            spreadRadius: 0,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Stack(
+
+                      const SizedBox(height: 16),
+
+                      // Smooth Page Indicator
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Center(
+                          child: SmoothPageIndicator(
+                            controller: _pageController,
+                            count: _carouselItems.length,
+                            effect: WormEffect(
+                              dotColor: Colors.grey.shade300,
+                              activeDotColor: Colors.green,
+                              dotHeight: 8, 
+                              dotWidth: 8,
+                              spacing: 4, 
+                            ), 
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+                      
+                      // Outside Decoration Services Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
                           children: [
-                            // Background image
-                            Container(
-                              width: double.infinity,
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(category['image']!),
-                                  fit: BoxFit.cover,
-                                  onError: (exception, stackTrace) {
-                                    // Fallback for missing images
-                                  },
-                                ),
-                              ),
+                            Text(
+                              'Outside Decoration Services',
+                              style: Theme.of(context).textTheme.headlineSmall,
                             ),
-                            
-                            // Green overlay for outdoor theme
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.green.withOpacity(0.7),
-                                  ],
-                                  stops: const [0.5, 1.0],
-                                ),
-                              ),
-                            ),
-                            
-                            // Title at bottom center
-                            Positioned(
-                              bottom: 12,
-                              left: 8,
-                              right: 8,
-                              child: Text(
-                                category['title']!,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(0, 1),
-                                      blurRadius: 3,
-                                      color: Colors.black54,
-                                    ),
-                                  ],
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
+                            //Divider
+                            const SizedBox(width: 10),
+                            Expanded(child: const Divider(color: Color(0xffE8E9EE), thickness: 1)),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Popular Outdoor Venues Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Text(
-                    'Popular Outdoor Venues Near You',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  //Divider
-                  const SizedBox(width: 10),
-                  Expanded(child: const Divider(color: Color(0xffE8E9EE), thickness: 1)),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Outside Decoration Services List with Location
-            FutureBuilder<Map<String, dynamic>?>(
-              future: UserLocationHelper.getDecorationTypeLocationParams(ref, 'outside'),
-              builder: (context, locationSnapshot) {
-                if (locationSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(
-                        color: Colors.green,
-                      ),
-                    ),
-                  );
-                }
-
-                final locationParams = locationSnapshot.data;
-                if (locationParams == null) {
-                  // Fallback to non-location based services
-                  return Consumer(
-                    builder: (context, ref, child) {
-                      final servicesAsync = ref.watch(
-                        servicesByDecorationTypeProvider('outside')
-                      );
-                      return _buildServicesList(servicesAsync, ref, 'outside');
-                    },
-                  );
-                }
-
-                // Use location-based services
-                return Consumer(
-                  builder: (context, ref, child) {
-                    final servicesAsync = ref.watch(
-                      servicesByDecorationTypeWithLocationProvider(locationParams)
-                    );
-                    return _buildServicesList(servicesAsync, ref, 'outside', isLocationBased: true);
-                  },
-                );
-              },
-            ),
-            
-            const SizedBox(height: 20),
+                      
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
+
+                // Sticky Filter Bar
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _FilterBarDelegate(
+                    child: _buildFilterBar(),
+                  ),
+                ),
+
+                // Services List
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 16),
+                  sliver: Consumer(
+                    builder: (context, ref, child) {
+                      final servicesAsync = ref.watch(filteredOutsideServicesProvider);
+                      return _buildSliverServicesList(servicesAsync, ref, 'outside');
+                    },
+                  ),
+                ),
+                
+                // Bottom spacing
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
               ],
             ),
             // Custom App Bar as an overlay
@@ -524,7 +363,7 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -592,7 +431,7 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(5, 4),
             spreadRadius: 0,
@@ -616,7 +455,7 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
               child: Row(
                 children: [
                   const Text(
-                    'Search \"',
+                    'Search "',
                     style: TextStyle(
                       color: Color(0xFF737680),
                       fontSize: 14,
@@ -643,7 +482,7 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
                     ),
                   ),
                   const Text(
-                    '\"',
+                    '"',
                     style: TextStyle(
                       color: Color(0xFF737680),
                       fontSize: 14,
@@ -659,322 +498,335 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen>
     );
   }
 
-  Widget _buildServicesList(
+
+
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Sort dropdown
+            SizedBox(
+              width: 140,
+              child: _buildSortDropdown(),
+            ),
+            const SizedBox(width: 8),
+            
+            // Filter button
+            _buildFilterButton(),
+            
+            const SizedBox(width: 8),
+            
+            // Results count
+            Consumer(
+              builder: (context, ref, child) {
+                final servicesAsync = ref.watch(filteredOutsideServicesProvider);
+                return servicesAsync.when(
+                  data: (services) => Text(
+                    '${services.length} results',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortDropdown() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final filter = ref.watch(outsideFilterProvider);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey[300] ?? Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<SortOption>(
+              value: filter.sortBy,
+              icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+              isDense: true,
+              isExpanded: true,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontFamily: 'Okra',
+              ),
+              items: SortOption.values.map((option) {
+                return DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    option.displayName,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  ref.read(outsideFilterProvider.notifier).update(
+                    (state) => state.copyWith(sortBy: value),
+                  );
+                }
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterButton() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final activeFiltersCount = ref.watch(outsideActiveFiltersCountProvider);
+        return InkWell(
+          onTap: () => _showFilterSheet(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: activeFiltersCount > 0 ? Colors.green : Colors.white,
+              border: Border.all(
+                color: activeFiltersCount > 0 ? Colors.green : (Colors.grey[300] ?? Colors.grey),
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tune,
+                  size: 18,
+                  color: activeFiltersCount > 0 ? Colors.white : Colors.grey[700],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Filter',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: activeFiltersCount > 0 ? Colors.white : Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+                if (activeFiltersCount > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$activeFiltersCount',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final currentFilter = ref.read(outsideFilterProvider);
+          return ServiceFilterSheet(
+            initialFilter: currentFilter,
+            decorationType: 'outside',
+            onApplyFilter: (filter) {
+              ref.read(outsideFilterProvider.notifier).state = filter;
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _onCarouselTap(Map<String, String> item) {
+    // Check if this is a 50% off banner (you might want to check for specific discount banners)
+    if (item['discount']?.contains('50%') == true) {
+      // Navigate to discount offers screen with 50% minimum discount
+      context.push('/discount-offers', extra: {
+        'minDiscountPercent': 50,
+        'title': 'Up to 50% Off',
+      });
+    } else {
+      // Handle other carousel item taps if needed
+      debugPrint('Tapped on carousel item: ${item['title']}');
+    }
+  }
+
+  Widget _buildSliverServicesList(
     AsyncValue<List<ServiceListingModel>> servicesAsync,
     WidgetRef ref,
-    String decorationType, {
-    bool isLocationBased = false,
-  }) {
+    String decorationType,
+  ) {
     return servicesAsync.when(
       data: (services) {
         if (services.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(
-              child: Text(
-                'No outdoor services available in your area',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(
+                child: Text(
+                  'No outside decoration services available',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
           );
         }
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: services.length,
-          itemBuilder: (context, index) {
-            final service = services[index];
-            return _buildServiceCard(service, isLocationBased);
-          },
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= services.length) {
+                return const SizedBox.shrink();
+              }
+              final service = services[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: DecorationCard(
+                  service: service,
+                  onTap: () {
+                    context.push('/service/${service.id}');
+                  },
+                ),
+              );
+            },
+            childCount: services.length,
+          ),
         );
       },
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(
-            color: Colors.green,
-          ),
-        ),
-      ),
-      error: (error, stack) => Padding(
-        padding: const EdgeInsets.all(32.0),
+      loading: () => const SliverToBoxAdapter(
         child: Center(
-          child: Column(
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load services',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please check your connection and try again',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceCard(ServiceListingModel service, bool isLocationBased) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Service Image
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Container(
-              height: 180,
-              width: double.infinity,
-              child: CachedNetworkImage(
-                imageUrl: service.image,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 48,
-                  ),
-                ),
-              ),
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(
+              color: Colors.green,
             ),
           ),
-          
-          // Service Details
-          Padding(
-            padding: const EdgeInsets.all(16),
+        ),
+      ),
+      error: (error, stack) => SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Service Name and Rating
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        service.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (service.rating != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              service.rating!.toStringAsFixed(1),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 48,
                 ),
-
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load services',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
-
-                // Distance and Location Info (if location-based)
-                if (isLocationBased && service.distanceKm != null) ...[
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.green,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${service.distanceKm!.toStringAsFixed(1)} km away',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      if (service.isPriceAdjusted == true) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.orange,
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            '+₹100 (Distance)',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.orange[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                Text(
+                  'Please check your connection and try again',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
                   ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Pricing
-                Row(
-                  children: [
-                    if (service.displayOriginalPrice != null &&
-                        service.displayOfferPrice != null &&
-                        service.displayOriginalPrice! > service.displayOfferPrice!) ...[
-                      Text(
-                        '₹${service.displayOriginalPrice!.toInt()}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    if (service.displayOfferPrice != null)
-                      Text(
-                        '₹${service.displayOfferPrice!.toInt()}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green,
-                        ),
-                      ),
-                    if (service.displayOfferPrice == null && service.displayOriginalPrice != null)
-                      Text(
-                        '₹${service.displayOriginalPrice!.toInt()}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green,
-                        ),
-                      ),
-                    const Spacer(),
-                    if (service.promotionalTag != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          service.promotionalTag!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Book Now Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.push('/service-detail/${service.id}');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'View Details',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
+  Widget _buildServiceCard(ServiceListingModel service) {
+    try {
+      return DecorationCard(
+        service: service,
+        onTap: () {
+          try {
+            context.push('/service/${service.id}');
+          } catch (e) {
+            // Handle navigation error silently
+          }
+        },
+      );
+    } catch (e) {
+      return Container(
+        height: 119,
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: const Center(
+          child: Text('Error loading service card'),
+        ),
+      );
+    }
+  }
+}
+
+class _FilterBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _FilterBarDelegate({required this.child});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.white,
+      height: maxExtent,
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => 80.0;
+
+  @override
+  double get minExtent => 80.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return false;
+  }
 } 

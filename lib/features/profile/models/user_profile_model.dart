@@ -15,6 +15,9 @@ class UserProfileModel {
   final String? postalCode;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
+  final DateTime? celebrationDate;
+  final String? celebrationTime;
+  final String? fcmToken;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -35,6 +38,9 @@ class UserProfileModel {
     this.postalCode,
     this.emergencyContactName,
     this.emergencyContactPhone,
+    this.celebrationDate,
+    this.celebrationTime,
+    this.fcmToken,
     this.createdAt,
     this.updatedAt,
   });
@@ -59,6 +65,11 @@ class UserProfileModel {
       postalCode: json['postal_code'] as String?,
       emergencyContactName: json['emergency_contact_name'] as String?,
       emergencyContactPhone: json['emergency_contact_phone'] as String?,
+      celebrationDate: json['celebration_date'] != null 
+          ? DateTime.parse(json['celebration_date'] as String)
+          : null,
+      celebrationTime: json['celebration_time'] as String?,
+      fcmToken: json['fcm_token'] as String?,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -86,6 +97,9 @@ class UserProfileModel {
       'postal_code': postalCode,
       'emergency_contact_name': emergencyContactName,
       'emergency_contact_phone': emergencyContactPhone,
+      'celebration_date': celebrationDate?.toIso8601String(),
+      'celebration_time': celebrationTime,
+      'fcm_token': fcmToken,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -108,6 +122,9 @@ class UserProfileModel {
     String? postalCode,
     String? emergencyContactName,
     String? emergencyContactPhone,
+    DateTime? celebrationDate,
+    String? celebrationTime,
+    String? fcmToken,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -128,6 +145,9 @@ class UserProfileModel {
       postalCode: postalCode ?? this.postalCode,
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
+      celebrationDate: celebrationDate ?? this.celebrationDate,
+      celebrationTime: celebrationTime ?? this.celebrationTime,
+      fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -154,6 +174,9 @@ class UserProfileModel {
             other.postalCode == postalCode &&
             other.emergencyContactName == emergencyContactName &&
             other.emergencyContactPhone == emergencyContactPhone &&
+            other.celebrationDate == celebrationDate &&
+            other.celebrationTime == celebrationTime &&
+            other.fcmToken == fcmToken &&
             other.createdAt == createdAt &&
             other.updatedAt == updatedAt);
   }
@@ -161,23 +184,30 @@ class UserProfileModel {
   @override
   int get hashCode {
     return Object.hash(
-      id,
-      authUserId,
-      appType,
-      fullName,
-      phoneNumber,
-      email,
-      dateOfBirth,
-      gender,
-      profileImageUrl,
-      bio,
-      city,
-      state,
-      country,
-      postalCode,
-      emergencyContactName,
-      emergencyContactPhone,
-      createdAt,
+      Object.hash(
+        id,
+        authUserId,
+        appType,
+        fullName,
+        phoneNumber,
+        email,
+        dateOfBirth,
+        gender,
+        profileImageUrl,
+        bio,
+      ),
+      Object.hash(
+        city,
+        state,
+        country,
+        postalCode,
+        emergencyContactName,
+        emergencyContactPhone,
+        celebrationDate,
+        celebrationTime,
+        fcmToken,
+        createdAt,
+      ),
       updatedAt,
     );
   }

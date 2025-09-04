@@ -20,8 +20,6 @@ final userWishlistProvider =
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef UserWishlistRef
     = AutoDisposeFutureProviderRef<List<WishlistWithService>>;
 String _$isServiceInWishlistHash() =>
@@ -161,8 +159,6 @@ class IsServiceInWishlistProvider extends AutoDisposeFutureProvider<bool> {
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 mixin IsServiceInWishlistRef on AutoDisposeFutureProviderRef<bool> {
   /// The parameter `serviceId` of this provider.
   String get serviceId;
@@ -190,8 +186,6 @@ final wishlistCountProvider = AutoDisposeFutureProvider<int>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef WishlistCountRef = AutoDisposeFutureProviderRef<int>;
 String _$wishlistNotifierHash() => r'1d7c02d96959aa26ac1d89b87bea87757e4f8280';
 
@@ -211,4 +205,4 @@ final wishlistNotifierProvider = AutoDisposeAsyncNotifierProvider<
 typedef _$WishlistNotifier
     = AutoDisposeAsyncNotifier<List<WishlistWithService>>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

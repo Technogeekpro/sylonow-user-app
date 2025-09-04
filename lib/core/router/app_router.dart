@@ -10,6 +10,11 @@ import '../../features/auth/screens/phone_input_screen.dart';
 import '../../features/auth/screens/profile_completion_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/onboarding/screens/welcome_screen.dart';
+import '../../features/onboarding/screens/name_screen.dart';
+import '../../features/onboarding/screens/occasion_screen.dart';
+import '../../features/onboarding/screens/date_screen.dart';
+import '../../features/onboarding/screens/auth_screen.dart';
 import '../../features/booking/screens/booking_success_screen.dart';
 import '../../features/home/screens/main_screen.dart';
 import '../../features/search/screens/search_screen.dart';
@@ -30,17 +35,20 @@ import '../../features/categories/screens/category_services_screen.dart';
 import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
-import '../../features/theater/screens/theater_detail_screen.dart';
 import '../../features/theater/screens/theater_detail_screen_new.dart';
 import '../../features/theater/screens/theater_date_selection_screen.dart';
 import '../../features/theater/screens/theater_list_screen.dart';
+import '../../features/theater/screens/theater_screens_selection_screen.dart';
 import '../../features/theater/screens/theater_decorations_screen.dart';
 import '../../features/theater/screens/theater_occasions_screen.dart';
 import '../../features/theater/screens/theater_addons_screen.dart';
 import '../../features/theater/screens/theater_checkout_screen.dart';
 import '../../features/wishlist/screens/wishlist_screen.dart';
 import '../../features/offers/screens/offers_screen.dart';
+import '../../features/offers/screens/discount_offers_screen.dart';
 import '../../features/home/screens/nearby_services_screen.dart';
+import '../../features/cakes/screens/cakes_screen.dart';
+import '../../features/theater/screens/theater_booking_history_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -53,6 +61,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.splashRoute,
         builder: (context, state) => const SplashScreen(),
+      ),
+      // Onboarding routes
+      GoRoute(
+        path: WelcomeScreen.routeName,
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: NameScreen.routeName,
+        builder: (context, state) => const NameScreen(),
+      ),
+      GoRoute(
+        path: OccasionScreen.routeName,
+        builder: (context, state) => const OccasionScreen(),
+      ),
+      GoRoute(
+        path: DateScreen.routeName,
+        builder: (context, state) => const DateScreen(),
+      ),
+      GoRoute(
+        path: OnboardingAuthScreen.routeName,
+        builder: (context, state) => const OnboardingAuthScreen(),
       ),
       GoRoute(
         path: AppConstants.loginRoute,
@@ -69,7 +98,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.otpVerificationRoute,
         builder: (context, state) {
-          final phoneNumber = (state.extra as Map<String, dynamic>)['phoneNumber'] as String;
+          final extra = state.extra;
+          if (extra is! Map<String, dynamic> || !extra.containsKey('phoneNumber')) {
+            throw Exception('Invalid phone number data in navigation');
+          }
+          final phoneNumber = extra['phoneNumber'] as String;
           return OtpVerificationScreen(phoneNumber: phoneNumber);
         },
       ),
@@ -106,6 +139,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: OffersScreen.routeName,
         builder: (context, state) => const OffersScreen(),
       ),
+      // Discount Offers route
+      GoRoute(
+        path: DiscountOffersScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final minDiscountPercent = extra?['minDiscountPercent'] as int? ?? 50;
+          final title = extra?['title'] as String? ?? 'Special Offers';
+          return DiscountOffersScreen(
+            minDiscountPercent: minDiscountPercent,
+            title: title,
+          );
+        },
+      ),
       // Profile route
       GoRoute(
         path: '/profile',
@@ -133,6 +179,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AddEditAddressScreen.routeName,
+        builder: (context, state) => const AddEditAddressScreen(),
+      ),
+      GoRoute(
+        path: '/profile/addresses',
+        builder: (context, state) => const ManageAddressScreen(),
+      ),
+      GoRoute(
+        path: '/profile/addresses/add',
         builder: (context, state) => const AddEditAddressScreen(),
       ),
       GoRoute(
@@ -174,29 +228,62 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: CheckoutScreen.routeName,
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          final service = extra['service'] as ServiceListingModel;
+          final extra = state.extra as Map<String, dynamic>?;
+          
+          // Handle null extra gracefully
+          if (extra == null) {
+            throw Exception('CheckoutScreen requires service data in navigation extra');
+          }
+          
+          // Safe casting for service - handle both ServiceListingModel and Map cases
+          late ServiceListingModel service;
+          final serviceData = extra['service'];
+          
+          if (serviceData is ServiceListingModel) {
+            service = serviceData;
+          } else if (serviceData is Map<String, dynamic>) {
+            // If it's a Map (happens during hot reload/DevTools inspection), 
+            // reconstruct the ServiceListingModel
+            service = ServiceListingModel.fromJson(serviceData);
+          } else {
+            // Fallback - shouldn't happen in normal cases
+            throw Exception('Invalid service data type: ${serviceData.runtimeType}');
+          }
+          
           final selectedAddressId = extra['selectedAddressId'] as String?;
+          final customization = extra['customization'] as Map<String, dynamic>?;
+          final selectedTimeSlot = extra['selectedTimeSlot'];
+          final selectedScreen = extra['selectedScreen'];
+          final selectedDate = extra['selectedDate'] as String?;
+          
           return CheckoutScreen(
             service: service,
             selectedAddressId: selectedAddressId,
+            customization: customization,
+            selectedTimeSlot: selectedTimeSlot,
+            selectedScreen: selectedScreen,
+            selectedDate: selectedDate,
           );
         },
       ),
       GoRoute(
         path: PaymentScreen.routeName,
         builder: (context, state) {
-          final bookingData = state.extra as Map<String, dynamic>;
-          return PaymentScreen(
-            bookingData: bookingData,
-          );
+          final bookingData = state.extra as Map<String, dynamic>?;
+          if (bookingData == null) {
+            throw Exception('PaymentScreen requires booking data in navigation extra');
+          }
+          return PaymentScreen(bookingData: bookingData);
         },
       ),
       // Booking Success route
       GoRoute(
         path: BookingSuccessScreen.routeName,
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) {
+            throw Exception('BookingSuccessScreen requires data in navigation extra');
+          }
           return BookingSuccessScreen(
             bookingData: extra['bookingData'] as Map<String, dynamic>,
             paymentMethod: extra['paymentMethod'] as String,
@@ -226,7 +313,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/category/:categoryName',
         builder: (context, state) {
           final categoryName = state.pathParameters['categoryName']!;
-          return CategoryServicesScreen(categoryName: categoryName);
+          final extra = state.extra as Map<String, dynamic>?;
+          final decorationType = extra?['decorationType'] as String?;
+          final displayName = extra?['displayName'] as String?;
+
+          return CategoryServicesScreen(
+            categoryName: categoryName,
+            decorationType: decorationType,
+            displayName: displayName,
+          );
         },
       ),
       // Theater date selection route
@@ -241,6 +336,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>;
           final selectedDate = extra['selectedDate'] as String;
           return TheaterListScreen(selectedDate: selectedDate);
+        },
+      ),
+      // Theater screens selection route (NEW - after selecting theater)
+      GoRoute(
+        path: '/theater/:theaterId/screens',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          return TheaterScreensSelectionScreen(
+            theaterId: theaterId,
+            selectedDate: selectedDate,
+          );
         },
       ),
       // Theater decorations selection route (NEW - first step after selecting theater)
@@ -315,20 +423,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // Cakes screen route
+      GoRoute(
+        path: '/cakes/:theaterId',
+        builder: (context, state) {
+          final theaterId = state.pathParameters['theaterId']!;
+          return CakesScreen(theaterId: theaterId);
+        },
+      ),
+      // Theater booking history route
+      GoRoute(
+        path: '/profile/theater-bookings',
+        builder: (context, state) => const TheaterBookingHistoryScreen(),
+      ),
     ],
     redirect: (context, state) async {
       final isOnSplashPage = state.matchedLocation == AppConstants.splashRoute;
-      
+
       // Always let splash screen handle the authentication check and navigation
       if (isOnSplashPage) {
         return null;
       }
-      
+
       // For all other routes, let them through
       // The splash screen will handle proper navigation based on auth state
       return null;
     },
   );
 });
-
- 

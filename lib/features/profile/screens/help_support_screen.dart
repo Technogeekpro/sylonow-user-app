@@ -75,13 +75,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     return _buildSection(
       title: 'Quick Actions',
       children: [
-        _buildQuickActionTile(
-          icon: Icons.call,
-          title: 'Call Support',
-          subtitle: 'Speak to our customer service team',
-          onTap: () => _makePhoneCall('+91-9876543210'),
-        ),
-        _buildDivider(),
+     
         _buildQuickActionTile(
           icon: Icons.chat,
           title: 'Live Chat',
@@ -96,12 +90,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
           onTap: () => _sendEmail(),
         ),
         _buildDivider(),
-        _buildQuickActionTile(
-          icon: Icons.headset_mic,
-          title: 'WhatsApp Support',
-          subtitle: 'Message us on WhatsApp',
-          onTap: () => _openWhatsApp(),
-        ),
+     
       ],
     );
   }
@@ -144,20 +133,9 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     return _buildSection(
       title: 'Contact Information',
       children: [
-        _buildContactTile(
-          icon: Icons.business,
-          title: 'Office Address',
-          subtitle: '123 Business District, Tech City, TC 12345',
-          onTap: () => _openMap(),
-        ),
+       
         _buildDivider(),
-        _buildContactTile(
-          icon: Icons.phone,
-          title: 'Customer Service',
-          subtitle: '+91-9876543210',
-          onTap: () => _makePhoneCall('+91-9876543210'),
-        ),
-        _buildDivider(),
+     
         _buildContactTile(
           icon: Icons.email,
           title: 'Email Address',

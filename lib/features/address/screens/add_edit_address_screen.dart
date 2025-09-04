@@ -150,11 +150,14 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Address' : 'Add New Address'),
-        leading: BackButton(
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             context.pop();
           },
         ),
+        elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -165,69 +168,221 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextFormField(
+                    _buildSectionTitle('Personal Information'),
+                    _buildTextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name (e.g., John Doe)'),
-                      validator: (value) => value!.isEmpty ? 'Please enter a name' : null,
+                      label: 'Full Name',
+                      hint: 'Enter your full name',
+                      validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    
+                    _buildSectionTitle('Address Details'),
+                    _buildTextField(
                       controller: _addressController,
-                      decoration: const InputDecoration(labelText: 'Address (House No, Street)'),
-                      validator: (value) => value!.isEmpty ? 'Please enter an address' : null,
+                      label: 'Street Address',
+                      hint: 'House number, street name',
+                      validator: (value) => value!.isEmpty ? 'Please enter your street address' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
                       controller: _areaController,
-                      decoration: const InputDecoration(labelText: 'Area / Sector / Locality'),
+                      label: 'Area / Locality',
+                      hint: 'Sector, locality or area',
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
                       controller: _nearbyController,
-                      decoration: const InputDecoration(labelText: 'Nearby Landmark (Optional)'),
+                      label: 'Nearby Landmark',
+                      hint: 'Any landmark nearby (optional)',
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
                       controller: _floorController,
-                      decoration: const InputDecoration(labelText: 'Floor / Building (Optional)'),
+                      label: 'Floor / Building',
+                      hint: 'Apartment, floor, building (optional)',
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(labelText: 'Phone Number'),
+                      label: 'Contact Number',
+                      hint: 'Phone number for delivery contact',
                       keyboardType: TextInputType.phone,
                     ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<AddressType>(
-                      value: _addressType,
-                      onChanged: (value) {
-                        setState(() {
-                          _addressType = value!;
-                        });
-                      },
-                      items: AddressType.values
-                          .map((type) => DropdownMenuItem(
-                                value: type,
-                                child: Text(type.toString().split('.').last.capitalize()),
-                              ))
-                          .toList(),
-                      decoration: const InputDecoration(labelText: 'Address Type'),
-                    ),
+                    const SizedBox(height: 24),
+                    
+                    _buildSectionTitle('Address Type'),
+                    _buildAddressTypeSelector(),
                     const SizedBox(height: 32),
-                    ElevatedButton.icon(
-                      onPressed: _fetchCurrentLocation,
-                      icon: const Icon(Icons.my_location),
-                      label: const Text('Use Current Location'),
+                    
+                    _buildLocationButton(),
+                  ],
+                ),
+              ),
+            ),
+      bottomNavigationBar: _buildSaveButton(),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Okra',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Theme.of(context).primaryColor,
+            width: 2,
+          ),
+        ),
+      ),
+      validator: validator,
+      keyboardType: keyboardType,
+    );
+  }
+
+  Widget _buildAddressTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: AddressType.values.map((type) {
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _addressType = type;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _addressType == type 
+                      ? Theme.of(context).primaryColor 
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      type == AddressType.home 
+                          ? Icons.home_outlined 
+                          : type == AddressType.work 
+                              ? Icons.work_outline 
+                              : Icons.location_on_outlined,
+                      color: _addressType == type ? Colors.white : Colors.grey[700],
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _saveAddress,
-                      child: Text(_isEditing ? 'Update Address' : 'Save Address'),
+                    const SizedBox(height: 4),
+                    Text(
+                      type.toString().split('.').last.capitalize(),
+                      style: TextStyle(
+                        color: _addressType == type ? Colors.white : Colors.grey[700],
+                        fontWeight: _addressType == type ? FontWeight.bold : FontWeight.normal,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildLocationButton() {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Theme.of(context).primaryColor,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Theme.of(context).primaryColor),
+        ),
+        elevation: 0,
+      ),
+      onPressed: _fetchCurrentLocation,
+      icon: const Icon(Icons.my_location),
+      label: const Text('Use Current Location'),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _saveAddress,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1581C6),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  _isEditing ? 'Update Address' : 'Save Address',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }

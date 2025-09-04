@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+
+
 class AppTheme {
-  static const Color primaryColor = Color(0xFFFF0080);
-  static const Color secondaryColor = Color(0xFFFFFFFF);
+  static const Color primaryColor = Color(0xFF1581C6);
+  static const Color secondaryColor = Color(0xFFFF0080);
+  static const Color tertiaryColor = Color(0xFFFFFFFF);
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color errorColor = Color(0xFFE53935);
   static const Color successColor = Color(0xFF4CAF50);
@@ -40,17 +43,20 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
+          backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
           textStyle: const TextStyle(
             fontFamily: 'Okra',
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(30),
           ),
+        ).copyWith(
+          backgroundColor: WidgetStateProperty.all(Colors.transparent),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

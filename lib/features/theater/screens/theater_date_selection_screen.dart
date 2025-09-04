@@ -28,11 +28,10 @@ class _TheaterDateSelectionScreenState
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenWidth < 400;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -41,7 +40,7 @@ class _TheaterDateSelectionScreenState
           'Select Date',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
             fontFamily: 'Okra',
           ),
@@ -50,206 +49,278 @@ class _TheaterDateSelectionScreenState
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => context.pop(),
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: Colors.grey[200]),
+        ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 16 : 24,
-            vertical: 16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Greeting Message
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(
+                isSmallScreen ? 20 : 24,
+                24,
+                isSmallScreen ? 20 : 24,
+                16,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ],
+                    child: const Icon(
+                      Icons.movie_outlined,
+                      color: AppTheme.primaryColor,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Choose Your Perfect Date',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 22 : 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      fontFamily: 'Okra',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select your preferred date to find available theaters\nand check real-time availability.',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 15,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              color: Colors.grey[200],
+            ),
+
+            // Calendar Section
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 20 : 24,
+                  vertical: 24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                    Text(
+                      'Select Date',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 18 : 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Calendar
+                    Expanded(
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme:
+                              ColorScheme.fromSeed(
+                                seedColor: AppTheme.primaryColor,
+                                brightness: Brightness.light,
+                              ).copyWith(
+                                primary: AppTheme.primaryColor,
+                                onPrimary: Colors.white,
+                                surface: Colors.white,
+                                onSurface: Colors.black,
+                                surfaceContainerHighest: Colors.grey[100],
+                              ),
+                          textTheme: Theme.of(context).textTheme.copyWith(
+                            bodyLarge: const TextStyle(fontFamily: 'Okra'),
+                            bodyMedium: const TextStyle(fontFamily: 'Okra'),
+                            titleMedium: const TextStyle(fontFamily: 'Okra'),
                           ),
-                          child: const Icon(
-                            Icons.movie_outlined,
-                            color: AppTheme.primaryColor,
-                            size: 24,
+                          datePickerTheme: DatePickerThemeData(
+                            dayStyle: const TextStyle(
+                              fontFamily: 'Okra',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            todayBackgroundColor: WidgetStateProperty.all(
+                              AppTheme.primaryColor.withOpacity(0.1),
+                            ),
+                            todayForegroundColor: WidgetStateProperty.all(
+                              AppTheme.primaryColor,
+                            ),
+                            dayBackgroundColor: WidgetStateProperty.resolveWith(
+                              (states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return AppTheme.primaryColor;
+                                }
+                                return Colors.transparent;
+                              },
+                            ),
+                            dayForegroundColor: WidgetStateProperty.resolveWith(
+                              (states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return Colors.black;
+                              },
+                            ),
+                            dayShape: WidgetStateProperty.all(
+                              const CircleBorder(),
+                            ),
+                            rangePickerBackgroundColor: Colors.white,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Choose Your Perfect Date',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 18 : 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              fontFamily: 'Okra',
-                            ),
+                        child: CalendarDatePicker(
+                          initialDate: selectedDate ?? DateTime.now(),
+                          firstDate: firstDate,
+                          lastDate: lastDate,
+                          onDateChanged: (date) {
+                            setState(() {
+                              selectedDate = date;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Selected Date Display
+            if (selectedDate != null)
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 20 : 24,
+                ),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.calendar_today,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Selected Date',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontFamily: 'Okra',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatDate(selectedDate!),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontFamily: 'Okra',
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Select your preferred date to find the best theater experiences and check availability.',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 13 : 14,
-                        color: Colors.grey[600],
-                        fontFamily: 'Okra',
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Date Selection Section
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        'Select Date',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 16 : 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                    ),
-                    // Date Picker
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme:
-                            ColorScheme.fromSeed(
-                              seedColor: AppTheme.primaryColor,
-                              brightness: Brightness.light,
-                            ).copyWith(
-                              primary: AppTheme.primaryColor,
-                              onPrimary: Colors.pink,
-                              surface: Colors.pink,
-                              onSurface: Colors.black,
-                            ),
-                      ),
-                      child: CalendarDatePicker(
-                        initialDate: DateTime.now(),
-                        firstDate: firstDate,
-                        lastDate: lastDate,
-
-                        onDateChanged: (date) {
-                          setState(() {
-                            selectedDate = date;
-                          });
-                        },
-                      ),
-                    ),
                   ],
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.05),
-
-              // Continue Button
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: selectedDate != null
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: ElevatedButton(
-                  onPressed: selectedDate != null
-                      ? () {
-                          context.push(
-                            '/theater/list',
-                            extra: {
-                              'selectedDate': selectedDate!.toIso8601String(),
-                            },
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedDate != null
-                        ? AppTheme.primaryColor
-                        : Colors.grey[300],
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
+            // Continue Button
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
+              child: ElevatedButton(
+                onPressed: selectedDate != null
+                    ? () {
+                        context.push(
+                          '/theater/list',
+                          extra: {
+                            'selectedDate': selectedDate!.toIso8601String(),
+                          },
+                        );
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: selectedDate != null
+                      ? AppTheme.primaryColor
+                      : Colors.grey[300],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.search,
-                        size: 20,
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search,
+                      size: 20,
+                      color: selectedDate != null
+                          ? Colors.white
+                          : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      selectedDate != null
+                          ? 'Find Available Theaters'
+                          : 'Select a date to continue',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
                         color: selectedDate != null
                             ? Colors.white
                             : Colors.grey[600],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        selectedDate != null
-                            ? 'Find Theaters - ${_formatDate(selectedDate!)}'
-                            : 'Select a date to continue',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 15 : 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Okra',
-                          color: selectedDate != null
-                              ? Colors.white
-                              : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

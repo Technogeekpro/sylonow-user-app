@@ -10,22 +10,22 @@ class CouponModel with _$CouponModel {
     required String code,
     required String title,
     required String description,
-    required double discountValue,
-    required String discountType, // 'percentage', 'fixed'
-    required DateTime startDate,
-    required DateTime endDate,
-    required bool isActive,
-    required bool isPublic, // true for public coupons, false for user-specific
-    String? userId, // for user-specific coupons
-    String? categoryId,
-    double? minOrderValue,
-    double? maxDiscountAmount,
-    int? maxUsagePerUser,
-    int? totalUsageLimit,
-    int? currentUsageCount,
-    List<String>? applicableServices,
-    List<String>? excludedServices,
-    String? termsAndConditions,
+    @JsonKey(name: 'discount_value') required double discountValue,
+    @JsonKey(name: 'discount_type') required String discountType, // 'percentage', 'fixed'
+    @JsonKey(name: 'start_date') required DateTime startDate,
+    @JsonKey(name: 'end_date') required DateTime endDate,
+    @JsonKey(name: 'is_active') required bool isActive,
+    @JsonKey(name: 'is_public') required bool isPublic, // true for public coupons, false for user-specific
+    @JsonKey(name: 'user_id') String? userId, // for user-specific coupons
+    @JsonKey(name: 'category_id') String? categoryId,
+    @JsonKey(name: 'min_order_value') double? minOrderValue,
+    @JsonKey(name: 'max_discount_amount') double? maxDiscountAmount,
+    @JsonKey(name: 'max_usage_per_user') int? maxUsagePerUser,
+    @JsonKey(name: 'total_usage_limit') int? totalUsageLimit,
+    @JsonKey(name: 'current_usage_count') int? currentUsageCount,
+    @JsonKey(name: 'applicable_services') List<String>? applicableServices,
+    @JsonKey(name: 'excluded_services') List<String>? excludedServices,
+    @JsonKey(name: 'terms_and_conditions') String? termsAndConditions,
     Map<String, dynamic>? metadata,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,

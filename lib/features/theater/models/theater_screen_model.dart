@@ -16,6 +16,13 @@ class TheaterScreenModel with _$TheaterScreenModel {
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
+    @JsonKey(name: 'total_capacity') @Default(0) int totalCapacity,
+    @JsonKey(name: 'allowed_capacity') @Default(0) int allowedCapacity,
+    @JsonKey(name: 'charges_extra_per_person') @Default(0.0) double chargesExtraPerPerson,
+    @JsonKey(name: 'video_url') String? videoUrl,
+    @Default([]) List<String> images,
+    @JsonKey(name: 'original_hourly_price') @Default(0.0) double originalHourlyPrice,
+    @JsonKey(name: 'discounted_hourly_price') @Default(0.0) double discountedHourlyPrice,
   }) = _TheaterScreenModel;
 
   factory TheaterScreenModel.fromJson(Map<String, dynamic> json) =>

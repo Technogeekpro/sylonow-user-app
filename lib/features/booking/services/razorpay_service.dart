@@ -215,7 +215,6 @@ class RazorpayService {
         await _orderRepository.updateOrderPayment(
           orderId: updatedPayment.bookingId!,
           paymentStatus: 'advance_paid',
-          advancePaymentId: response.paymentId,
         );
       }
 

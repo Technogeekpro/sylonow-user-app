@@ -97,12 +97,8 @@ mixin _$BookingModel {
   @JsonKey(name: 'completed_at')
   DateTime? get completedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this BookingModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of BookingModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $BookingModelCopyWith<BookingModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -159,8 +155,6 @@ class _$BookingModelCopyWithImpl<$Res, $Val extends BookingModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of BookingModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -382,8 +376,6 @@ class __$$BookingModelImplCopyWithImpl<$Res>
       _$BookingModelImpl _value, $Res Function(_$BookingModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of BookingModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -802,7 +794,7 @@ class _$BookingModelImpl implements _BookingModel {
                 other.completedAt == completedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -840,9 +832,7 @@ class _$BookingModelImpl implements _BookingModel {
         completedAt
       ]);
 
-  /// Create a copy of BookingModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$BookingModelImplCopyWith<_$BookingModelImpl> get copyWith =>
@@ -913,20 +903,20 @@ abstract class _BookingModel implements BookingModel {
   String get serviceTitle;
   @override
   @JsonKey(name: 'service_description')
-  String? get serviceDescription; // Time and Date Information
-  @override
+  String? get serviceDescription;
+  @override // Time and Date Information
   @JsonKey(name: 'booking_date')
   DateTime get bookingDate;
   @override
   @JsonKey(name: 'booking_time')
-  String get bookingTime; // Time slot (e.g., "14:00-16:00")
-  @override
+  String get bookingTime;
+  @override // Time slot (e.g., "14:00-16:00")
   @JsonKey(name: 'inquiry_time')
-  DateTime get inquiryTime; // When service provider was available for inquiry
-  @override
+  DateTime get inquiryTime;
+  @override // When service provider was available for inquiry
   @JsonKey(name: 'duration_hours')
-  int get durationHours; // Customer Information
-  @override
+  int get durationHours;
+  @override // Customer Information
   @JsonKey(name: 'customer_name')
   String get customerName;
   @override
@@ -934,8 +924,8 @@ abstract class _BookingModel implements BookingModel {
   String get customerPhone;
   @override
   @JsonKey(name: 'customer_email')
-  String? get customerEmail; // Address Information
-  @override
+  String? get customerEmail;
+  @override // Address Information
   @JsonKey(name: 'venue_address')
   String get venueAddress;
   @override
@@ -943,18 +933,18 @@ abstract class _BookingModel implements BookingModel {
   Map<String, dynamic>? get venueCoordinates;
   @override
   @JsonKey(name: 'special_requirements')
-  String? get specialRequirements; // Pricing Information
-  @override
+  String? get specialRequirements;
+  @override // Pricing Information
   @JsonKey(name: 'total_amount')
   double get totalAmount;
   @override
   @JsonKey(name: 'razorpay_amount')
-  double get razorpayAmount; // 60% of total
-  @override
+  double get razorpayAmount;
+  @override // 60% of total
   @JsonKey(name: 'sylonow_qr_amount')
-  double get sylonowQrAmount; // 40% of total
+  double get sylonowQrAmount;
+  @override // 40% of total
 // Payment Information
-  @override
   @JsonKey(name: 'razorpay_payment_id')
   String? get razorpayPaymentId;
   @override
@@ -965,22 +955,22 @@ abstract class _BookingModel implements BookingModel {
   String? get sylonowQrPaymentId;
   @override
   @JsonKey(name: 'payment_status')
-  String get paymentStatus; // pending, partial, completed, failed
+  String get paymentStatus;
+  @override // pending, partial, completed, failed
 // Booking Status
-  @override
-  String get status; // pending, confirmed, in_progress, completed, cancelled
-  @override
+  String get status;
+  @override // pending, confirmed, in_progress, completed, cancelled
   @JsonKey(name: 'vendor_confirmation')
   bool get vendorConfirmation;
   @override
   @JsonKey(name: 'notification_sent')
-  bool get notificationSent; // Additional Information
-  @override
+  bool get notificationSent;
+  @override // Additional Information
   @JsonKey(name: 'add_ons')
   List<Map<String, dynamic>>? get addOns;
   @override
-  Map<String, dynamic>? get metadata; // Timestamps
-  @override
+  Map<String, dynamic>? get metadata;
+  @override // Timestamps
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
@@ -992,11 +982,8 @@ abstract class _BookingModel implements BookingModel {
   @override
   @JsonKey(name: 'completed_at')
   DateTime? get completedAt;
-
-  /// Create a copy of BookingModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$BookingModelImplCopyWith<_$BookingModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1030,12 +1017,8 @@ mixin _$TimeSlotModel {
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this TimeSlotModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TimeSlotModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TimeSlotModelCopyWith<TimeSlotModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1070,8 +1053,6 @@ class _$TimeSlotModelCopyWithImpl<$Res, $Val extends TimeSlotModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TimeSlotModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1166,8 +1147,6 @@ class __$$TimeSlotModelImplCopyWithImpl<$Res>
       _$TimeSlotModelImpl _value, $Res Function(_$TimeSlotModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TimeSlotModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1318,7 +1297,7 @@ class _$TimeSlotModelImpl implements _TimeSlotModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -1334,9 +1313,7 @@ class _$TimeSlotModelImpl implements _TimeSlotModel {
       createdAt,
       updatedAt);
 
-  /// Create a copy of TimeSlotModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TimeSlotModelImplCopyWith<_$TimeSlotModelImpl> get copyWith =>
@@ -1381,30 +1358,27 @@ abstract class _TimeSlotModel implements TimeSlotModel {
   DateTime get date;
   @override
   @JsonKey(name: 'start_time')
-  String get startTime; // "14:00"
-  @override
+  String get startTime;
+  @override // "14:00"
   @JsonKey(name: 'end_time')
-  String get endTime; // "16:00"
-  @override
+  String get endTime;
+  @override // "16:00"
   @JsonKey(name: 'is_available')
   bool get isAvailable;
   @override
   @JsonKey(name: 'is_blocked')
-  bool get isBlocked; // Manually blocked by vendor
-  @override
+  bool get isBlocked;
+  @override // Manually blocked by vendor
   @JsonKey(name: 'booking_id')
-  String? get bookingId; // If booked, reference to booking
-  @override
+  String? get bookingId;
+  @override // If booked, reference to booking
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @override
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt;
-
-  /// Create a copy of TimeSlotModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TimeSlotModelImplCopyWith<_$TimeSlotModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1430,12 +1404,8 @@ mixin _$VendorInquiryTimeModel {
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this VendorInquiryTimeModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of VendorInquiryTimeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $VendorInquiryTimeModelCopyWith<VendorInquiryTimeModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1467,8 +1437,6 @@ class _$VendorInquiryTimeModelCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of VendorInquiryTimeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1542,8 +1510,6 @@ class __$$VendorInquiryTimeModelImplCopyWithImpl<$Res>
       $Res Function(_$VendorInquiryTimeModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of VendorInquiryTimeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1649,14 +1615,12 @@ class _$VendorInquiryTimeModelImpl implements _VendorInquiryTimeModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, vendorId, inquiryStartTime,
       inquiryEndTime, isActive, createdAt, updatedAt);
 
-  /// Create a copy of VendorInquiryTimeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$VendorInquiryTimeModelImplCopyWith<_$VendorInquiryTimeModelImpl>
@@ -1706,11 +1670,8 @@ abstract class _VendorInquiryTimeModel implements VendorInquiryTimeModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt;
-
-  /// Create a copy of VendorInquiryTimeModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$VendorInquiryTimeModelImplCopyWith<_$VendorInquiryTimeModelImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

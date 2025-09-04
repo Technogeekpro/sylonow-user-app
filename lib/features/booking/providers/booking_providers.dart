@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking_model.dart';
 import '../models/payment_model.dart';
 import '../models/order_model.dart';
@@ -11,6 +10,9 @@ import '../services/razorpay_service.dart';
 import '../services/sylonow_qr_service.dart';
 import '../services/notification_service.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../theater/models/add_on_model.dart';
+import '../../theater/models/selected_add_on_model.dart';
+import '../../theater/repositories/theater_repository.dart';
 
 // Repository Providers
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
@@ -385,15 +387,35 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
     String? serviceDescription,
     String? bookingTime,
     String? specialRequirements,
-    String? venueAddress,
-    Map<String, dynamic>? venueCoordinates,
+    String? addressId,
+    String? placeImageUrl,
   }) async {
+    print('🔄 [PROVIDER] OrderCreationNotifier.createOrder() called');
+    print('🔄 [PROVIDER] Parameters:');
+    print('🔄 [PROVIDER]   userId: $userId');
+    print('🔄 [PROVIDER]   vendorId: $vendorId');
+    print('🔄 [PROVIDER]   customerName: $customerName');
+    print('🔄 [PROVIDER]   serviceListingId: $serviceListingId');
+    print('🔄 [PROVIDER]   serviceTitle: $serviceTitle');
+    print('🔄 [PROVIDER]   bookingDate: $bookingDate');
+    print('🔄 [PROVIDER]   totalAmount: $totalAmount');
+    print('🔄 [PROVIDER]   customerPhone: $customerPhone');
+    print('🔄 [PROVIDER]   customerEmail: $customerEmail');
+    print('🔄 [PROVIDER]   serviceDescription: $serviceDescription');
+    print('🔄 [PROVIDER]   bookingTime: $bookingTime');
+    print('🔄 [PROVIDER]   specialRequirements: $specialRequirements');
+    print('🔄 [PROVIDER]   addressId: $addressId');
+    print('🔄 [PROVIDER]   placeImageUrl: $placeImageUrl');
+    
     state = const AsyncValue.loading();
 
     try {
+      print('💰 [PROVIDER] Calculating amounts');
       final advanceAmount = totalAmount * 0.6; // 60% advance
       final remainingAmount = totalAmount * 0.4; // 40% remaining
+      print('💰 [PROVIDER] Advance: $advanceAmount, Remaining: $remainingAmount');
 
+      print('🏗️ [PROVIDER] Calling _orderRepository.createOrder()');
       final order = await _orderRepository.createOrder(
         userId: userId,
         vendorId: vendorId,
@@ -409,13 +431,19 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
         serviceDescription: serviceDescription,
         bookingTime: bookingTime,
         specialRequirements: specialRequirements,
-        venueAddress: venueAddress,
-        venueCoordinates: venueCoordinates,
+        addressId: addressId,
+        placeImageUrl: placeImageUrl,
       );
 
+      print('✅ [PROVIDER] Order created successfully in repository');
+      print('✅ [PROVIDER] Order ID: ${order.id}');
       state = AsyncValue.data(order);
       return order;
     } catch (e, stackTrace) {
+      print('❌ [PROVIDER] Error creating order');
+      print('❌ [PROVIDER] Error type: ${e.runtimeType}');
+      print('❌ [PROVIDER] Error message: $e');
+      print('❌ [PROVIDER] Stack trace: $stackTrace');
       state = AsyncValue.error(e, stackTrace);
       rethrow;
     }
@@ -424,15 +452,11 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
   Future<void> updateOrderPayment({
     required String orderId,
     String? paymentStatus,
-    String? advancePaymentId,
-    String? remainingPaymentId,
   }) async {
     try {
       final updatedOrder = await _orderRepository.updateOrderPayment(
         orderId: orderId,
         paymentStatus: paymentStatus,
-        advancePaymentId: advancePaymentId,
-        remainingPaymentId: remainingPaymentId,
       );
 
       state = AsyncValue.data(updatedOrder);
@@ -452,4 +476,98 @@ final orderCreationProvider = StateNotifierProvider<OrderCreationNotifier, Async
 });
 
 // Current Order Provider (for tracking active order during payment flow)
-final currentOrderProvider = StateProvider<OrderModel?>((ref) => null); 
+final currentOrderProvider = StateProvider<OrderModel?>((ref) => null);
+
+// Add-ons related providers for checkout screen
+final theaterRepositoryProvider = Provider<TheaterRepository>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return TheaterRepository(supabase);
+});
+
+// Service add-ons provider (gets add-ons for a specific service or vendor)
+final serviceAddOnsProvider = FutureProvider.family<List<AddOnModel>, String>((ref, serviceId) async {
+  final repository = ref.watch(theaterRepositoryProvider);
+  // For now, we'll get add-ons based on vendor_id from the service
+  // This can be enhanced later to filter by service type or other criteria
+  return repository.getServiceAddOns(serviceId);
+});
+
+// Selected add-ons state provider
+final selectedAddOnsProvider = StateNotifierProvider<SelectedAddOnsNotifier, List<SelectedAddOnModel>>((ref) {
+  return SelectedAddOnsNotifier();
+});
+
+class SelectedAddOnsNotifier extends StateNotifier<List<SelectedAddOnModel>> {
+  SelectedAddOnsNotifier() : super([]);
+
+  void addAddOn(AddOnModel addOn) {
+    final existingIndex = state.indexWhere((item) => item.addOn.id == addOn.id);
+    
+    if (existingIndex != -1) {
+      // Increase quantity if already exists
+      final updatedList = List<SelectedAddOnModel>.from(state);
+      updatedList[existingIndex] = updatedList[existingIndex].copyWith(
+        quantity: updatedList[existingIndex].quantity + 1,
+      );
+      state = updatedList;
+    } else {
+      // Add new add-on
+      state = [...state, SelectedAddOnModel(addOn: addOn, quantity: 1)];
+    }
+  }
+
+  void removeAddOn(String addOnId) {
+    final existingIndex = state.indexWhere((item) => item.addOn.id == addOnId);
+    
+    if (existingIndex != -1) {
+      final currentItem = state[existingIndex];
+      final updatedList = List<SelectedAddOnModel>.from(state);
+      
+      if (currentItem.quantity > 1) {
+        // Decrease quantity
+        updatedList[existingIndex] = currentItem.copyWith(
+          quantity: currentItem.quantity - 1,
+        );
+        state = updatedList;
+      } else {
+        // Remove completely
+        updatedList.removeAt(existingIndex);
+        state = updatedList;
+      }
+    }
+  }
+
+  void updateQuantity(String addOnId, int quantity) {
+    final existingIndex = state.indexWhere((item) => item.addOn.id == addOnId);
+    
+    if (existingIndex != -1) {
+      if (quantity <= 0) {
+        // Remove if quantity is 0 or less
+        final updatedList = List<SelectedAddOnModel>.from(state);
+        updatedList.removeAt(existingIndex);
+        state = updatedList;
+      } else {
+        // Update quantity
+        final updatedList = List<SelectedAddOnModel>.from(state);
+        updatedList[existingIndex] = updatedList[existingIndex].copyWith(quantity: quantity);
+        state = updatedList;
+      }
+    }
+  }
+
+  void clearAddOns() {
+    state = [];
+  }
+
+  double getTotalAmount() {
+    return state.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+
+  int getItemQuantity(String addOnId) {
+    final item = state.firstWhere(
+      (item) => item.addOn.id == addOnId,
+      orElse: () => SelectedAddOnModel(addOn: AddOnModel(id: '', name: '', price: 0, category: ''), quantity: 0),
+    );
+    return item.quantity;
+  }
+} 

@@ -6,6 +6,8 @@ import 'package:ionicons/ionicons.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
+import 'package:sylonow_user/features/home/providers/vendor_providers.dart';
+import 'package:sylonow_user/features/theater/models/decoration_model.dart';
 
 
 class TheaterDetailScreen extends ConsumerStatefulWidget {
@@ -123,10 +125,10 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                       _currentImageIndex = index;
                     });
                   },
-                  itemCount: theater.images.length,
+                  itemCount: theater.images!.length,
                   itemBuilder: (context, index) {
                     return CachedNetworkImage(
-                      imageUrl: theater.images[index],
+                      imageUrl: theater.images![index],
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: Colors.grey[200],
@@ -160,7 +162,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                   ),
                 ),
                 // Image indicator
-                if (theater.images.length > 1)
+                if (theater.images!.length > 1)
                   Positioned(
                     bottom: 16,
                     left: 0,
@@ -168,7 +170,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        theater.images.length,
+                        theater.images!.length,
                         (index) => Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: 8,
@@ -203,7 +205,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            theater.name,
+                            theater.name!,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -218,7 +220,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  theater.address,
+                                  theater.address!,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -245,7 +247,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                           const Icon(Icons.star, color: Colors.amber, size: 16),
                           const SizedBox(width: 4),
                           Text(
-                            theater.rating.toStringAsFixed(1),
+                            theater.rating!.toStringAsFixed(1),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -293,7 +295,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                     ],
                   ),
                 // Amenities
-                if (theater.amenities.isNotEmpty)
+                if (theater.amenities!.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -309,7 +311,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: theater.amenities.map((amenity) {
+                        children: theater.amenities!.map((amenity) {
                           return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -394,7 +396,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
                 ],
                 // Time slot selection
                 const Text(
-                  'Select Time Slot',
+                  'Select Start Time',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -524,29 +526,21 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
     print('🎬 DEBUG: Theater ID: ${widget.theaterId}');
     print('🎬 DEBUG: Selected Date: ${widget.selectedDate}');
 
-    final timeSlotsAsync = ref.watch(theaterTimeSlotsProvider({
-      'theaterId': widget.theaterId,
-      'date': widget.selectedDate!,
-    }));
-
-    return timeSlotsAsync.when(
-      data: (timeSlots) {
-        print('🎬 DEBUG: Received ${timeSlots.length} time slots');
-        for (int i = 0; i < timeSlots.length; i++) {
-          final slot = timeSlots[i];
-          print('🎬 DEBUG: Slot $i: ${slot.startTime} - ${slot.endTime}, Status: ${slot.status}, Price: ${slot.slotPrice}');
-        }
-        
-        if (timeSlots.isEmpty) {
+    // Get decorations for this theater to find vendor IDs
+    final decorationsAsync = ref.watch(theaterDecorationsProvider(widget.theaterId));
+    
+    return decorationsAsync.when(
+      data: (decorations) {
+        if (decorations.isEmpty) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
               child: Column(
                 children: [
-                  Icon(Icons.schedule, size: 48, color: Colors.grey),
+                  Icon(Icons.celebration, size: 48, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    'No time slots available for this date',
+                    'No decorations available for this theater',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -560,124 +554,278 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
           );
         }
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 2.0,
-          ),
-          itemCount: timeSlots.length,
-          itemBuilder: (context, index) {
-            final timeSlot = timeSlots[index];
-            final timeSlotKey = '${timeSlot.startTime}-${timeSlot.endTime}';
-            final isSelected = _selectedTimeSlot == timeSlotKey;
-            final isAvailable = timeSlot.status == 'available';
-            final price = timeSlot.slotPrice.toInt();
-
-            return InkWell(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(0),
-                bottomLeft: Radius.circular(0),
-                bottomRight: Radius.circular(24),
-              ),
-              onTap: isAvailable ? () {
-                setState(() {
-                  _selectedTimeSlot = timeSlotKey;
-                });
-              } : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: !isAvailable 
-                      ? Colors.grey[200] 
-                      : isSelected 
-                          ? AppTheme.primaryColor 
-                          : Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(0),
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(24),
+        // Get the first decoration's vendor ID (assuming all decorations for a theater have the same vendor)
+        final decoration = decorations.first;
+        final vendorId = decoration.vendorId;
+        
+        if (vendorId == null) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No vendor assigned to decorations',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      fontFamily: 'Okra',
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  border: Border.all(
-                    color: !isAvailable 
-                        ? Colors.grey[300]!
-                        : isSelected 
-                            ? AppTheme.primaryColor 
-                            : Colors.grey[300]!,
-                    width: 1.5,
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Check vendor online status
+        final vendorOnlineAsync = ref.watch(vendorOnlineStatusProvider(vendorId));
+        
+        return vendorOnlineAsync.when(
+          data: (isOnline) {
+            if (!isOnline) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.offline_bolt, size: 48, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Decoration vendor is currently offline',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontFamily: 'Okra',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Please try again later when the vendor is online',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          fontFamily: 'Okra',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    if (!isAvailable)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[600],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'BOOKED',
+              );
+            }
+
+            // Get available time slots based on vendor business hours and advance booking
+            final currentTime = DateTime.now();
+            final availableSlotsAsync = ref.watch(vendorAvailableTimeSlotsProvider({
+              'vendorId': vendorId,
+              'selectedDate': widget.selectedDate!,
+              'currentTime': currentTime,
+            }));
+
+            return availableSlotsAsync.when(
+              data: (availableSlots) {
+                print('🎬 DEBUG: Available slots: $availableSlots');
+                
+                if (availableSlots.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.schedule, size: 48, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'No time slots available for this date',
                             style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              fontSize: 16,
+                              color: Colors.grey,
                               fontFamily: 'Okra',
                             ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'All slots may be booked or outside business hours',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              fontFamily: 'Okra',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 2.0,
+                  ),
+                  itemCount: availableSlots.length,
+                  itemBuilder: (context, index) {
+                    final timeSlot = availableSlots[index];
+                    final isSelected = _selectedTimeSlot == timeSlot;
+                    final startTime = timeSlot.split('-')[0];
+                    final endTime = timeSlot.split('-')[1];
+                    final price = theater.hourlyRate?.toInt() ?? 1000;
+
+                    return InkWell(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        topRight: Radius.circular(0),
+                        bottomLeft: Radius.circular(0),
+                        bottomRight: Radius.circular(24),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedTimeSlot = timeSlot;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? AppTheme.primaryColor 
+                              : Colors.white,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            topRight: Radius.circular(0),
+                            bottomLeft: Radius.circular(0),
+                            bottomRight: Radius.circular(24),
+                          ),
+                          border: Border.all(
+                            color: isSelected 
+                                ? AppTheme.primaryColor 
+                                : Colors.grey[300]!,
+                            width: 1.5,
                           ),
                         ),
-                      ),
-                    Column( 
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _formatTimeRange(timeSlotKey),
-                          style: TextStyle( 
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: !isAvailable  
-                                ? Colors.grey[500]
-                                : isSelected 
+                        child: Column( 
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              startTime,
+                              style: TextStyle( 
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected 
                                     ? Colors.white 
                                     : Colors.black,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${timeSlot.startTime} - ${timeSlot.endTime}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: !isAvailable 
-                                ? Colors.grey[400]
-                                : isSelected 
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'to $endTime',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isSelected 
                                     ? Colors.white.withOpacity(0.9) 
                                     : Colors.grey[600],
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '₹$price',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected 
+                                    ? Colors.white 
+                                    : AppTheme.primaryColor,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  ),
+                );
+              },
+              error: (error, stackTrace) {
+                print('🎬 DEBUG: Available slots error: $error');
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load available time slots',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
                             fontFamily: 'Okra',
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        if (isAvailable)
-                          Text(
-                            '₹$price',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected 
-                                  ? Colors.white 
-                                  : AppTheme.primaryColor,
-                              fontFamily: 'Okra',
-                            ),
-                          ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.refresh(vendorAvailableTimeSlotsProvider({
+                            'vendorId': vendorId,
+                            'selectedDate': widget.selectedDate!,
+                            'currentTime': DateTime.now(),
+                          })),
+                          child: const Text('Retry'),
+                        ), 
                       ],
                     ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              ),
+            );
+          },
+          error: (error, stackTrace) {
+            print('🎬 DEBUG: Vendor online status error: $error');
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to check vendor status',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(vendorOnlineStatusProvider(vendorId)),
+                      child: const Text('Retry'),
+                    ), 
                   ],
                 ),
               ),
@@ -686,7 +834,6 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
         );
       },
       loading: () {
-        print('🎬 DEBUG: Time slots loading...');
         return const Center(
           child: Padding(
             padding: EdgeInsets.all(32.0),
@@ -695,36 +842,32 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
         );
       },
       error: (error, stackTrace) {
-        print('🎬 DEBUG: Time slots error: $error');
-        print('🎬 DEBUG: Stack trace: $stackTrace');
+        print('🎬 DEBUG: Decorations error: $error');
         return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load time slots',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  fontFamily: 'Okra',
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load decorations',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontFamily: 'Okra',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () => ref.refresh(theaterTimeSlotsProvider({
-                  'theaterId': widget.theaterId,
-                  'date': widget.selectedDate!,
-                })),
-                child: const Text('Retry'),
-              ), 
-            ],
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () => ref.refresh(theaterDecorationsProvider(widget.theaterId)),
+                  child: const Text('Retry'),
+                ), 
+              ],
+            ),
           ),
-        ),
-      );
-    },
+        );
+      },
     );
   }
 
@@ -843,7 +986,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
     try {
       // Calculate duration and price
       final durationHours = _calculateDurationHours(_selectedTimeSlot!);
-      final totalPrice = theater.hourlyRate * durationHours;
+      final totalPrice = theater.hourlyRate! * durationHours;
       
       // Show booking confirmation dialog
       final confirmed = await showDialog<bool>(
@@ -854,7 +997,7 @@ class _TheaterDetailScreenState extends ConsumerState<TheaterDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBookingDetailRow('Theater', theater.name),
+              _buildBookingDetailRow('Theater', theater.name!),
               _buildBookingDetailRow('Date', _formatDate(_selectedDate!)),
               _buildBookingDetailRow('Time', _formatTimeRange(_selectedTimeSlot ?? '')),
               _buildBookingDetailRow('Duration', '${durationHours.toStringAsFixed(1)} hours'),

@@ -41,12 +41,8 @@ mixin _$QuoteModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this QuoteModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of QuoteModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $QuoteModelCopyWith<QuoteModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -76,8 +72,6 @@ class _$QuoteModelCopyWithImpl<$Res, $Val extends QuoteModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of QuoteModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -142,8 +136,6 @@ class __$$QuoteModelImplCopyWithImpl<$Res>
       _$QuoteModelImpl _value, $Res Function(_$QuoteModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of QuoteModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -245,14 +237,12 @@ class _$QuoteModelImpl implements _QuoteModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, id, quote, imageUrl, sex, createdAt, updatedAt);
 
-  /// Create a copy of QuoteModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$QuoteModelImplCopyWith<_$QuoteModelImpl> get copyWith =>
@@ -279,37 +269,35 @@ abstract class _QuoteModel implements QuoteModel {
   factory _QuoteModel.fromJson(Map<String, dynamic> json) =
       _$QuoteModelImpl.fromJson;
 
-  /// Unique identifier for the quote
   @override
+
+  /// Unique identifier for the quote
   String get id;
+  @override
 
   /// The quote text
-  @override
   String get quote;
+  @override
 
   /// Optional image URL for the quote background
-  @override
   @JsonKey(name: 'image_url')
   String? get imageUrl;
+  @override
 
   /// Sex category for the quote (male, female, neutral)
-  @override
   String? get sex;
+  @override
 
   /// Timestamp when created
-  @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
+  @override
 
   /// Timestamp when last updated
-  @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of QuoteModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$QuoteModelImplCopyWith<_$QuoteModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

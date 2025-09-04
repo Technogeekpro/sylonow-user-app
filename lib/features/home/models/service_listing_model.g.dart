@@ -12,7 +12,7 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
       id: json['id'] as String,
       vendorId: json['vendor_id'] as String?,
       name: json['title'] as String,
-      image: json['cover_photo'] as String,
+      image: json['cover_photo'] as String?,
       description: json['description'] as String?,
       rating: (json['rating'] as num?)?.toDouble(),
       reviewsCount: (json['reviews_count'] as num?)?.toInt(),

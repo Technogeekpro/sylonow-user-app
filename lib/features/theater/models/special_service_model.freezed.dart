@@ -35,12 +35,8 @@ mixin _$SpecialServiceModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this SpecialServiceModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SpecialServiceModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SpecialServiceModelCopyWith<SpecialServiceModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -73,8 +69,6 @@ class _$SpecialServiceModelCopyWithImpl<$Res, $Val extends SpecialServiceModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SpecialServiceModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -157,8 +151,6 @@ class __$$SpecialServiceModelImplCopyWithImpl<$Res>
       $Res Function(_$SpecialServiceModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SpecialServiceModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -280,14 +272,12 @@ class _$SpecialServiceModelImpl implements _SpecialServiceModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, description, iconUrl,
       price, durationMinutes, isActive, createdAt, updatedAt);
 
-  /// Create a copy of SpecialServiceModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SpecialServiceModelImplCopyWith<_$SpecialServiceModelImpl> get copyWith =>
@@ -341,11 +331,8 @@ abstract class _SpecialServiceModel implements SpecialServiceModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of SpecialServiceModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SpecialServiceModelImplCopyWith<_$SpecialServiceModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
+import 'package:sylonow_user/core/widgets/gredient_elevated_button.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
 
@@ -111,112 +115,82 @@ class LocationContent extends ConsumerWidget {
             child: Container(
               key: locationKey,
               child: GestureDetector(
-              onTap: () {
-                if (isLocationEnabled && selectedAddress != null) {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    transitionAnimationController: AnimationController(
-                      duration: const Duration(milliseconds: 300),
-                      vsync: Scaffold.of(context),
-                    ),
-                    builder: (context) => DraggableScrollableSheet(
-                      initialChildSize: 0.9,
-                      minChildSize: 0.5,
-                      maxChildSize: 0.95,
-                      builder: (context, scrollController) =>
-                          const ManageAddressScreen(),
-                    ),
-                  );
-                }
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Transform.rotate(
-                        angle: 1,
-                        child: const Icon(
-                          Icons.navigation,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                onTap: () {
+                  if (isLocationEnabled && selectedAddress != null) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      transitionAnimationController: AnimationController(
+                        duration: const Duration(milliseconds: 300),
+                        vsync: Scaffold.of(context),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          selectedAddress?.area ?? 'Accurate location detected',
-                          style: const TextStyle(
+                      builder: (context) => DraggableScrollableSheet(
+                        initialChildSize: 0.9,
+                        minChildSize: 0.5,
+                        maxChildSize: 0.95,
+                        builder: (context, scrollController) =>
+                            const ManageAddressScreen(),
+                      ),
+                    );
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Transform.rotate(
+                          angle: 1,
+                          child: const Icon(
+                            Icons.navigation,
                             color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Okra',
+                            size: 20,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      if (isLocationEnabled && selectedAddress != null)
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                          size: 20,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            selectedAddress?.area ??
+                                'Accurate location detected',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Okra',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    selectedAddress?.address ?? 'Current Location',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 12,
-                      fontFamily: 'Okra',
+                        if (isLocationEnabled && selectedAddress != null)
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            key: profileKey,
-            child: GestureDetector(
-              onTap: () {
-                context.push('/profile');
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 24,
+                    const SizedBox(height: 2),
+                    Text(
+                      selectedAddress?.address ?? 'Current Location',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                WalletButton(),
-                SizedBox(width: 8),
-                WishlistButton(),
-              ],
-            ),
+
+          const Row(
+            children: [WalletButton(), SizedBox(width: 8), WishlistButton()],
           ),
         ],
       ),
@@ -235,7 +209,7 @@ class WalletButton extends StatelessWidget {
         backgroundColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
-          side: const BorderSide(color: Colors.white),
+          side: BorderSide(color: Colors.white, width: 0.5),
         ),
       ),
       onPressed: () {
@@ -289,60 +263,60 @@ class SearchSection extends StatelessWidget {
     return Container(
       key: searchKey,
       child: GestureDetector(
-      onTap: () {
-        context.push('/search');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(5, 4),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 16, right: 8),
-              child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
-            ),
-            Expanded(
-              child: Container(
-                height: 45,
-                alignment: Alignment.centerLeft,
-                child: const Row(
-                  children: [
-                    Text(
-                      'Search "',
-                      style: TextStyle(
-                        color: Color(0xFF737680),
-                        fontSize: 14,
-                        fontFamily: 'Okra',
+        onTap: () {
+          context.push('/search');
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 15,
+                offset: const Offset(5, 4),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 16, right: 8),
+                child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
+              ),
+              Expanded(
+                child: Container(
+                  height: 45,
+                  alignment: Alignment.centerLeft,
+                  child: const Row(
+                    children: [
+                      Text(
+                        'Search "',
+                        style: TextStyle(
+                          color: Color(0xFF737680),
+                          fontSize: 14,
+                          fontFamily: 'Okra',
+                        ),
                       ),
-                    ),
-                    Expanded(child: AnimatedSearchText()),
-                    Text(
-                      '"',
-                      style: TextStyle(
-                        color: Color(0xFF737680),
-                        fontSize: 14,
-                        fontFamily: 'Okra',
+                      Expanded(child: AnimatedSearchText()),
+                      Text(
+                        '"',
+                        style: TextStyle(
+                          color: Color(0xFF737680),
+                          fontSize: 14,
+                          fontFamily: 'Okra',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -391,11 +365,11 @@ class AdvertisementSection extends StatelessWidget {
         context.push('/offers');
       },
       child: Container(
-        height: 260 + appBarHeight,
+        height: 270 + appBarHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: const DecorationImage(
-            image: AssetImage('assets/images/splash_screen.jpg'),
+            image: AssetImage('assets/images/splash_screen.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -410,17 +384,27 @@ class AdvertisementSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '🎉 Special Offer',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.9),
-                  fontFamily: 'Okra',
-                ),
+              Row(
+                children: [
+                  //Lottie
+                  Lottie.asset(
+                    'assets/animations/confetti.json',
+                    width: 36,
+                    height: 36,
+                  ),
+                  Text(
+                    ' Special Offer',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withOpacity(0.9),
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ],
               ),
-              Image.asset(
-                'assets/images/sylonow_white_logo.png',
+              SvgPicture.asset(
+                'assets/svgs/app_logo_text.svg',
                 width: 100,
                 height: 30,
               ),
@@ -438,35 +422,13 @@ class AdvertisementSection extends StatelessWidget {
               const SizedBox(height: 16),
 
               const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  context.push('/offers');
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Book Now & Save',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, color: Colors.pink, size: 20),
-                    ],
-                  ),
+             GradientElevatedButton(
+                  text: 'Book Now & Save',
+                  icon: Icon(Icons.arrow_forward),
+                  onPressed: () {
+                    context.push('/offers');
+                  },
                 ),
-              ),
             ],
           ),
         ),

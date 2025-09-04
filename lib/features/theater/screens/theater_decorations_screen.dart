@@ -66,11 +66,11 @@ class _TheaterDecorationsScreenState extends ConsumerState<TheaterDecorationsScr
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey[200],
                     ),
-                    child: theater?.images.isNotEmpty == true
+                    child: theater?.images!.isNotEmpty == true
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: CachedNetworkImage(
-                              imageUrl: theater!.images.first,
+                              imageUrl: theater!.images!.first,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Center(
                                 child: CircularProgressIndicator(

@@ -24,24 +24,40 @@ mixin _$CouponModel {
   String get code => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'discount_value')
   double get discountValue => throw _privateConstructorUsedError;
+  @JsonKey(name: 'discount_type')
   String get discountType =>
       throw _privateConstructorUsedError; // 'percentage', 'fixed'
+  @JsonKey(name: 'start_date')
   DateTime get startDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'end_date')
   DateTime get endDate => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_public')
   bool get isPublic =>
       throw _privateConstructorUsedError; // true for public coupons, false for user-specific
+  @JsonKey(name: 'user_id')
   String? get userId =>
       throw _privateConstructorUsedError; // for user-specific coupons
+  @JsonKey(name: 'category_id')
   String? get categoryId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'min_order_value')
   double? get minOrderValue => throw _privateConstructorUsedError;
+  @JsonKey(name: 'max_discount_amount')
   double? get maxDiscountAmount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'max_usage_per_user')
   int? get maxUsagePerUser => throw _privateConstructorUsedError;
+  @JsonKey(name: 'total_usage_limit')
   int? get totalUsageLimit => throw _privateConstructorUsedError;
+  @JsonKey(name: 'current_usage_count')
   int? get currentUsageCount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'applicable_services')
   List<String>? get applicableServices => throw _privateConstructorUsedError;
+  @JsonKey(name: 'excluded_services')
   List<String>? get excludedServices => throw _privateConstructorUsedError;
+  @JsonKey(name: 'terms_and_conditions')
   String? get termsAndConditions => throw _privateConstructorUsedError;
   Map<String, dynamic>? get metadata => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -49,12 +65,8 @@ mixin _$CouponModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this CouponModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CouponModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CouponModelCopyWith<CouponModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -70,22 +82,22 @@ abstract class $CouponModelCopyWith<$Res> {
       String code,
       String title,
       String description,
-      double discountValue,
-      String discountType,
-      DateTime startDate,
-      DateTime endDate,
-      bool isActive,
-      bool isPublic,
-      String? userId,
-      String? categoryId,
-      double? minOrderValue,
-      double? maxDiscountAmount,
-      int? maxUsagePerUser,
-      int? totalUsageLimit,
-      int? currentUsageCount,
-      List<String>? applicableServices,
-      List<String>? excludedServices,
-      String? termsAndConditions,
+      @JsonKey(name: 'discount_value') double discountValue,
+      @JsonKey(name: 'discount_type') String discountType,
+      @JsonKey(name: 'start_date') DateTime startDate,
+      @JsonKey(name: 'end_date') DateTime endDate,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'is_public') bool isPublic,
+      @JsonKey(name: 'user_id') String? userId,
+      @JsonKey(name: 'category_id') String? categoryId,
+      @JsonKey(name: 'min_order_value') double? minOrderValue,
+      @JsonKey(name: 'max_discount_amount') double? maxDiscountAmount,
+      @JsonKey(name: 'max_usage_per_user') int? maxUsagePerUser,
+      @JsonKey(name: 'total_usage_limit') int? totalUsageLimit,
+      @JsonKey(name: 'current_usage_count') int? currentUsageCount,
+      @JsonKey(name: 'applicable_services') List<String>? applicableServices,
+      @JsonKey(name: 'excluded_services') List<String>? excludedServices,
+      @JsonKey(name: 'terms_and_conditions') String? termsAndConditions,
       Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -101,8 +113,6 @@ class _$CouponModelCopyWithImpl<$Res, $Val extends CouponModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CouponModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -240,22 +250,22 @@ abstract class _$$CouponModelImplCopyWith<$Res>
       String code,
       String title,
       String description,
-      double discountValue,
-      String discountType,
-      DateTime startDate,
-      DateTime endDate,
-      bool isActive,
-      bool isPublic,
-      String? userId,
-      String? categoryId,
-      double? minOrderValue,
-      double? maxDiscountAmount,
-      int? maxUsagePerUser,
-      int? totalUsageLimit,
-      int? currentUsageCount,
-      List<String>? applicableServices,
-      List<String>? excludedServices,
-      String? termsAndConditions,
+      @JsonKey(name: 'discount_value') double discountValue,
+      @JsonKey(name: 'discount_type') String discountType,
+      @JsonKey(name: 'start_date') DateTime startDate,
+      @JsonKey(name: 'end_date') DateTime endDate,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'is_public') bool isPublic,
+      @JsonKey(name: 'user_id') String? userId,
+      @JsonKey(name: 'category_id') String? categoryId,
+      @JsonKey(name: 'min_order_value') double? minOrderValue,
+      @JsonKey(name: 'max_discount_amount') double? maxDiscountAmount,
+      @JsonKey(name: 'max_usage_per_user') int? maxUsagePerUser,
+      @JsonKey(name: 'total_usage_limit') int? totalUsageLimit,
+      @JsonKey(name: 'current_usage_count') int? currentUsageCount,
+      @JsonKey(name: 'applicable_services') List<String>? applicableServices,
+      @JsonKey(name: 'excluded_services') List<String>? excludedServices,
+      @JsonKey(name: 'terms_and_conditions') String? termsAndConditions,
       Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -269,8 +279,6 @@ class __$$CouponModelImplCopyWithImpl<$Res>
       _$CouponModelImpl _value, $Res Function(_$CouponModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CouponModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -403,22 +411,23 @@ class _$CouponModelImpl implements _CouponModel {
       required this.code,
       required this.title,
       required this.description,
-      required this.discountValue,
-      required this.discountType,
-      required this.startDate,
-      required this.endDate,
-      required this.isActive,
-      required this.isPublic,
-      this.userId,
-      this.categoryId,
-      this.minOrderValue,
-      this.maxDiscountAmount,
-      this.maxUsagePerUser,
-      this.totalUsageLimit,
-      this.currentUsageCount,
+      @JsonKey(name: 'discount_value') required this.discountValue,
+      @JsonKey(name: 'discount_type') required this.discountType,
+      @JsonKey(name: 'start_date') required this.startDate,
+      @JsonKey(name: 'end_date') required this.endDate,
+      @JsonKey(name: 'is_active') required this.isActive,
+      @JsonKey(name: 'is_public') required this.isPublic,
+      @JsonKey(name: 'user_id') this.userId,
+      @JsonKey(name: 'category_id') this.categoryId,
+      @JsonKey(name: 'min_order_value') this.minOrderValue,
+      @JsonKey(name: 'max_discount_amount') this.maxDiscountAmount,
+      @JsonKey(name: 'max_usage_per_user') this.maxUsagePerUser,
+      @JsonKey(name: 'total_usage_limit') this.totalUsageLimit,
+      @JsonKey(name: 'current_usage_count') this.currentUsageCount,
+      @JsonKey(name: 'applicable_services')
       final List<String>? applicableServices,
-      final List<String>? excludedServices,
-      this.termsAndConditions,
+      @JsonKey(name: 'excluded_services') final List<String>? excludedServices,
+      @JsonKey(name: 'terms_and_conditions') this.termsAndConditions,
       final Map<String, dynamic>? metadata,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt})
@@ -438,36 +447,50 @@ class _$CouponModelImpl implements _CouponModel {
   @override
   final String description;
   @override
+  @JsonKey(name: 'discount_value')
   final double discountValue;
   @override
+  @JsonKey(name: 'discount_type')
   final String discountType;
 // 'percentage', 'fixed'
   @override
+  @JsonKey(name: 'start_date')
   final DateTime startDate;
   @override
+  @JsonKey(name: 'end_date')
   final DateTime endDate;
   @override
+  @JsonKey(name: 'is_active')
   final bool isActive;
   @override
+  @JsonKey(name: 'is_public')
   final bool isPublic;
 // true for public coupons, false for user-specific
   @override
+  @JsonKey(name: 'user_id')
   final String? userId;
 // for user-specific coupons
   @override
+  @JsonKey(name: 'category_id')
   final String? categoryId;
   @override
+  @JsonKey(name: 'min_order_value')
   final double? minOrderValue;
   @override
+  @JsonKey(name: 'max_discount_amount')
   final double? maxDiscountAmount;
   @override
+  @JsonKey(name: 'max_usage_per_user')
   final int? maxUsagePerUser;
   @override
+  @JsonKey(name: 'total_usage_limit')
   final int? totalUsageLimit;
   @override
+  @JsonKey(name: 'current_usage_count')
   final int? currentUsageCount;
   final List<String>? _applicableServices;
   @override
+  @JsonKey(name: 'applicable_services')
   List<String>? get applicableServices {
     final value = _applicableServices;
     if (value == null) return null;
@@ -479,6 +502,7 @@ class _$CouponModelImpl implements _CouponModel {
 
   final List<String>? _excludedServices;
   @override
+  @JsonKey(name: 'excluded_services')
   List<String>? get excludedServices {
     final value = _excludedServices;
     if (value == null) return null;
@@ -489,6 +513,7 @@ class _$CouponModelImpl implements _CouponModel {
   }
 
   @override
+  @JsonKey(name: 'terms_and_conditions')
   final String? termsAndConditions;
   final Map<String, dynamic>? _metadata;
   @override
@@ -559,7 +584,7 @@ class _$CouponModelImpl implements _CouponModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -588,9 +613,7 @@ class _$CouponModelImpl implements _CouponModel {
         updatedAt
       ]);
 
-  /// Create a copy of CouponModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CouponModelImplCopyWith<_$CouponModelImpl> get copyWith =>
@@ -606,30 +629,31 @@ class _$CouponModelImpl implements _CouponModel {
 
 abstract class _CouponModel implements CouponModel {
   const factory _CouponModel(
-          {required final String id,
-          required final String code,
-          required final String title,
-          required final String description,
-          required final double discountValue,
-          required final String discountType,
-          required final DateTime startDate,
-          required final DateTime endDate,
-          required final bool isActive,
-          required final bool isPublic,
-          final String? userId,
-          final String? categoryId,
-          final double? minOrderValue,
-          final double? maxDiscountAmount,
-          final int? maxUsagePerUser,
-          final int? totalUsageLimit,
-          final int? currentUsageCount,
-          final List<String>? applicableServices,
-          final List<String>? excludedServices,
-          final String? termsAndConditions,
-          final Map<String, dynamic>? metadata,
-          @JsonKey(name: 'created_at') final DateTime? createdAt,
-          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
-      _$CouponModelImpl;
+      {required final String id,
+      required final String code,
+      required final String title,
+      required final String description,
+      @JsonKey(name: 'discount_value') required final double discountValue,
+      @JsonKey(name: 'discount_type') required final String discountType,
+      @JsonKey(name: 'start_date') required final DateTime startDate,
+      @JsonKey(name: 'end_date') required final DateTime endDate,
+      @JsonKey(name: 'is_active') required final bool isActive,
+      @JsonKey(name: 'is_public') required final bool isPublic,
+      @JsonKey(name: 'user_id') final String? userId,
+      @JsonKey(name: 'category_id') final String? categoryId,
+      @JsonKey(name: 'min_order_value') final double? minOrderValue,
+      @JsonKey(name: 'max_discount_amount') final double? maxDiscountAmount,
+      @JsonKey(name: 'max_usage_per_user') final int? maxUsagePerUser,
+      @JsonKey(name: 'total_usage_limit') final int? totalUsageLimit,
+      @JsonKey(name: 'current_usage_count') final int? currentUsageCount,
+      @JsonKey(name: 'applicable_services')
+      final List<String>? applicableServices,
+      @JsonKey(name: 'excluded_services') final List<String>? excludedServices,
+      @JsonKey(name: 'terms_and_conditions') final String? termsAndConditions,
+      final Map<String, dynamic>? metadata,
+      @JsonKey(name: 'created_at') final DateTime? createdAt,
+      @JsonKey(name: 'updated_at')
+      final DateTime? updatedAt}) = _$CouponModelImpl;
 
   factory _CouponModel.fromJson(Map<String, dynamic> json) =
       _$CouponModelImpl.fromJson;
@@ -643,36 +667,52 @@ abstract class _CouponModel implements CouponModel {
   @override
   String get description;
   @override
+  @JsonKey(name: 'discount_value')
   double get discountValue;
   @override
-  String get discountType; // 'percentage', 'fixed'
-  @override
+  @JsonKey(name: 'discount_type')
+  String get discountType;
+  @override // 'percentage', 'fixed'
+  @JsonKey(name: 'start_date')
   DateTime get startDate;
   @override
+  @JsonKey(name: 'end_date')
   DateTime get endDate;
   @override
+  @JsonKey(name: 'is_active')
   bool get isActive;
   @override
-  bool get isPublic; // true for public coupons, false for user-specific
-  @override
-  String? get userId; // for user-specific coupons
-  @override
+  @JsonKey(name: 'is_public')
+  bool get isPublic;
+  @override // true for public coupons, false for user-specific
+  @JsonKey(name: 'user_id')
+  String? get userId;
+  @override // for user-specific coupons
+  @JsonKey(name: 'category_id')
   String? get categoryId;
   @override
+  @JsonKey(name: 'min_order_value')
   double? get minOrderValue;
   @override
+  @JsonKey(name: 'max_discount_amount')
   double? get maxDiscountAmount;
   @override
+  @JsonKey(name: 'max_usage_per_user')
   int? get maxUsagePerUser;
   @override
+  @JsonKey(name: 'total_usage_limit')
   int? get totalUsageLimit;
   @override
+  @JsonKey(name: 'current_usage_count')
   int? get currentUsageCount;
   @override
+  @JsonKey(name: 'applicable_services')
   List<String>? get applicableServices;
   @override
+  @JsonKey(name: 'excluded_services')
   List<String>? get excludedServices;
   @override
+  @JsonKey(name: 'terms_and_conditions')
   String? get termsAndConditions;
   @override
   Map<String, dynamic>? get metadata;
@@ -682,11 +722,8 @@ abstract class _CouponModel implements CouponModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of CouponModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CouponModelImplCopyWith<_$CouponModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

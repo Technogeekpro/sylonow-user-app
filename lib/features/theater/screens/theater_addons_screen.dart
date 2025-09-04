@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/add_on_model.dart';
+import 'package:sylonow_user/features/theater/models/selected_add_on_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -27,14 +28,16 @@ class TheaterAddonsScreen extends ConsumerStatefulWidget {
 
 class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
   int _currentStep = 0;
-  final List<AddOnModel> _selectedGiftsAndDecorations = [];
-  final List<AddOnModel> _selectedSpecialServices = [];
+  final List<SelectedAddOnModel> _selectedGiftsAndDecorations = [];
+  final List<SelectedAddOnModel> _selectedSpecialServices = [];
 
   // Pagination
   final Map<String, int> _visibleCounts = {
-    'gifts': 4,
+    'cake': 4,
+    'cakes': 4,
     'decorations': 4,
     'special_services': 4,
+    'extra_special': 4,
   };
 
   @override
@@ -42,16 +45,16 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
     super.initState();
   }
 
-  List<AddOnModel> get _allSelectedAddOns => [
+  List<SelectedAddOnModel> get _allSelectedAddOns => [
     ..._selectedGiftsAndDecorations,
     ..._selectedSpecialServices,
   ];
 
   double get _totalAddOnsPrice {
-    return _allSelectedAddOns.fold(0.0, (sum, addon) => sum + addon.price);
+    return _allSelectedAddOns.fold(0.0, (sum, addon) => sum + addon.totalPrice);
   }
 
-  int get _totalSelectedCount => _allSelectedAddOns.length;
+  int get _totalSelectedCount => _allSelectedAddOns.fold(0, (sum, addon) => sum + addon.quantity);
 
   String get _currentStepTitle {
     switch (_currentStep) {
@@ -67,9 +70,9 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
   List<String> get _currentStepCategories {
     switch (_currentStep) {
       case 0:
-        return ['gifts', 'decorations'];
+        return ['cake', 'cakes', 'decorations']; // Updated to match actual database categories
       case 1:
-        return ['special_services'];
+        return ['special_services', 'extra_special', 'special service', 'extra-special-service']; // Include all service variants
       default:
         return [];
     }
@@ -147,11 +150,11 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.grey[200],
                     ),
-                    child: theater?.images.isNotEmpty == true
+                    child: theater?.images?.isNotEmpty == true
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: CachedNetworkImage(
-                              imageUrl: theater!.images.first,
+                              imageUrl: theater!.images!.first,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Center(
                                 child: CircularProgressIndicator(
@@ -371,8 +374,8 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
                   itemCount: visibleAddOns.length,
                   itemBuilder: (context, index) {
                     final addOn = visibleAddOns[index];
-                    final isSelected = _isAddOnSelected(addOn);
-                    return _buildFigmaStyleCard(addOn, isSelected);
+                    final selectedAddOn = _getSelectedAddOn(addOn);
+                    return _buildFigmaStyleCard(addOn, selectedAddOn);
                   },
                 ),
 
@@ -412,113 +415,297 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
     );
   }
 
-  Widget _buildFigmaStyleCard(AddOnModel addOn, bool isSelected) {
-    return InkWell(
-      onTap: () => _toggleAddOnSelection(addOn),
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Image Section
-          Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(400),
-                  topRight: Radius.circular(400),
-                ),
-                color: Colors.grey[100],
-              ),
-              child: addOn.imageUrl != null
-                  ? ClipRRect(
+  Widget _buildFigmaStyleCard(AddOnModel addOn, SelectedAddOnModel? selectedAddOn) {
+    final isSelected = selectedAddOn != null;
+    final quantity = selectedAddOn?.quantity ?? 0;
+    
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+          width: 2,
+        ),
+        boxShadow: isSelected ? [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
+      ),
+      child: InkWell(
+        onTap: () => _addAddOn(addOn),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image Section with Selection Badge
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
                       ),
-                      child: CachedNetworkImage(
-                        imageUrl: addOn.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Center(
-                          child: CircularProgressIndicator(
-                            color: AppTheme.primaryColor,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Center(
-                          child: Icon(
-                            _getCategoryIcon(addOn.category),
-                            color: Colors.grey[400],
-                            size: 32,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        _getCategoryIcon(addOn.category),
-                        color: Colors.grey[400],
-                        size: 32,
-                      ),
+                      color: Colors.grey[100],
                     ),
-            ),
-          ),
-          SizedBox(height: 8),
-
-          // Info Section
-          Expanded(
-            flex: 1,
-            child: Container(
-              
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xffF0EBFE), // Light purple background
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(8),
-                  bottomLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(20),
-                  topLeft: Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    addOn.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      fontFamily: 'Okra',
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    child: addOn.imageUrl != null
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                            child: CachedNetworkImage(
+                              imageUrl: addOn.imageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Center(
+                                child: Icon(
+                                  _getCategoryIcon(addOn.category),
+                                  color: Colors.grey[400],
+                                  size: 32,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              _getCategoryIcon(addOn.category),
+                              color: Colors.grey[400],
+                              size: 32,
+                            ),
+                          ),
                   ),
+                  
+                  // Selection Badge
+                  if (isSelected)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+
+            // Info Section
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppTheme.primaryColor.withOpacity(0.1)
+                      : const Color(0xffF0EBFE),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Name and Price
+                    Column(
+                      children: [
+                        Text(
+                          addOn.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? AppTheme.primaryColor : Colors.black,
+                            fontFamily: 'Okra',
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '₹${addOn.price.round()}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? AppTheme.primaryColor : Colors.grey[600],
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    // Quantity Controls
+                    if (isSelected)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () => _decreaseQuantity(addOn),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                '$quantity',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: quantity < 5 ? () => _increaseQuantity(addOn) : null,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 14,
+                                  color: quantity < 5 
+                                      ? AppTheme.primaryColor 
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      // Add Button
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: const Text(
+                          'Add',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  bool _isAddOnSelected(AddOnModel addOn) {
-    return _allSelectedAddOns.any((selected) => selected.id == addOn.id);
+  SelectedAddOnModel? _getSelectedAddOn(AddOnModel addOn) {
+    try {
+      return _allSelectedAddOns.firstWhere((selected) => selected.id == addOn.id);
+    } catch (e) {
+      return null;
+    }
   }
 
-  void _toggleAddOnSelection(AddOnModel addOn) {
+  void _addAddOn(AddOnModel addOn) {
     setState(() {
       final currentStepSelection = _currentStep == 0
           ? _selectedGiftsAndDecorations
           : _selectedSpecialServices;
 
-      if (_isAddOnSelected(addOn)) {
-        currentStepSelection.removeWhere((item) => item.id == addOn.id);
+      final existingIndex = currentStepSelection.indexWhere((item) => item.id == addOn.id);
+      
+      if (existingIndex >= 0) {
+        // Already selected, increase quantity if under limit
+        final current = currentStepSelection[existingIndex];
+        if (current.quantity < 5) {
+          currentStepSelection[existingIndex] = current.copyWith(quantity: current.quantity + 1);
+        }
       } else {
-        currentStepSelection.add(addOn);
+        // Not selected, add with quantity 1
+        currentStepSelection.add(SelectedAddOnModel(addOn: addOn, quantity: 1));
+      }
+    });
+  }
+
+  void _increaseQuantity(AddOnModel addOn) {
+    setState(() {
+      final currentStepSelection = _currentStep == 0
+          ? _selectedGiftsAndDecorations
+          : _selectedSpecialServices;
+
+      final index = currentStepSelection.indexWhere((item) => item.id == addOn.id);
+      if (index >= 0) {
+        final current = currentStepSelection[index];
+        if (current.quantity < 5) {
+          currentStepSelection[index] = current.copyWith(quantity: current.quantity + 1);
+        }
+      }
+    });
+  }
+
+  void _decreaseQuantity(AddOnModel addOn) {
+    setState(() {
+      final currentStepSelection = _currentStep == 0
+          ? _selectedGiftsAndDecorations
+          : _selectedSpecialServices;
+
+      final index = currentStepSelection.indexWhere((item) => item.id == addOn.id);
+      if (index >= 0) {
+        final current = currentStepSelection[index];
+        if (current.quantity > 1) {
+          currentStepSelection[index] = current.copyWith(quantity: current.quantity - 1);
+        } else {
+          // Remove if quantity becomes 0
+          currentStepSelection.removeAt(index);
+        }
       }
     });
   }
@@ -617,12 +804,18 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
     switch (category.toLowerCase()) {
       case 'gifts':
         return 'Gifts';
+      case 'cake':
+        return 'Gifts & Treats'; // Treat cake category as gifts
       case 'special_services':
         return 'Special Services';
       case 'cakes':
         return 'Cakes';
       case 'extra_special':
         return 'Extra Special';
+      case 'extra-special-service':
+        return 'Extra Special';
+      case 'special service':
+        return 'Special Services';
       case 'decorations':
         return 'Decorations';
       case 'video_shoot':
@@ -632,6 +825,7 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
       default:
         return category
             .replaceAll('_', ' ')
+            .replaceAll('-', ' ')
             .split(' ')
             .map(
               (word) => word.isNotEmpty
@@ -646,8 +840,14 @@ class _TheaterAddonsScreenState extends ConsumerState<TheaterAddonsScreen> {
     switch (category.toLowerCase()) {
       case 'gifts':
         return Icons.card_giftcard;
+      case 'cake':
+        return Icons.card_giftcard; // Use gift icon for cake category
       case 'special_services':
         return Icons.room_service;
+      case 'special service':
+        return Icons.room_service;
+      case 'extra-special-service':
+        return Icons.star;
       case 'cakes':
         return Icons.cake;
       case 'extra_special':

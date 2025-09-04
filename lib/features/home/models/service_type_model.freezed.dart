@@ -44,12 +44,8 @@ mixin _$ServiceTypeModel {
   /// Timestamp when last updated
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this ServiceTypeModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ServiceTypeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ServiceTypeModelCopyWith<ServiceTypeModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -81,8 +77,6 @@ class _$ServiceTypeModelCopyWithImpl<$Res, $Val extends ServiceTypeModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ServiceTypeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -159,8 +153,6 @@ class __$$ServiceTypeModelImplCopyWithImpl<$Res>
       $Res Function(_$ServiceTypeModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ServiceTypeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -284,14 +276,12 @@ class _$ServiceTypeModelImpl implements _ServiceTypeModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, description, iconUrl,
       category, isActive, createdAt, updatedAt);
 
-  /// Create a copy of ServiceTypeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ServiceTypeModelImplCopyWith<_$ServiceTypeModelImpl> get copyWith =>
@@ -320,42 +310,40 @@ abstract class _ServiceTypeModel implements ServiceTypeModel {
   factory _ServiceTypeModel.fromJson(Map<String, dynamic> json) =
       _$ServiceTypeModelImpl.fromJson;
 
-  /// Unique identifier for the service type
   @override
+
+  /// Unique identifier for the service type
   String get id;
+  @override
 
   /// Name of the service type
-  @override
   String get name;
+  @override
 
   /// Description of the service type
-  @override
   String? get description;
+  @override
 
   /// Icon URL for the service type
-  @override
   String? get iconUrl;
+  @override
 
   /// Category this service type belongs to
-  @override
   String? get category;
+  @override
 
   /// Whether this service type is active
-  @override
   bool get isActive;
+  @override
 
   /// Timestamp when created
-  @override
   DateTime get createdAt;
+  @override
 
   /// Timestamp when last updated
-  @override
   DateTime get updatedAt;
-
-  /// Create a copy of ServiceTypeModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ServiceTypeModelImplCopyWith<_$ServiceTypeModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

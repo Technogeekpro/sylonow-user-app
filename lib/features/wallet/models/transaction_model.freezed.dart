@@ -40,12 +40,8 @@ mixin _$TransactionModel {
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this TransactionModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TransactionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TransactionModelCopyWith<TransactionModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -80,8 +76,6 @@ class _$TransactionModelCopyWithImpl<$Res, $Val extends TransactionModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TransactionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -176,8 +170,6 @@ class __$$TransactionModelImplCopyWithImpl<$Res>
       $Res Function(_$TransactionModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TransactionModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -329,7 +321,7 @@ class _$TransactionModelImpl implements _TransactionModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -345,9 +337,7 @@ class _$TransactionModelImpl implements _TransactionModel {
       createdAt,
       updatedAt);
 
-  /// Create a copy of TransactionModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TransactionModelImplCopyWith<_$TransactionModelImpl> get copyWith =>
@@ -387,12 +377,12 @@ abstract class _TransactionModel implements TransactionModel {
   String get userId;
   @override
   @JsonKey(name: 'transaction_type')
-  String get type; // 'refund', 'payment', 'cashback'
-  @override
+  String get type;
+  @override // 'refund', 'payment', 'cashback'
   double get amount;
   @override
-  String get status; // 'pending', 'completed', 'failed'
-  @override
+  String get status;
+  @override // 'pending', 'completed', 'failed'
   String? get description;
   @override
   @JsonKey(name: 'reference_id')
@@ -408,11 +398,8 @@ abstract class _TransactionModel implements TransactionModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime get updatedAt;
-
-  /// Create a copy of TransactionModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TransactionModelImplCopyWith<_$TransactionModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

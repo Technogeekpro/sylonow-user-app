@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/services/image_upload_service.dart';
 import '../../home/models/service_listing_model.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../providers/booking_providers.dart';
 import '../models/order_model.dart';
+import '../models/payment_model.dart';
+import '../services/razorpay_service.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -574,10 +578,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     }
 
     try {
-      // First create the order in the database
+      // First create the order in the database (without place image initially)
       final order = await ref.read(orderCreationProvider.notifier).createOrder(
         userId: user.id,
-        vendorId: service.vendorId ?? service.vendor?.id ?? 'unknown-vendor',  // Updated this line
+        vendorId: service.vendorId ?? service.vendor?.id ?? 'unknown-vendor',
         customerName: bookingData['customerName'] ?? user.userMetadata?['full_name'] ?? 'Customer',
         serviceListingId: service.id,
         serviceTitle: service.name,
@@ -588,14 +592,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         serviceDescription: service.description,
         bookingTime: bookingData['selectedTimeSlot'],
         specialRequirements: bookingData['specialRequirements'],
-        venueAddress: bookingData['venueAddress'],
-        venueCoordinates: bookingData['venueCoordinates'],
+        addressId: bookingData['selectedAddressId'],
+        placeImageUrl: null, // Will be updated after payment success
       );
 
       // Store the order in the current order provider
       ref.read(currentOrderProvider.notifier).state = order;
 
-      // Process Razorpay payment for 60% advance
+      // Process Razorpay payment for 60% advance (this will trigger payment UI)
       await ref.read(razorpayPaymentProvider.notifier).processPayment(
         bookingId: order.id,
         userId: user.id,
@@ -613,8 +617,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         },
       );
 
-      // Navigate to success page after payment
-      _navigateToSuccess(order);
+      // Listen for payment result to handle success/failure
+      _listenForPaymentResult(order);
+
     } catch (error) {
       // Handle error
       ScaffoldMessenger.of(context).showSnackBar(
@@ -626,6 +631,92 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ),
       );
     }
+  }
+
+  void _listenForPaymentResult(OrderModel order) {
+    // Listen to payment provider state changes
+    ref.listen<AsyncValue<RazorpayPaymentResult?>>(
+      razorpayPaymentProvider,
+      (previous, next) async {
+        next.when(
+          data: (result) async {
+            if (result != null && result.isSuccess) {
+              // Payment successful - now upload place image if available
+              await _handlePaymentSuccess(order);
+            } else if (result != null && !result.isSuccess) {
+              // Payment failed
+              _handlePaymentFailure(result.message);
+            }
+          },
+          loading: () {
+            // Payment in progress - show loading if needed
+            debugPrint('Payment processing...');
+          },
+          error: (error, stackTrace) {
+            // Payment error
+            _handlePaymentFailure(error.toString());
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handlePaymentSuccess(OrderModel order) async {
+    debugPrint('🎉 Payment successful! Processing place image upload...');
+    
+    try {
+      String? placeImageUrl;
+      
+      // Check if there's a place image to upload
+      final placeImageData = widget.bookingData['placeImage'];
+      if (placeImageData != null && placeImageData is XFile) {
+        debugPrint('📸 Uploading place image after successful payment...');
+        
+        final uploadService = ImageUploadService();
+        final user = ref.read(currentUserProvider)!;
+        
+        placeImageUrl = await uploadService.uploadPlaceImage(
+          imageFile: placeImageData,
+          userId: user.id,
+          orderId: 'orders/${order.id}',
+        );
+        
+        if (placeImageUrl != null) {
+          debugPrint('✅ Place image uploaded: $placeImageUrl');
+          
+          // Update the order with the place image URL
+          await ref.read(orderRepositoryProvider).updateOrderPlaceImage(
+            orderId: order.id,
+            placeImageUrl: placeImageUrl,
+          );
+          debugPrint('✅ Order updated with place image URL');
+        } else {
+          debugPrint('❌ Failed to upload place image');
+        }
+      } else {
+        debugPrint('ℹ️ No place image to upload');
+      }
+
+      // Navigate to success screen
+      _navigateToSuccess(order.copyWith(placeImageUrl: placeImageUrl));
+      
+    } catch (e) {
+      debugPrint('❌ Error handling payment success: $e');
+      // Still navigate to success even if image upload fails
+      _navigateToSuccess(order);
+    }
+  }
+
+  void _handlePaymentFailure(String error) {
+    debugPrint('❌ Payment failed: $error');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment failed: $error'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   void _navigateToSuccess(OrderModel order) {

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/home/models/quote_model.dart';
 import 'package:sylonow_user/features/home/models/vendor_model.dart';
@@ -34,6 +35,34 @@ class HomeRepository {
     }
   }
 
+  /// Fetches a vendor by ID
+  /// 
+  /// Returns a vendor model or null if not found
+  Future<VendorModel?> getVendorById(String vendorId) async {
+    try {
+      debugPrint('🔍 HomeRepository: Fetching vendor with ID: $vendorId');
+      final response = await _supabase
+          .from('vendors') 
+          .select()
+          .eq('id', vendorId)
+          .maybeSingle();
+
+      if (response == null) {
+        debugPrint('🔍 HomeRepository: No vendor found with ID: $vendorId');
+        return null;
+      }
+
+      debugPrint('🔍 HomeRepository: Raw vendor response: $response');
+      final vendor = VendorModel.fromJson(response);
+      debugPrint('🔍 HomeRepository: Parsed vendor model: $vendor');
+      return vendor;
+    } catch (e, stackTrace) {
+      debugPrint('❌ HomeRepository: Error fetching vendor $vendorId: $e');
+      debugPrint('❌ HomeRepository: Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
   /// Fetches featured partners/vendors
   /// 
   /// Returns a list of verified and active vendors
@@ -46,6 +75,7 @@ class HomeRepository {
           .eq('is_active', true)
           .eq('is_verified', true)
           .order('rating', ascending: false)
+          
           .order('total_jobs_completed', ascending: false)
           .limit(limit);
 
@@ -80,16 +110,28 @@ class HomeRepository {
 
   /// Fetches featured services
   /// 
-  /// Returns a list of featured and active service listings
+  /// Returns a list of featured and active service listings from verified and active vendors
   /// Limited to [limit] number of services (default: 10)
   Future<List<ServiceListingModel>> getFeaturedServices(
       {int limit = 10, int offset = 0}) async {
     try {
       final response = await _supabase
           .from('service_listings')
-          .select()
+          .select('''
+            *,
+            vendors!inner(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews,
+              is_verified,
+              is_active
+            )
+          ''')
           .eq('is_featured', true)
           .eq('is_active', true)
+          .eq('vendors.verification_status', 'verified')
           .limit(limit)
           .range(offset, offset + limit - 1);
 
@@ -108,14 +150,26 @@ class HomeRepository {
 
   /// Fetches private theater services
   /// 
-  /// Returns a list of private theater related service listings
+  /// Returns a list of private theater related service listings from verified and active vendors
   /// Limited to [limit] number of services (default: 4)
   Future<List<ServiceListingModel>> getPrivateTheaterServices({int limit = 4}) async {
     try {
       final response = await _supabase
           .from('service_listings')
-          .select()
+          .select('''
+            *,
+            vendors!inner(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews,
+              is_verified,
+              is_active
+            )
+          ''')
           .eq('is_active', true)
+          .eq('vendors.verification_status', 'verified')
           .ilike('category', '%theater%')
           .order('created_at', ascending: false)
           .limit(limit);
@@ -130,65 +184,124 @@ class HomeRepository {
 
   /// Fetches popular nearby services
   /// 
-  /// Returns a list of popular services based on ratings and reviews
+  /// Returns a list of popular services based on ratings and reviews from verified and active vendors
   /// This is a simplified version - in production, you'd use user location
   /// Limited to [limit] number of services (default: 6)
   Future<List<ServiceListingModel>> getPopularNearbyServices({int limit = 6}) async {
     try {
-      print('🔍 Repository: getPopularNearbyServices (fallback) called');
-      
       final response = await _supabase
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendors!inner(
               rating,
               total_reviews,
-              total_jobs_completed
+              total_jobs_completed,
+              is_verified,
+              is_active
             )
           ''')
           .eq('is_active', true)
+          .eq('vendors.verification_status', 'verified')
           .order('created_at', ascending: false)
           .limit(limit);
-
-      print('🔍 Repository: Fallback service count: ${(response as List).length}');
 
       return response
           .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
     } catch (e) {
-      print('🔍 Repository: Error in getPopularNearbyServices: $e');
       throw Exception('Failed to fetch popular nearby services: $e');
     }
   }
 
   /// Fetches a specific service by ID
   /// 
-  /// Returns the service details if found, null otherwise
+  /// Returns the service details if found, with flexible conditions for debugging
   Future<ServiceListingModel?> getServiceById(String serviceId) async {
     try {
-      final response = await _supabase
-          .from('service_listings')
-          .select('''
-            *,
-            vendors(
-              id,
-              business_name,
-              full_name,
-              rating,
-              total_reviews,
-              total_jobs_completed,
-              profile_image_url,
-              location
-            )
-          ''')
-          .eq('id', serviceId)
-          .eq('is_active', true)
-          .single();
+      debugPrint('🔍 Searching for service with ID: $serviceId');
+      
+      // First try with all conditions
+      try {
+        final strictResponse = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors!inner(
+                id,
+                business_name,
+                full_name,
+                rating,
+                total_reviews,
+                total_jobs_completed,
+                profile_image_url,
+                location,
+                is_verified,
+                is_online
+              )
+            ''')
+            .eq('id', serviceId)
+            .eq('is_active', true)
+            .eq('vendors.verification_status', 'verified')
+            .eq('vendors.is_online', true)
+            .single();
 
-      return ServiceListingModel.fromJson(response);
+        debugPrint('✅ Service found with strict conditions');
+        return ServiceListingModel.fromJson(strictResponse);
+      } catch (strictError) {
+        debugPrint('❌ Service not found with strict conditions: $strictError');
+      }
+
+      // If strict conditions fail, try with relaxed conditions for debugging
+      try {
+        final relaxedResponse = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors(
+                id,
+                business_name,
+                full_name,
+                rating,
+                total_reviews,
+                total_jobs_completed,
+                profile_image_url,
+                location,
+                is_verified,
+                is_online
+              )
+            ''')
+            .eq('id', serviceId)
+            .maybeSingle();
+
+        if (relaxedResponse == null) {
+          debugPrint('❌ Service not found with ID: $serviceId');
+          return null;
+        }
+
+        debugPrint('📋 Service found with relaxed conditions:');
+        debugPrint('  - Service active: ${relaxedResponse['is_active']}');
+        debugPrint('  - Service verified: ${relaxedResponse['is_verified']}');
+        
+        final vendorData = relaxedResponse['vendors'];
+        if (vendorData != null) {
+          debugPrint('  - Vendor accessible: true');
+          debugPrint('  - Vendor online: ${vendorData['is_online']}');
+          debugPrint('  - Vendor verified: ${vendorData['is_verified']}');
+        } else {
+          debugPrint('  - Vendor accessible: false (due to RLS policy)');
+          debugPrint('  - Service will be shown but booking may be disabled');
+        }
+
+        // Return the service even with relaxed conditions
+        return ServiceListingModel.fromJson(relaxedResponse);
+      } catch (relaxedError) {
+        debugPrint('❌ Service not found even with relaxed conditions: $relaxedError');
+      }
+
+      return null;
     } catch (e) {
-      // Return null if service not found or any error occurs
+      debugPrint('❌ Error in getServiceById: $e');
       return null;
     }
   }
@@ -222,6 +335,7 @@ class HomeRepository {
             .eq('is_active', true)
             .eq('category', category)
             .neq('id', currentServiceId)
+            .not('cover_photo', 'is', null)
             .limit(limit)
             .order('rating', ascending: false);
 
@@ -246,6 +360,7 @@ class HomeRepository {
             ''')
             .eq('is_active', true)
             .neq('id', currentServiceId)
+            .not('cover_photo', 'is', null)
             .limit(limit)
             .order('rating', ascending: false);
 
@@ -288,7 +403,7 @@ class HomeRepository {
 
   /// Fetches services by category
   /// 
-  /// Returns a list of services filtered by category
+  /// Returns a list of services filtered by category from verified and active vendors
   Future<List<ServiceListingModel>> getServicesByCategory({
     required String categoryName,
     int limit = 10,
@@ -299,16 +414,20 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors!inner(
               id,
               business_name,
               full_name,
               rating,
-              total_reviews
+              total_reviews,
+              is_verified,
+              is_active
             )
           ''')
           .eq('category', categoryName)
           .eq('is_active', true)
+          .eq('vendor.is_verified', true)
+          .eq('vendor.is_active', true)
           .limit(limit)
           .range(offset, offset + limit - 1)
           .order('rating', ascending: false);
@@ -323,7 +442,7 @@ class HomeRepository {
 
   /// Fetches services by decoration type
   /// 
-  /// Returns a list of services filtered by decoration type ('inside', 'outside', or 'both')
+  /// Returns a list of services filtered by decoration type ('inside', 'outside', or 'both') from verified and active vendors
   /// Used to differentiate between inside and outside decoration services
   Future<List<ServiceListingModel>> getServicesByDecorationType({
     required String decorationType,
@@ -335,23 +454,37 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors!inner(
               id,
               business_name,
               full_name,
               rating,
-              total_reviews
+              total_reviews,
+              is_verified,
+              is_active
             )
           ''')
           .eq('is_active', true)
+          .eq('vendor.is_verified', true)
+          .eq('vendor.is_active', true)
           .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
           .limit(limit)
           .range(offset, offset + limit - 1)
           .order('rating', ascending: false);
 
-      return response
-          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
-          .toList();
+      final results = <ServiceListingModel>[];
+      for (int i = 0; i < response.length; i++) {
+        try {
+          final data = response[i];
+          final service = ServiceListingModel.fromJson(data);
+          results.add(service);
+        } catch (e) {
+          // Skip this record and continue with others
+          continue;
+        }
+      }
+      
+      return results;
     } catch (e) {
       throw Exception('Failed to fetch services by decoration type: $e');
     }
@@ -370,7 +503,7 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors(
               id,
               business_name,
               full_name,
@@ -540,7 +673,7 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors(
               id,
               business_name,
               full_name,
@@ -618,7 +751,7 @@ class HomeRepository {
           .from('service_listings')
           .select('''
             *,
-            vendors(
+            vendor:vendors(
               id,
               business_name,
               full_name,
@@ -666,8 +799,6 @@ class HomeRepository {
     int limit = 6,
   }) async {
     try {
-      print('🔍 Repository: getPopularNearbyServicesWithLocation called with lat: $userLat, lon: $userLon, radius: $radiusKm');
-      
       var query = _supabase
           .from('service_listings')
           .select('''
@@ -678,25 +809,21 @@ class HomeRepository {
               total_jobs_completed
             )
           ''')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .not('cover_photo', 'is', null);
 
       // Apply decoration type filter
       if (decorationType != null) {
         query = query.or('decoration_type.eq.$decorationType,decoration_type.eq.both');
       }
 
-      print('🔍 Repository: Executing query...');
       final response = await query
           .order('created_at', ascending: false) // Order by creation date since vendor data might be empty
           .limit(limit * 3); // Fetch more to have options after radius filtering
 
-      print('🔍 Repository: Raw response count: ${(response as List).length}');
-
       final services = response
           .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
-
-      print('🔍 Repository: Parsed services count: ${services.length}');
 
       // Apply location calculations with radius filter
       final locationFilteredServices = _applyLocationCalculations(
@@ -707,15 +834,203 @@ class HomeRepository {
         radiusFilter: radiusKm,
       );
 
-      print('🔍 Repository: Location filtered services count: ${locationFilteredServices.length}');
+      // Return only the requested limit
+      final result = locationFilteredServices.take(limit).toList();
+      return result;
+    } catch (e) {
+      throw Exception('Failed to fetch popular nearby services with location: $e');
+    }
+  }
+
+  /// Fetches services by category and decoration type
+  /// 
+  /// Returns a list of services filtered by both category and decoration type
+  /// Optimized with database indexing and caching considerations
+  Future<List<ServiceListingModel>> getServicesByCategoryAndDecorationType({
+    required String categoryName,
+    required String decorationType,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            id,
+            title,
+            description,
+            category,
+            decoration_type,
+            cover_photo,
+            original_price,
+            offer_price,
+            promotional_tag,
+            rating,
+            reviews_count,
+            is_featured,
+            latitude,
+            longitude,
+            vendors!inner(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews,
+              is_verified
+            )
+          ''')
+          .eq('category', categoryName)
+          .eq('is_active', true)
+          .eq('vendors.verification_status', 'verified')
+          .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
+          .limit(limit)
+          .range(offset, offset + limit - 1)
+          .order('is_featured', ascending: false)
+          .order('rating', ascending: false)
+          .order('created_at', ascending: false);
+
+      if (response.isEmpty) {
+        return [];
+      }
+
+      return response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch services by category and decoration type: $e');
+    }
+  }
+
+  /// Fetches services by category and decoration type with location calculations
+  /// 
+  /// Enhanced version that includes location-based distance and pricing
+  /// Optimized for better performance and caching
+  Future<List<ServiceListingModel>> getServicesByCategoryAndDecorationTypeWithLocation({
+    required String categoryName,
+    required String decorationType,
+    required double userLat,
+    required double userLon,
+    double? radiusKm,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            id,
+            title,
+            description,
+            category,
+            decoration_type,
+            cover_photo,
+            original_price,
+            offer_price,
+            promotional_tag,
+            rating,
+            reviews_count,
+            is_featured,
+            latitude,
+            longitude,
+            vendors!inner(
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews,
+              is_verified
+            )
+          ''')
+          .eq('category', categoryName)
+          .eq('is_active', true)
+          .eq('vendors.verification_status', 'verified')
+          .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null)
+          .limit(limit * 3) // Fetch more to have options after radius filtering
+          .range(offset, offset + (limit * 3) - 1)
+          .order('is_featured', ascending: false)
+          .order('rating', ascending: false);
+
+      if (response.isEmpty) {
+        return [];
+      }
+
+      final services = response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .toList();
+
+      // Apply location calculations
+      final locationFilteredServices = _applyLocationCalculations(
+        services: services,
+        userLat: userLat,
+        userLon: userLon,
+        sortByDistance: true,
+        radiusFilter: radiusKm,
+      );
 
       // Return only the requested limit
       final result = locationFilteredServices.take(limit).toList();
-      print('🔍 Repository: Final result count: ${result.length}');
       return result;
     } catch (e) {
-      print('🔍 Repository: Error in getPopularNearbyServicesWithLocation: $e');
-      throw Exception('Failed to fetch popular nearby services with location: $e');
+      throw Exception('Failed to fetch services by category and decoration type with location: $e');
+    }
+  }
+
+  /// Fetches services with a specific discount percentage or more
+  /// 
+  /// Returns a list of active services that have discount of [minDiscountPercent] or more
+  /// Limited to 50 services and ordered by discount percentage descending
+  Future<List<ServiceListingModel>> getServicesWithDiscount(int minDiscountPercent) async {
+    try {
+      final response = await _supabase
+          .from('service_listings')
+          .select('''
+            *,
+            vendors (
+              id,
+              business_name,
+              full_name,
+              rating,
+              total_reviews,
+              is_verified
+            )
+          ''')
+          .eq('is_active', true)
+          .not('original_price', 'is', null)
+          .not('offer_price', 'is', null)
+          .filter('offer_price', 'lt', 'original_price')
+          .limit(50)
+          .order('created_at', ascending: false);
+
+      if (response.isEmpty) {
+        return [];
+      }
+
+      final services = response
+          .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+          .where((service) {
+            // Calculate discount percentage
+            if (service.originalPrice != null && 
+                service.offerPrice != null && 
+                service.originalPrice! > service.offerPrice!) {
+              final discountPercent = ((service.originalPrice! - service.offerPrice!) / service.originalPrice! * 100);
+              return discountPercent >= minDiscountPercent;
+            }
+            return false;
+          })
+          .toList();
+
+      // Sort by discount percentage descending
+      services.sort((a, b) {
+        final discountA = ((a.originalPrice! - a.offerPrice!) / a.originalPrice! * 100);
+        final discountB = ((b.originalPrice! - b.offerPrice!) / b.originalPrice! * 100);
+        return discountB.compareTo(discountA);
+      });
+
+      return services;
+    } catch (e) {
+      throw Exception('Failed to fetch services with discount: $e');
     }
   }
 } 

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:intl/intl.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/theater_model.dart';
-import 'package:sylonow_user/features/theater/models/theater_screen_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
 
 
@@ -30,13 +30,21 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
   DateTime? _selectedDate;
-  TheaterTimeSlotWithScreenModel? _selectedTimeSlot;
+  Map<String, dynamic>? _selectedTimeSlot;
+  String? _selectedScreenId;
+  String? _selectedScreenName;
 
   @override
   void initState() {
     super.initState();
     if (widget.selectedDate != null) {
       _selectedDate = DateTime.parse(widget.selectedDate!);
+    }
+    
+    // Get screen info from selection data
+    if (widget.selectionData != null) {
+      _selectedScreenId = widget.selectionData!['screenId'];
+      _selectedScreenName = widget.selectionData!['screenName'];
     }
   }
 
@@ -130,10 +138,10 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                       _currentImageIndex = index;
                     });
                   },
-                  itemCount: theater.images.length,
+                  itemCount: theater.images!.length,
                   itemBuilder: (context, index) {
                     return CachedNetworkImage(
-                      imageUrl: theater.images[index],
+                      imageUrl: theater.images![index],
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: Colors.grey[200],
@@ -167,7 +175,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                   ),
                 ),
                 // Image indicator
-                if (theater.images.length > 1)
+                if (theater.images!.length > 1)
                   Positioned(
                     bottom: 16,
                     left: 0,
@@ -175,7 +183,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        theater.images.length,
+                        theater.images!.length,
                         (index) => Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: 8,
@@ -184,7 +192,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                             shape: BoxShape.circle,
                             color: _currentImageIndex == index
                                 ? Colors.white
-                                : Colors.white.withOpacity(0.5),
+                                : Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -210,7 +218,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            theater.name,
+                            theater.name!,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -225,7 +233,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  theater.address,
+                                  theater.address!,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -252,7 +260,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                           const Icon(Icons.star, color: Colors.amber, size: 16),
                           const SizedBox(width: 4),
                           Text(
-                            theater.rating.toStringAsFixed(1),
+                            theater.rating!.toStringAsFixed(1),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -300,7 +308,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                     ],
                   ),
                 // Amenities
-                if (theater.amenities.isNotEmpty)
+                if (theater.amenities!.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -316,7 +324,7 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: theater.amenities.map((amenity) {
+                        children: theater.amenities!.map((amenity) {
                           return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -359,10 +367,10 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Date selection
+                // Date and Screen selection info
                 if (_selectedDate != null) ...[
                   const Text(
-                    'Selected Date',
+                    'Booking Details',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -371,38 +379,65 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                   
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        const Icon(
-                          Ionicons.calendar_outline,
-                          color: AppTheme.primaryColor,
-                          size: 20,
+                        Row(
+                          children: [
+                            const Icon(
+                              Ionicons.calendar_outline,
+                              color: AppTheme.primaryColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              _formatDate(_selectedDate!),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          _formatDate(_selectedDate!),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                            fontFamily: 'Okra',
+                        if (_selectedScreenName != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Ionicons.tv_outline,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _selectedScreenName!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor,
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
                 ],
-                // Time slot selection with automatic screen allocation
-                const Text(
-                  'Select Time Slot',
-                  style: TextStyle(
+                // Time slot selection for selected screen
+                Text(
+                  _selectedScreenName != null 
+                    ? 'Available Time Slots for ${_selectedScreenName!}'
+                    : 'Select Time Slot',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Okra',
@@ -410,7 +445,9 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Screen will be automatically allocated based on availability',
+                  _selectedScreenName != null
+                    ? 'Choose from available time slots for this screen'
+                    : 'Screen will be automatically allocated based on availability',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -445,12 +482,14 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                       }
                       
                       // Navigate to occasions selection screen
+                      final updatedSelectionData = Map<String, dynamic>.from(widget.selectionData ?? {});
+                      updatedSelectionData['selectedTimeSlot'] = _selectedTimeSlot;
+                      
                       context.push(
                         '/theater/${widget.theaterId}/occasions',
                         extra: {
                           'selectedDate': widget.selectedDate!,
-                          'selectedTimeSlot': _selectedTimeSlot,
-                          'selectionData': widget.selectionData ?? {},
+                          'selectionData': updatedSelectionData,
                         },
                       );
                     }
@@ -545,23 +584,205 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
       );
     }
 
+    // If we have a specific screen selected, use screen-specific time slots
+    if (_selectedScreenId != null) {
+      final providerKey = '${_selectedScreenId!}|${widget.selectedDate!}';
+      final screenTimeSlotsAsync = ref.watch(screenTimeSlotsProvider(providerKey));
+
+      return screenTimeSlotsAsync.when(
+        data: (timeSlots) {
+          print('🎬 DEBUG: Screen-specific slots: ${timeSlots.length}');
+          
+          if (timeSlots.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.schedule, size: 48, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'No time slots available for this screen on selected date',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        fontFamily: 'Okra',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.4,
+            ),
+            itemCount: timeSlots.length,
+            itemBuilder: (context, index) {
+              final timeSlot = timeSlots[index];
+              final isSelected = _selectedTimeSlot?['id'] == timeSlot['id'];
+              final isAvailable = timeSlot['is_available'] ?? true;
+              final double originalPrice = (timeSlot['original_hourly_price'] as num?)?.toDouble() ?? 1500.0;
+              final double discountedPrice = (timeSlot['discounted_hourly_price'] as num?)?.toDouble() ?? 0.0;
+              final double finalPrice = (timeSlot['final_price'] as num?)?.toDouble() ?? originalPrice;
+              final bool hasDiscount = timeSlot['has_discount'] ?? false;
+
+              return InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: isAvailable ? () {
+                  setState(() {
+                    _selectedTimeSlot = {
+                      ...timeSlot,
+                      'screen_id': _selectedScreenId,
+                      'screen_name': _selectedScreenName,
+                      'base_price': finalPrice,
+                      'price_per_hour': finalPrice,
+                      'original_hourly_price': originalPrice,
+                      'discounted_hourly_price': discountedPrice,
+                      'final_price': finalPrice,
+                      'has_discount': hasDiscount,
+                    };
+                  });
+                } : null,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: !isAvailable 
+                        ? Colors.grey[200] 
+                        : isSelected 
+                            ? AppTheme.primaryColor 
+                            : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: !isAvailable 
+                          ? Colors.grey[300]!
+                          : isSelected 
+                              ? AppTheme.primaryColor 
+                              : Colors.grey[300]!,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      if (!isAvailable)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red[600],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'BOOKED',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ),
+                        ),
+                      Column( 
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${_formatTimeTo12Hour(timeSlot['start_time'])} - ${_formatTimeTo12Hour(timeSlot['end_time'])}',
+                            style: TextStyle( 
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: !isAvailable  
+                                  ? Colors.grey[500]
+                                  : isSelected 
+                                      ? Colors.white 
+                                      : Colors.black,
+                              fontFamily: 'Okra',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          if (timeSlot['label'] != null)
+                            Text(
+                              timeSlot['label'],
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: !isAvailable 
+                                    ? Colors.grey[400]
+                                    : isSelected 
+                                        ? Colors.white.withOpacity(0.9) 
+                                        : Colors.grey[600],
+                                fontFamily: 'Okra',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          const SizedBox(height: 4),
+                          // Price display with discount information
+                       
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(color: AppTheme.primaryColor),
+          ),
+        ),
+        error: (error, stackTrace) {
+          print('🎬 DEBUG: Screen time slots error: $error');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Failed to load time slots for this screen',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(screenTimeSlotsProvider(providerKey)),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    // Use direct time slots provider that fetches from theater_time_slots table
     print('🎬 DEBUG: Theater ID: ${widget.theaterId}');
     print('🎬 DEBUG: Selected Date: ${widget.selectedDate}');
 
-    // Create a string key to avoid Map comparison issues
     final providerKey = '${widget.theaterId}|${widget.selectedDate!}';
-    
-    final timeSlotsAsync = ref.watch(theaterTimeSlotsWithScreensProvider(providerKey));
+    final timeSlotsAsync = ref.watch(theaterTimeSlotsDirectProvider(providerKey));
 
     return timeSlotsAsync.when(
       data: (timeSlots) {
-        print('🎬 DEBUG: UI - In data state with ${timeSlots.length} time slots');
-        print('🎬 DEBUG: UI - AsyncValue state: ${timeSlotsAsync.runtimeType}');
-        for (int i = 0; i < timeSlots.length; i++) {
-          final slot = timeSlots[i];
-          print('🎬 DEBUG: Slot $i: ${slot.startTime} - ${slot.endTime}, Screen: ${slot.screenName}, Price: ₹${slot.basePrice}');
-        }
-        
         if (timeSlots.isEmpty) {
           return const Center(
             child: Padding(
@@ -592,44 +813,49 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.8,
+            childAspectRatio: 1.6,
           ),
           itemCount: timeSlots.length,
           itemBuilder: (context, index) {
             final timeSlot = timeSlots[index];
-            final isSelected = _selectedTimeSlot?.id == timeSlot.id;
-            final isAvailable = timeSlot.isAvailable;
-            final price = timeSlot.basePrice.toInt();
+            final isSelected = _selectedTimeSlot != null && _selectedTimeSlot is Map && _selectedTimeSlot!['id'] == timeSlot['id'];
+            final isAvailable = timeSlot['is_available'] ?? true;
+            final isBooked = timeSlot['is_booked'] ?? false;
+            final double originalPrice = (timeSlot['original_hourly_price'] as num?)?.toDouble() ?? 500.0;
+            final double discountedPrice = (timeSlot['discounted_hourly_price'] as num?)?.toDouble() ?? 0.0;
+            final double finalPrice = (timeSlot['final_price'] as num?)?.toDouble() ?? originalPrice;
+            final bool hasDiscount = timeSlot['has_discount'] ?? false;
 
             return InkWell(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(0),
-                bottomLeft: Radius.circular(0),
-                bottomRight: Radius.circular(24),
-              ),
+              borderRadius: BorderRadius.circular(12),
               onTap: isAvailable ? () {
                 setState(() {
-                  _selectedTimeSlot = timeSlot;
+                  _selectedTimeSlot = {
+                    'id': timeSlot['id'],
+                    'start_time': timeSlot['start_time'],
+                    'end_time': timeSlot['end_time'],
+                    'screen_name': timeSlot['screen_name'],
+                    'screen_id': timeSlot['screen_id'],
+                    'base_price': finalPrice,
+                    'price_per_hour': finalPrice,
+                    'final_price': finalPrice,
+                    'original_hourly_price': originalPrice,
+                    'discounted_hourly_price': discountedPrice,
+                    'has_discount': hasDiscount,
+                  };
                 });
-                // Update the booking selection state
-                ref.read(theaterBookingSelectionProvider.notifier).setTimeSlot(timeSlot);
               } : null,
               child: Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: !isAvailable 
+                  color: isBooked || !isAvailable
                       ? Colors.grey[200] 
                       : isSelected 
                           ? AppTheme.primaryColor 
                           : Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(0),
-                    bottomLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(24),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: !isAvailable 
+                    color: isBooked || !isAvailable
                         ? Colors.grey[300]!
                         : isSelected 
                             ? AppTheme.primaryColor 
@@ -639,14 +865,15 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                 ),
                 child: Stack(
                   children: [
-                    if (!isAvailable)
+                    // Booked indicator
+                    if (isBooked)
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: 0,
+                        right: 0,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.grey[600],
+                            color: Colors.red[600],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -664,47 +891,77 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${timeSlot.startTime} - ${timeSlot.endTime}',
+                          '${_formatTimeTo12Hour(timeSlot['start_time'])} - ${_formatTimeTo12Hour(timeSlot['end_time'])}',
                           style: TextStyle( 
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: !isAvailable  
+                            color: isBooked || !isAvailable
                                 ? Colors.grey[500]
                                 : isSelected 
                                     ? Colors.white 
                                     : Colors.black,
                             fontFamily: 'Okra',
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 2),
-                        if (timeSlot.screenName != null)
+                        if (timeSlot['screen_name'] != null) ...[
+                          const SizedBox(height: 4),
                           Text(
-                            timeSlot.screenName!,
+                            timeSlot['screen_name'],
                             style: TextStyle(
                               fontSize: 10,
-                              color: !isAvailable 
+                              color: isBooked || !isAvailable
                                   ? Colors.grey[400]
                                   : isSelected 
                                       ? Colors.white.withOpacity(0.9) 
                                       : Colors.grey[600],
                               fontFamily: 'Okra',
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                        const SizedBox(height: 2),
-                        if (timeSlot.screenCapacity != null)
+                        ],
+                        const SizedBox(height: 4),
+                        // Price display with discount information
+                        if (hasDiscount && isAvailable && !isBooked) ...[
+                          // Show original price with strikethrough
                           Text(
-                            '${timeSlot.screenCapacity} seats',
+                            '₹${originalPrice.toStringAsFixed(0)}',
                             style: TextStyle(
                               fontSize: 9,
-                              color: !isAvailable 
-                                  ? Colors.grey[400]
-                                  : isSelected 
-                                      ? Colors.white.withOpacity(0.8) 
-                                      : Colors.grey[500],
+                              decoration: TextDecoration.lineThrough,
+                              color: isSelected ? Colors.white70 : Colors.grey[600],
                               fontFamily: 'Okra',
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                        const SizedBox(height: 4),
+                          // Show discounted price
+                          Text(
+                            '₹${finalPrice.toStringAsFixed(0)}/hr',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : Colors.green[700],
+                              fontFamily: 'Okra',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ] else ...[
+                          // Show regular price
+                          Text(
+                            '₹${finalPrice.toStringAsFixed(0)}/hr',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isBooked || !isAvailable
+                                  ? Colors.grey[400]
+                                  : isSelected 
+                                      ? Colors.white 
+                                      : AppTheme.primaryColor,
+                              fontFamily: 'Okra',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -714,20 +971,13 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
           },
         );
       },
-      loading: () {
-        print('🎬 DEBUG: UI - In loading state for time slots');
-        print('🎬 DEBUG: UI - AsyncValue state: ${timeSlotsAsync.runtimeType}');
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32.0),
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          ),
-        );
-      },
-      error: (error, stackTrace) {
-        print('🎬 DEBUG: Time slots error: $error');
-        print('🎬 DEBUG: Stack trace: $stackTrace');
-        return Center(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
+        ),
+      ),
+      error: (error, stackTrace) => Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: Column(
@@ -744,23 +994,31 @@ class _TheaterDetailScreenNewState extends ConsumerState<TheaterDetailScreenNew>
               ),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: () => ref.refresh(theaterTimeSlotsWithScreensProvider(providerKey)),
+                onPressed: () => ref.refresh(theaterTimeSlotsDirectProvider(providerKey)),
                 child: const Text('Retry'),
               ),
             ],
           ),
         ),
-      );
-      },
+      ),
     );
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    
-    return '${date.day} ${months[date.month - 1]}, ${date.year}';
+    return DateFormat('EEE, MMM d, y').format(date);
+  }
+
+  String _formatTimeTo12Hour(String time24) {
+    try {
+      final time = TimeOfDay(
+        hour: int.parse(time24.split(':')[0]),
+        minute: int.parse(time24.split(':')[1]),
+      );
+      final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+      final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+      return '${hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} $period';
+    } catch (e) {
+      return time24; // Return original if parsing fails
+    }
   }
 }

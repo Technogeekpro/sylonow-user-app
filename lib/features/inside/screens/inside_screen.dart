@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/user_location_helper.dart';
-import '../../../core/utils/location_utils.dart';
-import '../../home/providers/home_providers.dart';
+import '../../../core/widgets/decoration_card.dart';
 import '../../home/models/service_listing_model.dart';
+import '../../home/models/filter_model.dart';
+import '../../home/providers/filter_providers.dart';
+import '../../home/widgets/service_filter_sheet.dart';
 
 class InsideScreen extends ConsumerStatefulWidget {
   const InsideScreen({super.key});
@@ -24,7 +24,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
   double _scrollOffset = 0.0;
 
   late AnimationController _searchAnimationController;
-  late Animation<double> _slideAnimation;
 
   int _currentSearchIndex = 0;
   final List<String> _searchTexts = [
@@ -61,15 +60,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
     },
   ];
 
-  // Mock data for categories
-  final List<Map<String, String>> _categories = [
-    {'title': 'Private Birthday', 'image': 'assets/images/category1.jpg'},
-    {'title': 'Anniversary', 'image': 'assets/images/category2.jpg'},
-    {'title': 'Theme Birthday', 'image': 'assets/images/category3.jpg'},
-    {'title': 'Wedding Decor', 'image': 'assets/images/category4.jpg'},
-    {'title': 'Baby Shower', 'image': 'assets/images/category5.jpg'},
-    {'title': 'Corporate Events', 'image': 'assets/images/category1.jpg'},
-  ];
 
 
   @override
@@ -83,12 +73,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
       vsync: this,
     );
 
-    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _searchAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
 
     // Start the animation cycle
     _startSearchAnimation();
@@ -130,7 +114,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
       body: Container(
         decoration: const BoxDecoration(color: Colors.white),
         child: Stack(
@@ -174,7 +157,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                   ),
                                   gradient: LinearGradient(
                                     colors: [
-                                      AppTheme.primaryColor.withOpacity(0.8),
+                                      AppTheme.primaryColor.withValues(alpha: 0.8),
                                       AppTheme.primaryColor,
                                     ],
                                     begin: Alignment.topLeft,
@@ -192,12 +175,13 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                         height: 100,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Colors.white.withOpacity(0.1),
+                                          color: Colors.white.withValues(alpha: 0.1),
                                         ),
                                       ),
                                     ),
 
-                                    // Content
+                                    // Contentp
+                                    
                                     Padding(
                                       padding: const EdgeInsets.all(20),
                                       child: Column(
@@ -205,7 +189,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            item['subtitle']!,
+                                            item['subtitle'] ?? '',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
@@ -214,7 +198,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            item['title']!,
+                                            item['title'] ?? '',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 24,
@@ -231,7 +215,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    item['discount']!,
+                                                    item['discount'] ?? '',
                                                     style: const TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 16,
@@ -254,7 +238,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                                           ),
                                                     ),
                                                     child: Text(
-                                                      item['code']!,
+                                                      item['code'] ?? '',
                                                       style: TextStyle(
                                                         color: AppTheme
                                                             .primaryColor,
@@ -272,7 +256,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                                                 height: 60,
                                                 decoration: BoxDecoration(
                                                   color: Colors.white
-                                                      .withOpacity(0.2),
+                                                      .withValues(alpha: 0.2),
                                                   borderRadius:
                                                       BorderRadius.circular(30),
                                                 ),
@@ -317,148 +301,13 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
 
                       const SizedBox(height: 30),
 
-                      // What are you looking for section
+                      // Inside Decoration Services Section
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
                             Text(
-                              'What are you looking for ?',
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            //Divider
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: const Divider(
-                                color: Color(0xffE8E9EE),
-                                thickness: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Categories Grid
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.all(0),
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 1.0, // Square aspect ratio
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                              ),
-                          itemCount: _categories.length,
-                          itemBuilder: (context, index) {
-                            final category = _categories[index];
-                            return GestureDetector(
-                              onTap: () {
-                                // Handle category tap
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Selected: ${category['title']}',
-                                    ),
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      spreadRadius: 0,
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Stack(
-                                    children: [
-                                      // Background image
-                                      Container(
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                            image: AssetImage(
-                                              category['image']!,
-                                            ),
-                                            fit: BoxFit.cover,
-                                            onError: (exception, stackTrace) {
-                                              // Fallback for missing images
-                                            },
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Dark overlay for better text readability
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Colors.transparent,
-                                              Colors.black.withOpacity(0.7),
-                                            ],
-                                            stops: const [0.5, 1.0],
-                                          ),
-                                        ),
-                                      ),
-
-                                      // Title at bottom center
-                                      Positioned(
-                                        bottom: 12,
-                                        left: 8,
-                                        right: 8,
-                                        child: Text(
-                                          category['title']!,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                            shadows: [
-                                              Shadow(
-                                                offset: Offset(0, 1),
-                                                blurRadius: 3,
-                                                color: Colors.black54,
-                                              ),
-                                            ],
-                                          ),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Popular Venues Section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Popular Venues Near You',
+                              'Inside Decoration Services',
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             //Divider
@@ -474,51 +323,31 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
                       ),
 
                       const SizedBox(height: 16),
-
-                      // Inside Decoration Services List with Location
-                      FutureBuilder<Map<String, dynamic>?>(
-                        future: UserLocationHelper.getDecorationTypeLocationParams(ref, 'inside'),
-                        builder: (context, locationSnapshot) {
-                          if (locationSnapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(32.0),
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            );
-                          }
-
-                          final locationParams = locationSnapshot.data;
-                          if (locationParams == null) {
-                            // Fallback to non-location based services
-                            return Consumer(
-                              builder: (context, ref, child) {
-                                final servicesAsync = ref.watch(
-                                  servicesByDecorationTypeProvider('inside')
-                                );
-                                return _buildServicesList(servicesAsync, ref, 'inside');
-                              },
-                            );
-                          }
-
-                          // Use location-based services
-                          return Consumer(
-                            builder: (context, ref, child) {
-                              final servicesAsync = ref.watch(
-                                servicesByDecorationTypeWithLocationProvider(locationParams)
-                              );
-                              return _buildServicesList(servicesAsync, ref, 'inside', isLocationBased: true);
-                            },
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
+
+                // Sticky Filter Bar
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _FilterBarDelegate(
+                    child: _buildFilterBar(),
+                  ),
+                ),
+
+                // Services List
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 16),
+                  sliver: Consumer(
+                    builder: (context, ref, child) {
+                      final servicesAsync = ref.watch(filteredInsideServicesProvider);
+                      return _buildSliverServicesList(servicesAsync, ref, 'inside');
+                    },
+                  ),
+                ),
+                
+                // Bottom spacing
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
               ],
             ),
             // Custom App Bar as an overlay
@@ -534,323 +363,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
     );
   }
 
-  Widget _buildServicesList(
-    AsyncValue<List<ServiceListingModel>> servicesAsync,
-    WidgetRef ref,
-    String decorationType, {
-    bool isLocationBased = false,
-  }) {
-    return servicesAsync.when(
-      data: (services) {
-        if (services.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(
-              child: Text(
-                'No services available in your area',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          );
-        }
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: services.length,
-          itemBuilder: (context, index) {
-            final service = services[index];
-            return _buildServiceCard(service, isLocationBased);
-          },
-        );
-      },
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryColor,
-          ),
-        ),
-      ),
-      error: (error, stack) => Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Center(
-          child: Column(
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load services',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please check your connection and try again',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceCard(ServiceListingModel service, bool isLocationBased) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Service Image
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Container(
-              height: 180,
-              width: double.infinity,
-              child: CachedNetworkImage(
-                imageUrl: service.image,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 48,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          // Service Details
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Service Name and Rating
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        service.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (service.rating != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              service.rating!.toStringAsFixed(1),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // Distance and Location Info (if location-based)
-                if (isLocationBased && service.distanceKm != null) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: AppTheme.primaryColor,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${service.distanceKm!.toStringAsFixed(1)} km away',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      if (service.isPriceAdjusted == true) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.orange,
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            '+₹100 (Distance)',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.orange[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Pricing
-                Row(
-                  children: [
-                    if (service.displayOriginalPrice != null &&
-                        service.displayOfferPrice != null &&
-                        service.displayOriginalPrice! > service.displayOfferPrice!) ...[
-                      Text(
-                        '₹${service.displayOriginalPrice!.toInt()}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    if (service.displayOfferPrice != null)
-                      Text(
-                        '₹${service.displayOfferPrice!.toInt()}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    if (service.displayOfferPrice == null && service.displayOriginalPrice != null)
-                      Text(
-                        '₹${service.displayOriginalPrice!.toInt()}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    const Spacer(),
-                    if (service.promotionalTag != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          service.promotionalTag!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Book Now Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.push('/service-detail/${service.id}');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'View Details',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCustomAppBarOverlay() {
     final statusBarHeight = MediaQuery.of(context).padding.top;
@@ -874,7 +387,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -909,9 +422,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
     );
   }
 
-  Widget _buildCarousel() {
-    return Container(child: Text('Carousel'));
-  }
 
   Widget _buildTitleContent() {
     return Container(
@@ -941,7 +451,7 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
         border: Border.all(color: const Color(0xFFE1E2E4), width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(5, 4),
             spreadRadius: 0,
@@ -1005,15 +515,308 @@ class _InsideScreenState extends ConsumerState<InsideScreen>
       ),
     );
   }
-}
 
-class _onCarouselTap extends StatelessWidget {
-  Map<String, String> item = {};
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Sort dropdown
+            SizedBox(
+              width: 140,
+              child: _buildSortDropdown(),
+            ),
+            const SizedBox(width: 8),
+            
+            // Filter button
+            _buildFilterButton(),
+            
+            const SizedBox(width: 8),
+            
+            // Results count
+            Consumer(
+              builder: (context, ref, child) {
+                final servicesAsync = ref.watch(filteredInsideServicesProvider);
+                return servicesAsync.when(
+                  data: (services) => Text(
+                    '${services.length} results',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  _onCarouselTap(this.item);
+  Widget _buildSortDropdown() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final filter = ref.watch(insideFilterProvider);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey[300] ?? Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<SortOption>(
+              value: filter.sortBy,
+              icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+              isDense: true,
+              isExpanded: true,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontFamily: 'Okra',
+              ),
+              items: SortOption.values.map((option) {
+                return DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    option.displayName,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  ref.read(insideFilterProvider.notifier).update(
+                    (state) => state.copyWith(sortBy: value),
+                  );
+                }
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(child: Text('Carousel'));
+  Widget _buildFilterButton() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final activeFiltersCount = ref.watch(insideActiveFiltersCountProvider);
+        return InkWell(
+          onTap: () => _showFilterSheet(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: activeFiltersCount > 0 ? AppTheme.primaryColor : Colors.white,
+              border: Border.all(
+                color: activeFiltersCount > 0 ? AppTheme.primaryColor : (Colors.grey[300] ?? Colors.grey),
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tune,
+                  size: 18,
+                  color: activeFiltersCount > 0 ? Colors.white : Colors.grey[700],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Filter',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: activeFiltersCount > 0 ? Colors.white : Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+                if (activeFiltersCount > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$activeFiltersCount',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final currentFilter = ref.read(insideFilterProvider);
+          return ServiceFilterSheet(
+            initialFilter: currentFilter,
+            decorationType: 'inside',
+            onApplyFilter: (filter) {
+              ref.read(insideFilterProvider.notifier).state = filter;
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _onCarouselTap(Map<String, String> item) {
+    // Check if this is the 50% off banner
+    if (item['discount'] == 'Up to 50% Off') {
+      // Navigate to discount offers screen with 50% minimum discount
+      context.push('/discount-offers', extra: {
+        'minDiscountPercent': 50,
+        'title': 'Up to 50% Off',
+      });
+    } else {
+      // Handle other carousel item taps if needed
+      debugPrint('Tapped on carousel item: ${item['title']}');
+    }
+  }
+
+  Widget _buildSliverServicesList(
+    AsyncValue<List<ServiceListingModel>> servicesAsync,
+    WidgetRef ref,
+    String decorationType,
+  ) {
+    return servicesAsync.when(
+      data: (services) {
+        if (services.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(
+                child: Text(
+                  'No inside decoration services available',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= services.length) {
+                return const SizedBox.shrink();
+              }
+              final service = services[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: DecorationCard(
+                  service: service,
+                  onTap: () {
+                    context.push('/service/${service.id}');
+                  },
+                ),
+              );
+            },
+            childCount: services.length,
+          ),
+        );
+      },
+      loading: () => const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ),
+      ),
+      error: (error, stack) => SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load services',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please check your connection and try again',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
+
+class _FilterBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _FilterBarDelegate({required this.child});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.white,
+      height: maxExtent,
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => 80.0;
+
+  @override
+  double get minExtent => 80.0;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return false;
+  }
+}
+

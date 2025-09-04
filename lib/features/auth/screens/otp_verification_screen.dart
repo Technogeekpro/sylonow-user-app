@@ -1,11 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
-import '../controllers/auth_controller.dart';
 import '../providers/auth_providers.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
@@ -20,16 +20,45 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
   ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
+class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> with CodeAutoFill {
   String _otp = '';
   bool _isLoading = false;
   bool _isResending = false;
   int _remainingSeconds = 60;
+  Timer? _timer;
+  final TextEditingController _otpController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _startResendTimer();
+    _initSmsListener();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _otpController.dispose();
+    SmsAutoFill().unregisterListener();
+    super.dispose();
+  }
+
+  void _initSmsListener() async {
+    // Listen for SMS messages
+    await SmsAutoFill().listenForCode();
+  }
+
+  @override
+  void codeUpdated() {
+    // This method is called when SMS is received
+    if (code != null && code!.length == 6) {
+      setState(() {
+        _otp = code!;
+        _otpController.text = code!;
+      });
+      // Auto verify when OTP is received
+      _verifyOtp();
+    }
   }
 
   void _startResendTimer() {
@@ -37,12 +66,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       _remainingSeconds = 60;
     });
     
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted && _remainingSeconds > 0) {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
         setState(() {
           _remainingSeconds--;
         });
-        _startResendTimer();
+      } else {
+        timer.cancel();
       }
     });
   }
@@ -84,7 +115,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   }
 
   Future<void> _resendOtp() async {
-    if (_remainingSeconds == 0) {
+    if (_remainingSeconds == 0 && !_isResending) {
       setState(() {
         _isResending = true;
       });
@@ -97,7 +128,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('OTP resent successfully')),
           );
+          // Clear the OTP field and restart timer
+          _otpController.clear();
+          setState(() {
+            _otp = '';
+          });
           _startResendTimer();
+          // Re-initialize SMS listener for new OTP
+          _initSmsListener();
         }
       } catch (e) {
         if (mounted) {
@@ -154,17 +192,27 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              OtpTextField(
-                numberOfFields: 6,
-                borderColor: AppTheme.primaryColor,
-                focusedBorderColor: AppTheme.primaryColor,
-                showFieldAsBox: true,
-                borderWidth: 2.0,
-                fieldWidth: 45,
-                borderRadius: BorderRadius.circular(10),
-                onSubmit: (String verificationCode) {
+              PinFieldAutoFill(
+                decoration: BoxLooseDecoration(
+                  strokeColorBuilder: FixedColorBuilder(AppTheme.primaryColor),
+                  bgColorBuilder: FixedColorBuilder(Colors.transparent),
+                  strokeWidth: 2.0,
+                  radius: const Radius.circular(10),
+                ),
+                currentCode: _otp,
+                codeLength: 6,
+                controller: _otpController,
+                onCodeSubmitted: (code) {
                   setState(() {
-                    _otp = verificationCode;
+                    _otp = code;
+                  });
+                  if (code.length == 6) {
+                    _verifyOtp();
+                  }
+                },
+                onCodeChanged: (code) {
+                  setState(() {
+                    _otp = code ?? '';
                   });
                 },
               ),

@@ -10,6 +10,14 @@
         "--access-token",
         "sbp_f86cc788044e30bfaf2762478dae32f2fbfa1afe"
       ]
+    },
+    "dart": {
+      "command": "dart",
+      "args": [
+        "mcp-server",
+        "--force-roots-fallback"
+      ]
     }
+   
   }
 }

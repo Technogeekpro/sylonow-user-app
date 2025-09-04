@@ -144,8 +144,8 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
               // Background image
               Positioned.fill(
                 child: CachedNetworkImage(
-                  imageUrl: theater.images.isNotEmpty
-                      ? theater.images.first
+                  imageUrl: theater.images!.isNotEmpty
+                      ? theater.images!.first
                       : 'https://images.unsplash.com/photo-1489599735188-6c6b2b5d1c3e?w=400',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
@@ -194,7 +194,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        theater.name,
+                        theater.name!,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

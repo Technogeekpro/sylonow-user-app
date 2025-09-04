@@ -39,12 +39,8 @@ mixin _$CakeModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this CakeModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CakeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CakeModelCopyWith<CakeModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -79,8 +75,6 @@ class _$CakeModelCopyWithImpl<$Res, $Val extends CakeModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CakeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -181,8 +175,6 @@ class __$$CakeModelImplCopyWithImpl<$Res>
       _$CakeModelImpl _value, $Res Function(_$CakeModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CakeModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -334,7 +326,7 @@ class _$CakeModelImpl implements _CakeModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -351,9 +343,7 @@ class _$CakeModelImpl implements _CakeModel {
       createdAt,
       updatedAt);
 
-  /// Create a copy of CakeModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CakeModelImplCopyWith<_$CakeModelImpl> get copyWith =>
@@ -417,11 +407,8 @@ abstract class _CakeModel implements CakeModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of CakeModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CakeModelImplCopyWith<_$CakeModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

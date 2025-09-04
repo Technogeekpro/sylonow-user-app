@@ -13,65 +13,80 @@ class VendorModel with _$VendorModel {
     /// Unique identifier for the vendor
     required String id,
     
-    /// Email of the vendor
-    required String email,
+    /// Email of the vendor (optional - can be null)
+    String? email,
     
     /// Phone number of the vendor (optional)
     String? phone,
     
     /// Full name of the vendor (optional)
-    String? fullName,
+    @JsonKey(name: 'full_name') String? fullName,
     
     /// Business name
-    String? businessName,
+    @JsonKey(name: 'business_name') String? businessName,
     
     /// Type of business
-    String? businessType,
+    @JsonKey(name: 'business_type') String? businessType,
     
     /// Years of experience
-    @Default(0) int experienceYears,
+    @JsonKey(name: 'experience_years') @Default(0) int experienceYears,
     
     /// Location information (coordinates, address, etc.)
     Map<String, dynamic>? location,
     
     /// Profile image URL
-    String? profileImageUrl,
+    @JsonKey(name: 'profile_image_url') String? profileImageUrl,
     
     /// Portfolio images
-    @Default([]) List<String> portfolioImages,
+    @JsonKey(name: 'portfolio_images') @Default([]) List<String> portfolioImages,
     
     /// Bio or description
     String? bio,
     
     /// Availability schedule
-    Map<String, dynamic>? availabilitySchedule,
+    @JsonKey(name: 'availability_schedule') Map<String, dynamic>? availabilitySchedule,
     
     /// Average rating (0-5)
     @Default(0.0) double rating,
     
     /// Total number of reviews
-    @Default(0) int totalReviews,
+    @JsonKey(name: 'total_reviews') @Default(0) int totalReviews,
     
     /// Total jobs completed
-    @Default(0) int totalJobsCompleted,
+    @JsonKey(name: 'total_jobs_completed') @Default(0) int totalJobsCompleted,
     
     /// Verification status
-    @Default('pending') String verificationStatus,
+    @JsonKey(name: 'verification_status') @Default('pending') String verificationStatus,
     
     /// Whether the vendor is active
-    @Default(true) bool isActive,
+    @JsonKey(name: 'is_active') @Default(true) bool isActive,
     
     /// Whether the vendor is verified
-    @Default(false) bool isVerified,
+    @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
     
     /// FCM token for notifications
-    String? fcmToken,
+    @JsonKey(name: 'fcm_token') String? fcmToken,
+    
+    /// Business hours - start time (HH:mm format)
+    @JsonKey(name: 'start_time') String? startTime,
+    
+    /// Business hours - close time (HH:mm format)
+    @JsonKey(name: 'close_time') String? closeTime,
+    
+    /// Minimum advance booking time in hours
+    @JsonKey(name: 'advance_booking_hours') @Default(2) int advanceBookingHours,
+    
+    /// Whether the vendor is currently online
+    @JsonKey(name: 'is_online') @Default(false) bool isOnline,
+    
+    /// Timestamp when vendor was last online
+    @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
     
     /// Timestamp when created
-    required DateTime createdAt,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
     
     /// Timestamp when last updated
-    required DateTime updatedAt,
+    @JsonKey(name: 'updated_at') required DateTime updatedAt,
   }) = _VendorModel;
 
   /// Creates a VendorModel from JSON

@@ -42,7 +42,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 16),
               _buildUtilitySection(context, ref),
               const SizedBox(height: 16),
-              _buildLegalSection(context, ref),
+              _buildAboutSection(context, ref),
               const SizedBox(height: 24),
               _buildSignOutSection(context, ref),
               const SizedBox(height: 40),
@@ -260,8 +260,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         {
           'icon': Icons.history,
           'title': 'Booking History',
-          'subtitle': 'View your past bookings',
+          'subtitle': 'View your past service bookings',
           'route': '/profile/bookings',
+        },
+        {
+          'icon': Icons.movie_outlined,
+          'title': 'Theater Bookings',
+          'subtitle': 'View your theater booking history',
+          'route': '/profile/theater-bookings',
         },
         {
           'icon': Icons.location_on_outlined,
@@ -306,16 +312,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'route': '/profile/privacy',
         },
         {
+          'icon': Icons.cancel_outlined,
+          'title': 'Cancellation Policy',
+          'subtitle': 'View cancellation and refund policy',
+          'onTap': () => _showCancellationPolicyDialog(context),
+        },
+        {
           'icon': Icons.description_outlined,
           'title': 'Terms of Service',
           'subtitle': 'Read our terms and conditions',
           'route': '/profile/terms',
-        },
-        {
-          'icon': Icons.info_outline,
-          'title': 'About',
-          'subtitle': 'App version and information',
-          'route': '/profile/about',
         },
       ],
     );
@@ -357,7 +363,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     icon: item['icon'] as IconData,
                     title: item['title'] as String,
                     subtitle: item['subtitle'] as String,
-                    onTap: () => context.push(item['route'] as String),
+                    onTap:
+                        item['onTap'] as VoidCallback? ??
+                        () => context.push(item['route'] as String),
                   ),
                   if (index < items.length - 1)
                     Divider(height: 1, color: Colors.grey[200], indent: 60),
@@ -498,35 +506,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: () async {
                 // Close dialog immediately
                 Navigator.pop(dialogContext);
-                
+
                 // Show loading indicator
                 showDialog(
                   context: context,
                   barrierDismissible: false,
                   builder: (BuildContext loadingContext) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return const Center(child: CircularProgressIndicator());
                   },
                 );
-                
+
                 try {
                   // Perform complete logout with all data clearing
                   await LogoutService.performCompleteLogout(ref);
-                  
+
                   // Close loading dialog
                   if (context.mounted) {
                     Navigator.pop(context);
                   }
-                  
+
                   // Test logout state (for debugging)
                   await LogoutTestService.printLogoutState();
-                  
+
                   // Navigate to splash screen to handle auth state
                   if (context.mounted) {
                     context.go('/');
                   }
-                  
+
                   // Show success message
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -541,7 +547,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (context.mounted) {
                     Navigator.pop(context);
                   }
-                  
+
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -564,6 +570,433 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context, WidgetRef ref) {
+    return _buildSection(
+      context: context,
+      title: 'About',
+      items: [
+        {
+          'icon': Icons.info_outline,
+          'title': 'About Sylonow',
+          'subtitle': 'App version and legal information',
+          'onTap': () => _showAboutBottomModal(context),
+        },
+      ],
+    );
+  }
+
+  void _showAboutBottomModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'About Sylonow',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Okra',
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, size: 24),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAboutTile(
+                        context: context,
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Privacy Policy',
+                        subtitle: 'Read our privacy policy',
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push('/profile/privacy');
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildAboutTile(
+                        context: context,
+                        icon: Icons.cancel_outlined,
+                        title: 'Cancellation Policy',
+                        subtitle: 'View cancellation and refund policy',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showCancellationPolicyDialog(context);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildAboutTile(
+                        context: context,
+                        icon: Icons.description_outlined,
+                        title: 'Terms of Service',
+                        subtitle: 'Read our terms and conditions',
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push('/profile/terms');
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.mobile_friendly,
+                              size: 48,
+                              color: AppTheme.primaryColor,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Sylonow',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Okra',
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Version 1.0.0',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Okra',
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Your trusted service marketplace platform connecting you with verified service providers.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Okra',
+                                color: Colors.grey[600],
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAboutTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCancellationPolicyDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Cancellation & Refund Policy',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Okra',
+              fontSize: 18,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Refunds are subject to the time of cancellation before the scheduled service:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildRefundTable(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Additional Wallet Terms:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildWalletTerms(),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontFamily: 'Okra',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRefundTable() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Time Before Service',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Bank Refund',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Wallet Refund',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildTableRow('More than 24 Hours', '50%', '100%'),
+          _buildTableRow('24 to 12 Hours', '30%', '100%'),
+          _buildTableRow('12 to 6 Hours', '17%', '100%'),
+          _buildTableRow('Less than 6 Hours', 'No Refund', '100%'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableRow(String time, String bankRefund, String walletRefund) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              time,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              bankRefund,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              walletRefund,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletTerms() {
+    const terms = [
+      '• Bank refunds will be processed within 5-7 working days.',
+      '• Wallet refunds are instant and can only be used for future Sylonow bookings.',
+      '• Wallet balances do not expire and can be used at any time in the future.',
+      '• Wallet balances are non-transferable, non-refundable to bank accounts, and cannot be withdrawn.',
+      '• Maximum wallet balance limit: ₹10,000.',
+      '• Wallet refund is not available if your wallet balance is ₹10,000 or above.',
+      '• Wallet refund becomes available again only when your wallet balance drops below ₹10,000.',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: terms
+          .map(
+            (term) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                term,
+                style: const TextStyle(
+                  fontFamily: 'Okra',
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

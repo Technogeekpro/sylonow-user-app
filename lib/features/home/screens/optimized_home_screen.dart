@@ -10,11 +10,14 @@ import 'package:sylonow_user/features/home/widgets/location/location_widgets.dar
 import 'package:sylonow_user/features/home/widgets/app_bar/custom_app_bar.dart';
 import 'package:sylonow_user/features/home/widgets/theater/theater_section.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/core/providers/welcome_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
+import 'package:sylonow_user/features/profile/providers/profile_providers.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:uuid/uuid.dart';
 
 /// Optimized home screen with performance improvements
@@ -72,6 +75,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkLocationPermissionAsync();
       _checkAndShowWelcomeOverlay();
+      _initializeFCMToken();
     });
   }
 
@@ -81,16 +85,16 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
       // Wait for UI to be fully built
       await Future.delayed(const Duration(milliseconds: 500));
       
-      final prefs = await SharedPreferences.getInstance();
-      // For testing - always show the overlay (comment out the next line in production)
-      final hasShownWelcome = false;
-      // final hasShownWelcome = prefs.getBool('has_shown_welcome_overlay') ?? false;
+      final welcomeService = ref.read(welcomePreferencesServiceProvider);
+      final hasShownWelcome = await welcomeService.hasShownWelcome();
       
       if (!hasShownWelcome && mounted) {
-        debugPrint('🎯 Showing welcome overlay...');
+        debugPrint('🎯 Showing welcome overlay for the first time...');
         setState(() {
           _showWelcomeOverlay = true;
         });
+      } else {
+        debugPrint('🎯 Welcome overlay already shown, skipping...');
       }
     } catch (e) {
       debugPrint('Welcome overlay check error: $e');
@@ -99,14 +103,139 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
 
   Future<void> _markWelcomeCompleted() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('has_shown_welcome_overlay', true);
+      final welcomeService = ref.read(welcomePreferencesServiceProvider);
+      await welcomeService.markWelcomeCompleted();
+      
       setState(() {
         _showWelcomeOverlay = false;
       });
+      
       debugPrint('🎯 Welcome overlay marked as completed');
     } catch (e) {
       debugPrint('Error marking welcome completed: $e');
+    }
+  }
+
+  /// Initialize FCM token and update user profile
+  Future<void> _initializeFCMToken() async {
+    try {
+      debugPrint('🔔 Initializing FCM token...');
+      
+      // Get current user
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) {
+        debugPrint('🔔 No authenticated user found, skipping FCM token initialization');
+        return;
+      }
+
+      debugPrint('🔔 Current user found: ${currentUser.id}');
+
+      // Request notification permissions
+      final messaging = FirebaseMessaging.instance;
+      
+      // Check current permission status first
+      NotificationSettings initialSettings = await messaging.getNotificationSettings();
+      debugPrint('🔔 Current notification permission status: ${initialSettings.authorizationStatus}');
+      
+      final settings = await messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+
+      debugPrint('🔔 Notification permission after request: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        debugPrint('🔔 Notification permission granted, getting FCM token...');
+
+        // Get FCM token with timeout
+        final fcmToken = await messaging.getToken().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('🔔 FCM token request timed out');
+            return null;
+          },
+        );
+
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          debugPrint('🔔 FCM token received: ${fcmToken.length > 20 ? fcmToken.substring(0, 20) : fcmToken}...');
+          
+          // Update user profile with FCM token
+          await _updateUserFCMToken(currentUser.id, fcmToken);
+        } else {
+          debugPrint('🔔 Failed to get valid FCM token');
+        }
+      } else {
+        debugPrint('🔔 Notification permission denied: ${settings.authorizationStatus}');
+      }
+
+      // Listen for token refresh (only set up once)
+      messaging.onTokenRefresh.listen((newToken) {
+        final currentUser = ref.read(currentUserProvider);
+        if (currentUser != null && newToken.isNotEmpty) {
+          debugPrint('🔔 FCM token refreshed: ${newToken.length > 20 ? newToken.substring(0, 20) : newToken}...');
+          _updateUserFCMToken(currentUser.id, newToken);
+        }
+      });
+
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('🔔 Foreground message received: ${message.messageId}');
+        debugPrint('🔔 Message title: ${message.notification?.title}');
+        debugPrint('🔔 Message body: ${message.notification?.body}');
+      });
+
+    } catch (e, stackTrace) {
+      debugPrint('🔔 Error initializing FCM token: $e');
+      debugPrint('🔔 Stack trace: $stackTrace');
+    }
+  }
+
+  /// Update user FCM token in the database
+  Future<void> _updateUserFCMToken(String authUserId, String fcmToken) async {
+    try {
+      debugPrint('🔔 Updating FCM token in database for user: $authUserId');
+      
+      final profileRepository = ref.read(profileRepositoryProvider);
+      await profileRepository.updateFcmToken(
+        authUserId: authUserId,
+        fcmToken: fcmToken,
+      );
+      
+      debugPrint('🔔 ✅ FCM token successfully upserted in user_profiles table');
+      
+      // Verify the update by checking if profile exists
+      final updatedProfile = await profileRepository.getUserProfile(authUserId);
+      if (updatedProfile?.fcmToken == fcmToken) {
+        debugPrint('🔔 ✅ FCM token verification successful');
+      } else {
+        debugPrint('🔔 ⚠️ FCM token verification failed - token may not have been saved correctly');
+      }
+      
+    } catch (e, stackTrace) {
+      debugPrint('🔔 ❌ Error updating FCM token in database: $e');
+      debugPrint('🔔 Stack trace: $stackTrace');
+      
+      // Retry once after a delay
+      try {
+        await Future.delayed(const Duration(seconds: 2));
+        debugPrint('🔔 Retrying FCM token update...');
+        
+        final profileRepository = ref.read(profileRepositoryProvider);
+        await profileRepository.updateFcmToken(
+          authUserId: authUserId,
+          fcmToken: fcmToken,
+        );
+        
+        debugPrint('🔔 ✅ FCM token updated successfully on retry');
+      } catch (retryError) {
+        debugPrint('🔔 ❌ Failed to update FCM token on retry: $retryError');
+      }
     }
   }
 

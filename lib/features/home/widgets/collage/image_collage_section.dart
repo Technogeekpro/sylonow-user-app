@@ -179,7 +179,7 @@ class _ImageCard extends StatelessWidget {
               );
             },
             child: CachedNetworkImage(
-              imageUrl: service.image,
+              imageUrl: service.image ?? '',
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(color: Colors.grey[200]),
               errorWidget: (context, url, error) => Container(
@@ -196,7 +196,7 @@ class _ImageCard extends StatelessWidget {
             ),
           ),
           child: CachedNetworkImage(
-            imageUrl: service.image,
+            imageUrl: service.image ?? '',
             fit: BoxFit.cover,
             placeholder: (context, url) => Container(color: Colors.grey[200]),
             errorWidget: (context, url, error) => Container(

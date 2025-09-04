@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/profile/providers/profile_providers.dart';
+import 'package:sylonow_user/features/profile/repositories/profile_repository.dart';
+import 'package:sylonow_user/core/providers/welcome_providers.dart';
 
 /// Welcome overlay widget that displays a semi-circular welcome message
 /// with pulse animation for first-time users
 class WelcomeOverlay extends ConsumerStatefulWidget {
-  const WelcomeOverlay({
-    super.key,
-    required this.onSkip,
-    required this.onNext,
-  });
+  const WelcomeOverlay({super.key, required this.onSkip, required this.onNext});
 
   final VoidCallback onSkip;
   final VoidCallback onNext;
@@ -20,17 +20,19 @@ class WelcomeOverlay extends ConsumerStatefulWidget {
 }
 
 class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _fadeAnimationController;
-  late AnimationController _pulseAnimationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _pulseAnimation;
   int _currentStep = 0;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  bool _isUpdating = false;
 
   final List<WelcomeStep> _steps = [
     WelcomeStep(
       title: "Hi, Bhakti Gharat 👋",
-      message: "Welcome to Sylonow! Let's transform your space into a masterpiece.",
+      message:
+          "Welcome to Sylonow! Let's transform your space into a masterpiece.",
       showButtons: false,
     ),
     WelcomeStep(
@@ -43,55 +45,27 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
   @override
   void initState() {
     super.initState();
-    
+
     // Fade animation controller
     _fadeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    // Pulse animation controller
-    _pulseAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeAnimationController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _pulseAnimationController,
-      curve: Curves.easeInOut,
-    ));
 
-    // Start animations
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Start animation
     _fadeAnimationController.forward();
-    _pulseAnimationController.repeat(reverse: true);
-    
-    // Auto advance to next step
-    if (_currentStep == 0) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _currentStep = 1;
-          });
-        }
-      });
-    }
   }
 
   @override
   void dispose() {
     _fadeAnimationController.dispose();
-    _pulseAnimationController.dispose();
     super.dispose();
   }
 
@@ -99,44 +73,50 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final userProfile = ref.watch(currentUserProfileProvider);
-    
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPadding = mediaQuery.padding.bottom;
+
     return userProfile.when(
       data: (profile) {
-        final userName = profile?.fullName ?? user?.email?.split('@').first ?? "User";
-        
+        final userName =
+            profile?.fullName ?? user?.email?.split('@').first ?? "User";
+
         return AnimatedBuilder(
           animation: _fadeAnimation,
           builder: (context, child) {
-            return Stack(
-              children: [
-                // Semi-transparent background
-                Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  color: Colors.black.withOpacity(0.3 * _fadeAnimation.value),
-                ),
-                
-                // Semi-circular overlay positioned at top
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _pulseAnimation.value,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _currentStep == 0 
-                              ? _buildSemiCircularWelcome(userName, profile)
-                              : _buildSemiCircularSelection(),
-                        ),
-                      );
-                    },
+            return Positioned.fill(
+              child: Stack(
+                children: [
+                  // Semi-transparent background covering full screen
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black.withOpacity(0.3 * _fadeAnimation.value),
                   ),
-                ),
-              ],
+
+                  // Semi-circular overlay positioned based on current step
+                  if (_currentStep == 0)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildTopSemiCircularWelcome(userName, profile),
+                      ),
+                    )
+                  else
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildBottomSemiCircularSelection(bottomPadding),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         );
@@ -146,89 +126,135 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
     );
   }
 
-  Widget _buildSemiCircularWelcome(String userName, dynamic profile) {
+  Widget _buildTopSemiCircularWelcome(String userName, dynamic profile) {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
     final statusBarHeight = mediaQuery.padding.top;
-    
+
     return ClipPath(
-      clipper: SemiCircularClipper(),
+      clipper: TopSemiCircularClipper(),
       child: Container(
         width: screenWidth,
-        height: screenWidth * 0.9 + statusBarHeight,
+        height: screenHeight * 0.65 + statusBarHeight,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFFF0080), // Primary pink
-              Color(0xFFFF4081),
-              Color(0xFFE91E63),
+              Color(0xFF1683C9), // Primary pink
+              Color(0xFF0C4366),
+           
             ],
           ),
         ),
         child: Padding(
           padding: EdgeInsets.only(
-            top: statusBarHeight + 60,
-            left: 24,
-            right: 24,
-            bottom: 40,
+            top: statusBarHeight + 80,
+            left: 32,
+            right: 32,
+            bottom: 60,
           ),
           child: Column(
             children: [
               // Profile avatar
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  color: Colors.white.withOpacity(0.2),
-                ),
-                child: profile?.profileImageUrl != null
-                    ? ClipOval(
-                        child: Image.network(
-                          profile!.profileImageUrl!,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(
+              Row(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      color: Colors.white.withOpacity(0.2),
+                    ),
+                    child: profile?.profileImageUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              profile!.profileImageUrl!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                            ),
+                          )
+                        : Icon(
                             Icons.person,
                             size: 30,
                             color: Colors.white.withOpacity(0.7),
                           ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Welcome message
+                  Row(
+                    children: [
+                      Text(
+                        "Hi, $userName ",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'Okra',
                         ),
-                      )
-                    : Icon(
-                        Icons.person,
-                        size: 30,
-                        color: Colors.white.withOpacity(0.7),
+                        textAlign: TextAlign.center,
                       ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Welcome message
-              Text(
-                "Hi, $userName 👋",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Okra',
-                ),
-                textAlign: TextAlign.center,
+                      //Lottie Aniamtion
+                      Lottie.asset(
+                        'assets/animations/wave.json',
+                        width: 32,
+                        height: 32,
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              
+
               const Text(
                 "\"Welcome to Sylonow! Let's transform your space into a masterpiece.\"",
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white,
                   fontFamily: 'Okra',
+                  fontWeight: FontWeight.w400,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 40),
+
+              // Next button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentStep = 1;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFFF0080),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -237,33 +263,34 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
     );
   }
 
-  Widget _buildSemiCircularSelection() {
+  Widget _buildBottomSemiCircularSelection(double bottomPadding) {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
-    final statusBarHeight = mediaQuery.padding.top;
-    
+    final screenHeight = mediaQuery.size.height;
+
     return ClipPath(
-      clipper: SemiCircularClipper(),
+      clipper: BottomSemiCircularClipper(
+        
+      ),
       child: Container(
         width: screenWidth,
-        height: screenWidth * 0.9 + statusBarHeight,
+        height: screenHeight * 0.7 + bottomPadding,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFFF0080), // Primary pink
-              Color(0xFFFF4081),
-              Color(0xFFE91E63),
+              Color(0xFF1683C9), // Primary pink
+              Color(0xFF0C4366),
             ],
           ),
         ),
         child: Padding(
           padding: EdgeInsets.only(
-            top: statusBarHeight + 60,
+            top: screenHeight * 0.2,
             left: 24,
             right: 24,
-            bottom: 40,
+            bottom: bottomPadding + 80,
           ),
           child: Column(
             children: [
@@ -278,7 +305,7 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              
+
               const Text(
                 "select special day and time",
                 style: TextStyle(
@@ -289,87 +316,95 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              
+
               // Date selector
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Select Date",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF666666),
-                        fontFamily: 'Okra',
-                      ),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey[600],
-                    ),
-                  ],
+              TextField(
+                readOnly: true,
+                onTap: () => _selectDate(context),
+
+                decoration: InputDecoration(
+                  hintText: _selectedDate != null
+                      ? DateFormat('dd MMM yyyy').format(_selectedDate!)
+                      : "Select Date",
+                  suffixIcon: Icon(Icons.keyboard_arrow_up),
+
+                  hintStyle: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontFamily: 'Okra',
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              
+              const SizedBox(height: 20),
+
               // Time selector
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Select Time",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF666666),
-                        fontFamily: 'Okra',
-                      ),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey[600],
-                    ),
-                  ],
+              TextField(
+                readOnly: true,
+                onTap: () => _selectTime(context),
+
+                decoration: InputDecoration(
+                  hintText: _selectedTime != null
+                      ? _selectedTime!.format(context)
+                      : "Select Time",
+                  hintStyle: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontFamily: 'Okra',
+                  ),
                 ),
               ),
               const Spacer(),
-              
-              // Skip button
+
+              // Action buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: widget.onSkip,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Skip",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward,
+                  Expanded(
+                    child: TextButton(
+                      onPressed: widget.onSkip,
+                      child: const Text(
+                        "Skip",
+                        style: TextStyle(
+                          fontSize: 16,
                           color: Colors.white,
-                          size: 18,
+                          fontFamily: 'Okra',
                         ),
-                      ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _isUpdating
+                          ? null
+                          : () => _saveCelebrationPreferences(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFFF0080),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isUpdating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFFF0080),
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Save & Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -379,6 +414,133 @@ class _WelcomeOverlayState extends ConsumerState<WelcomeOverlay>
         ),
       ),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFFF0080),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFF0080),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFFF0080),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFF0080),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  Future<void> _saveCelebrationPreferences() async {
+    if (_selectedDate == null && _selectedTime == null) {
+      // Skip if no preferences selected
+      widget.onSkip();
+      return;
+    }
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      // Save to welcome preferences service (local storage)
+      final welcomeService = ref.read(welcomePreferencesServiceProvider);
+      await welcomeService.saveCelebrationPreferences(
+        celebrationDate: _selectedDate,
+        celebrationTime: _selectedTime,
+      );
+
+      // Also try to save to profile repository (remote storage)
+      final user = ref.read(currentUserProvider);
+      if (user != null) {
+        try {
+          final profileRepo = ref.read(profileRepositoryProvider);
+          await profileRepo.updateCelebrationPreferences(
+            userId: user.id,
+            celebrationDate: _selectedDate,
+            celebrationTime: _selectedTime,
+          );
+
+          // Refresh the current user profile
+          ref.invalidate(currentUserProfileProvider);
+        } catch (e) {
+          debugPrint('Warning: Failed to save to profile repository: $e');
+          // Continue anyway since we saved locally
+        }
+      }
+
+      // Invalidate welcome providers to refresh cached data
+      ref.invalidate(celebrationDateProvider);
+      ref.invalidate(celebrationTimeProvider);
+      ref.invalidate(formattedCelebrationDateProvider);
+      ref.invalidate(formattedCelebrationTimeProvider);
+
+      widget.onNext();
+    } catch (e) {
+      debugPrint('Error saving celebration preferences: $e');
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save preferences: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+        });
+      }
+    }
   }
 }
 
@@ -395,32 +557,65 @@ class WelcomeStep {
   });
 }
 
-/// Custom clipper for semi-circular shape
-class SemiCircularClipper extends CustomClipper<Path> {
+/// Custom clipper for top semi-circular shape
+class TopSemiCircularClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    
+
     // Start from top left
     path.moveTo(0, 0);
-    
+
     // Go to top right
     path.lineTo(size.width, 0);
-    
+
     // Go down on the right side
     path.lineTo(size.width, size.height * 0.7);
-    
+
     // Create a curved bottom using quadratic bezier curve
     path.quadraticBezierTo(
       size.width * 0.5, // Control point X (center)
-      size.height,      // Control point Y (bottom)
-      0,               // End point X (left)
+      size.height, // Control point Y (bottom)
+      0, // End point X (left)
       size.height * 0.7, // End point Y
     );
-    
+
     // Close the path back to start
     path.close();
-    
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+/// Custom clipper for bottom semi-circular shape
+class BottomSemiCircularClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+
+    // Start from bottom left
+    path.moveTo(0, size.height);
+
+    // Go to bottom right
+    path.lineTo(size.width, size.height);
+
+    // Go up on the right side
+    path.lineTo(size.width, size.height * 0.2);
+
+    // Create a curved top using quadratic bezier curve
+    path.quadraticBezierTo(
+      size.width * 0.5, // Control point X (center)
+      0, // Control point Y (top)
+      0, // End point X (left)
+      size.height * 0.3, // End point Y
+    );
+
+    // Close the path back to start
+    path.close();
+
     return path;
   }
 

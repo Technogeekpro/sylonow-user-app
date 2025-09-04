@@ -23,37 +23,44 @@ mixin _$VendorModel {
   /// Unique identifier for the vendor
   String get id => throw _privateConstructorUsedError;
 
-  /// Email of the vendor
-  String get email => throw _privateConstructorUsedError;
+  /// Email of the vendor (optional - can be null)
+  String? get email => throw _privateConstructorUsedError;
 
   /// Phone number of the vendor (optional)
   String? get phone => throw _privateConstructorUsedError;
 
   /// Full name of the vendor (optional)
+  @JsonKey(name: 'full_name')
   String? get fullName => throw _privateConstructorUsedError;
 
   /// Business name
+  @JsonKey(name: 'business_name')
   String? get businessName => throw _privateConstructorUsedError;
 
   /// Type of business
+  @JsonKey(name: 'business_type')
   String? get businessType => throw _privateConstructorUsedError;
 
   /// Years of experience
+  @JsonKey(name: 'experience_years')
   int get experienceYears => throw _privateConstructorUsedError;
 
   /// Location information (coordinates, address, etc.)
   Map<String, dynamic>? get location => throw _privateConstructorUsedError;
 
   /// Profile image URL
+  @JsonKey(name: 'profile_image_url')
   String? get profileImageUrl => throw _privateConstructorUsedError;
 
   /// Portfolio images
+  @JsonKey(name: 'portfolio_images')
   List<String> get portfolioImages => throw _privateConstructorUsedError;
 
   /// Bio or description
   String? get bio => throw _privateConstructorUsedError;
 
   /// Availability schedule
+  @JsonKey(name: 'availability_schedule')
   Map<String, dynamic>? get availabilitySchedule =>
       throw _privateConstructorUsedError;
 
@@ -61,35 +68,59 @@ mixin _$VendorModel {
   double get rating => throw _privateConstructorUsedError;
 
   /// Total number of reviews
+  @JsonKey(name: 'total_reviews')
   int get totalReviews => throw _privateConstructorUsedError;
 
   /// Total jobs completed
+  @JsonKey(name: 'total_jobs_completed')
   int get totalJobsCompleted => throw _privateConstructorUsedError;
 
   /// Verification status
+  @JsonKey(name: 'verification_status')
   String get verificationStatus => throw _privateConstructorUsedError;
 
   /// Whether the vendor is active
+  @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
 
   /// Whether the vendor is verified
+  @JsonKey(name: 'is_verified')
   bool get isVerified => throw _privateConstructorUsedError;
 
   /// FCM token for notifications
+  @JsonKey(name: 'fcm_token')
   String? get fcmToken => throw _privateConstructorUsedError;
 
+  /// Business hours - start time (HH:mm format)
+  @JsonKey(name: 'start_time')
+  String? get startTime => throw _privateConstructorUsedError;
+
+  /// Business hours - close time (HH:mm format)
+  @JsonKey(name: 'close_time')
+  String? get closeTime => throw _privateConstructorUsedError;
+
+  /// Minimum advance booking time in hours
+  @JsonKey(name: 'advance_booking_hours')
+  int get advanceBookingHours => throw _privateConstructorUsedError;
+
+  /// Whether the vendor is currently online
+  @JsonKey(name: 'is_online')
+  bool get isOnline => throw _privateConstructorUsedError;
+
+  /// Timestamp when vendor was last online
+  @JsonKey(name: 'last_online_at')
+  DateTime? get lastOnlineAt => throw _privateConstructorUsedError;
+
   /// Timestamp when created
+  @JsonKey(name: 'created_at')
   DateTime get createdAt => throw _privateConstructorUsedError;
 
   /// Timestamp when last updated
+  @JsonKey(name: 'updated_at')
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this VendorModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of VendorModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $VendorModelCopyWith<VendorModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -102,26 +133,32 @@ abstract class $VendorModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String email,
+      String? email,
       String? phone,
-      String? fullName,
-      String? businessName,
-      String? businessType,
-      int experienceYears,
+      @JsonKey(name: 'full_name') String? fullName,
+      @JsonKey(name: 'business_name') String? businessName,
+      @JsonKey(name: 'business_type') String? businessType,
+      @JsonKey(name: 'experience_years') int experienceYears,
       Map<String, dynamic>? location,
-      String? profileImageUrl,
-      List<String> portfolioImages,
+      @JsonKey(name: 'profile_image_url') String? profileImageUrl,
+      @JsonKey(name: 'portfolio_images') List<String> portfolioImages,
       String? bio,
+      @JsonKey(name: 'availability_schedule')
       Map<String, dynamic>? availabilitySchedule,
       double rating,
-      int totalReviews,
-      int totalJobsCompleted,
-      String verificationStatus,
-      bool isActive,
-      bool isVerified,
-      String? fcmToken,
-      DateTime createdAt,
-      DateTime updatedAt});
+      @JsonKey(name: 'total_reviews') int totalReviews,
+      @JsonKey(name: 'total_jobs_completed') int totalJobsCompleted,
+      @JsonKey(name: 'verification_status') String verificationStatus,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'is_verified') bool isVerified,
+      @JsonKey(name: 'fcm_token') String? fcmToken,
+      @JsonKey(name: 'start_time') String? startTime,
+      @JsonKey(name: 'close_time') String? closeTime,
+      @JsonKey(name: 'advance_booking_hours') int advanceBookingHours,
+      @JsonKey(name: 'is_online') bool isOnline,
+      @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
+      @JsonKey(name: 'updated_at') DateTime updatedAt});
 }
 
 /// @nodoc
@@ -134,13 +171,11 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of VendorModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? phone = freezed,
     Object? fullName = freezed,
     Object? businessName = freezed,
@@ -158,6 +193,11 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
     Object? isActive = null,
     Object? isVerified = null,
     Object? fcmToken = freezed,
+    Object? startTime = freezed,
+    Object? closeTime = freezed,
+    Object? advanceBookingHours = null,
+    Object? isOnline = null,
+    Object? lastOnlineAt = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -166,10 +206,10 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      email: null == email
+      email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       phone: freezed == phone
           ? _value.phone
           : phone // ignore: cast_nullable_to_non_nullable
@@ -238,6 +278,26 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      startTime: freezed == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      closeTime: freezed == closeTime
+          ? _value.closeTime
+          : closeTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      advanceBookingHours: null == advanceBookingHours
+          ? _value.advanceBookingHours
+          : advanceBookingHours // ignore: cast_nullable_to_non_nullable
+              as int,
+      isOnline: null == isOnline
+          ? _value.isOnline
+          : isOnline // ignore: cast_nullable_to_non_nullable
+              as bool,
+      lastOnlineAt: freezed == lastOnlineAt
+          ? _value.lastOnlineAt
+          : lastOnlineAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -260,26 +320,32 @@ abstract class _$$VendorModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String email,
+      String? email,
       String? phone,
-      String? fullName,
-      String? businessName,
-      String? businessType,
-      int experienceYears,
+      @JsonKey(name: 'full_name') String? fullName,
+      @JsonKey(name: 'business_name') String? businessName,
+      @JsonKey(name: 'business_type') String? businessType,
+      @JsonKey(name: 'experience_years') int experienceYears,
       Map<String, dynamic>? location,
-      String? profileImageUrl,
-      List<String> portfolioImages,
+      @JsonKey(name: 'profile_image_url') String? profileImageUrl,
+      @JsonKey(name: 'portfolio_images') List<String> portfolioImages,
       String? bio,
+      @JsonKey(name: 'availability_schedule')
       Map<String, dynamic>? availabilitySchedule,
       double rating,
-      int totalReviews,
-      int totalJobsCompleted,
-      String verificationStatus,
-      bool isActive,
-      bool isVerified,
-      String? fcmToken,
-      DateTime createdAt,
-      DateTime updatedAt});
+      @JsonKey(name: 'total_reviews') int totalReviews,
+      @JsonKey(name: 'total_jobs_completed') int totalJobsCompleted,
+      @JsonKey(name: 'verification_status') String verificationStatus,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'is_verified') bool isVerified,
+      @JsonKey(name: 'fcm_token') String? fcmToken,
+      @JsonKey(name: 'start_time') String? startTime,
+      @JsonKey(name: 'close_time') String? closeTime,
+      @JsonKey(name: 'advance_booking_hours') int advanceBookingHours,
+      @JsonKey(name: 'is_online') bool isOnline,
+      @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
+      @JsonKey(name: 'updated_at') DateTime updatedAt});
 }
 
 /// @nodoc
@@ -290,13 +356,11 @@ class __$$VendorModelImplCopyWithImpl<$Res>
       _$VendorModelImpl _value, $Res Function(_$VendorModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of VendorModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? email = null,
+    Object? email = freezed,
     Object? phone = freezed,
     Object? fullName = freezed,
     Object? businessName = freezed,
@@ -314,6 +378,11 @@ class __$$VendorModelImplCopyWithImpl<$Res>
     Object? isActive = null,
     Object? isVerified = null,
     Object? fcmToken = freezed,
+    Object? startTime = freezed,
+    Object? closeTime = freezed,
+    Object? advanceBookingHours = null,
+    Object? isOnline = null,
+    Object? lastOnlineAt = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -322,10 +391,10 @@ class __$$VendorModelImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      email: null == email
+      email: freezed == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       phone: freezed == phone
           ? _value.phone
           : phone // ignore: cast_nullable_to_non_nullable
@@ -394,6 +463,26 @@ class __$$VendorModelImplCopyWithImpl<$Res>
           ? _value.fcmToken
           : fcmToken // ignore: cast_nullable_to_non_nullable
               as String?,
+      startTime: freezed == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      closeTime: freezed == closeTime
+          ? _value.closeTime
+          : closeTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      advanceBookingHours: null == advanceBookingHours
+          ? _value.advanceBookingHours
+          : advanceBookingHours // ignore: cast_nullable_to_non_nullable
+              as int,
+      isOnline: null == isOnline
+          ? _value.isOnline
+          : isOnline // ignore: cast_nullable_to_non_nullable
+              as bool,
+      lastOnlineAt: freezed == lastOnlineAt
+          ? _value.lastOnlineAt
+          : lastOnlineAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -411,26 +500,33 @@ class __$$VendorModelImplCopyWithImpl<$Res>
 class _$VendorModelImpl implements _VendorModel {
   const _$VendorModelImpl(
       {required this.id,
-      required this.email,
+      this.email,
       this.phone,
-      this.fullName,
-      this.businessName,
-      this.businessType,
-      this.experienceYears = 0,
+      @JsonKey(name: 'full_name') this.fullName,
+      @JsonKey(name: 'business_name') this.businessName,
+      @JsonKey(name: 'business_type') this.businessType,
+      @JsonKey(name: 'experience_years') this.experienceYears = 0,
       final Map<String, dynamic>? location,
-      this.profileImageUrl,
+      @JsonKey(name: 'profile_image_url') this.profileImageUrl,
+      @JsonKey(name: 'portfolio_images')
       final List<String> portfolioImages = const [],
       this.bio,
+      @JsonKey(name: 'availability_schedule')
       final Map<String, dynamic>? availabilitySchedule,
       this.rating = 0.0,
-      this.totalReviews = 0,
-      this.totalJobsCompleted = 0,
-      this.verificationStatus = 'pending',
-      this.isActive = true,
-      this.isVerified = false,
-      this.fcmToken,
-      required this.createdAt,
-      required this.updatedAt})
+      @JsonKey(name: 'total_reviews') this.totalReviews = 0,
+      @JsonKey(name: 'total_jobs_completed') this.totalJobsCompleted = 0,
+      @JsonKey(name: 'verification_status') this.verificationStatus = 'pending',
+      @JsonKey(name: 'is_active') this.isActive = true,
+      @JsonKey(name: 'is_verified') this.isVerified = false,
+      @JsonKey(name: 'fcm_token') this.fcmToken,
+      @JsonKey(name: 'start_time') this.startTime,
+      @JsonKey(name: 'close_time') this.closeTime,
+      @JsonKey(name: 'advance_booking_hours') this.advanceBookingHours = 2,
+      @JsonKey(name: 'is_online') this.isOnline = false,
+      @JsonKey(name: 'last_online_at') this.lastOnlineAt,
+      @JsonKey(name: 'created_at') required this.createdAt,
+      @JsonKey(name: 'updated_at') required this.updatedAt})
       : _location = location,
         _portfolioImages = portfolioImages,
         _availabilitySchedule = availabilitySchedule;
@@ -442,9 +538,9 @@ class _$VendorModelImpl implements _VendorModel {
   @override
   final String id;
 
-  /// Email of the vendor
+  /// Email of the vendor (optional - can be null)
   @override
-  final String email;
+  final String? email;
 
   /// Phone number of the vendor (optional)
   @override
@@ -452,19 +548,22 @@ class _$VendorModelImpl implements _VendorModel {
 
   /// Full name of the vendor (optional)
   @override
+  @JsonKey(name: 'full_name')
   final String? fullName;
 
   /// Business name
   @override
+  @JsonKey(name: 'business_name')
   final String? businessName;
 
   /// Type of business
   @override
+  @JsonKey(name: 'business_type')
   final String? businessType;
 
   /// Years of experience
   @override
-  @JsonKey()
+  @JsonKey(name: 'experience_years')
   final int experienceYears;
 
   /// Location information (coordinates, address, etc.)
@@ -482,6 +581,7 @@ class _$VendorModelImpl implements _VendorModel {
 
   /// Profile image URL
   @override
+  @JsonKey(name: 'profile_image_url')
   final String? profileImageUrl;
 
   /// Portfolio images
@@ -489,7 +589,7 @@ class _$VendorModelImpl implements _VendorModel {
 
   /// Portfolio images
   @override
-  @JsonKey()
+  @JsonKey(name: 'portfolio_images')
   List<String> get portfolioImages {
     if (_portfolioImages is EqualUnmodifiableListView) return _portfolioImages;
     // ignore: implicit_dynamic_type
@@ -505,6 +605,7 @@ class _$VendorModelImpl implements _VendorModel {
 
   /// Availability schedule
   @override
+  @JsonKey(name: 'availability_schedule')
   Map<String, dynamic>? get availabilitySchedule {
     final value = _availabilitySchedule;
     if (value == null) return null;
@@ -521,44 +622,72 @@ class _$VendorModelImpl implements _VendorModel {
 
   /// Total number of reviews
   @override
-  @JsonKey()
+  @JsonKey(name: 'total_reviews')
   final int totalReviews;
 
   /// Total jobs completed
   @override
-  @JsonKey()
+  @JsonKey(name: 'total_jobs_completed')
   final int totalJobsCompleted;
 
   /// Verification status
   @override
-  @JsonKey()
+  @JsonKey(name: 'verification_status')
   final String verificationStatus;
 
   /// Whether the vendor is active
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_active')
   final bool isActive;
 
   /// Whether the vendor is verified
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_verified')
   final bool isVerified;
 
   /// FCM token for notifications
   @override
+  @JsonKey(name: 'fcm_token')
   final String? fcmToken;
+
+  /// Business hours - start time (HH:mm format)
+  @override
+  @JsonKey(name: 'start_time')
+  final String? startTime;
+
+  /// Business hours - close time (HH:mm format)
+  @override
+  @JsonKey(name: 'close_time')
+  final String? closeTime;
+
+  /// Minimum advance booking time in hours
+  @override
+  @JsonKey(name: 'advance_booking_hours')
+  final int advanceBookingHours;
+
+  /// Whether the vendor is currently online
+  @override
+  @JsonKey(name: 'is_online')
+  final bool isOnline;
+
+  /// Timestamp when vendor was last online
+  @override
+  @JsonKey(name: 'last_online_at')
+  final DateTime? lastOnlineAt;
 
   /// Timestamp when created
   @override
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
   /// Timestamp when last updated
   @override
+  @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'VendorModel(id: $id, email: $email, phone: $phone, fullName: $fullName, businessName: $businessName, businessType: $businessType, experienceYears: $experienceYears, location: $location, profileImageUrl: $profileImageUrl, portfolioImages: $portfolioImages, bio: $bio, availabilitySchedule: $availabilitySchedule, rating: $rating, totalReviews: $totalReviews, totalJobsCompleted: $totalJobsCompleted, verificationStatus: $verificationStatus, isActive: $isActive, isVerified: $isVerified, fcmToken: $fcmToken, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'VendorModel(id: $id, email: $email, phone: $phone, fullName: $fullName, businessName: $businessName, businessType: $businessType, experienceYears: $experienceYears, location: $location, profileImageUrl: $profileImageUrl, portfolioImages: $portfolioImages, bio: $bio, availabilitySchedule: $availabilitySchedule, rating: $rating, totalReviews: $totalReviews, totalJobsCompleted: $totalJobsCompleted, verificationStatus: $verificationStatus, isActive: $isActive, isVerified: $isVerified, fcmToken: $fcmToken, startTime: $startTime, closeTime: $closeTime, advanceBookingHours: $advanceBookingHours, isOnline: $isOnline, lastOnlineAt: $lastOnlineAt, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -598,13 +727,23 @@ class _$VendorModelImpl implements _VendorModel {
                 other.isVerified == isVerified) &&
             (identical(other.fcmToken, fcmToken) ||
                 other.fcmToken == fcmToken) &&
+            (identical(other.startTime, startTime) ||
+                other.startTime == startTime) &&
+            (identical(other.closeTime, closeTime) ||
+                other.closeTime == closeTime) &&
+            (identical(other.advanceBookingHours, advanceBookingHours) ||
+                other.advanceBookingHours == advanceBookingHours) &&
+            (identical(other.isOnline, isOnline) ||
+                other.isOnline == isOnline) &&
+            (identical(other.lastOnlineAt, lastOnlineAt) ||
+                other.lastOnlineAt == lastOnlineAt) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -627,13 +766,16 @@ class _$VendorModelImpl implements _VendorModel {
         isActive,
         isVerified,
         fcmToken,
+        startTime,
+        closeTime,
+        advanceBookingHours,
+        isOnline,
+        lastOnlineAt,
         createdAt,
         updatedAt
       ]);
 
-  /// Create a copy of VendorModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$VendorModelImplCopyWith<_$VendorModelImpl> get copyWith =>
@@ -649,119 +791,164 @@ class _$VendorModelImpl implements _VendorModel {
 
 abstract class _VendorModel implements VendorModel {
   const factory _VendorModel(
-      {required final String id,
-      required final String email,
-      final String? phone,
-      final String? fullName,
-      final String? businessName,
-      final String? businessType,
-      final int experienceYears,
-      final Map<String, dynamic>? location,
-      final String? profileImageUrl,
-      final List<String> portfolioImages,
-      final String? bio,
-      final Map<String, dynamic>? availabilitySchedule,
-      final double rating,
-      final int totalReviews,
-      final int totalJobsCompleted,
-      final String verificationStatus,
-      final bool isActive,
-      final bool isVerified,
-      final String? fcmToken,
-      required final DateTime createdAt,
-      required final DateTime updatedAt}) = _$VendorModelImpl;
+          {required final String id,
+          final String? email,
+          final String? phone,
+          @JsonKey(name: 'full_name') final String? fullName,
+          @JsonKey(name: 'business_name') final String? businessName,
+          @JsonKey(name: 'business_type') final String? businessType,
+          @JsonKey(name: 'experience_years') final int experienceYears,
+          final Map<String, dynamic>? location,
+          @JsonKey(name: 'profile_image_url') final String? profileImageUrl,
+          @JsonKey(name: 'portfolio_images') final List<String> portfolioImages,
+          final String? bio,
+          @JsonKey(name: 'availability_schedule')
+          final Map<String, dynamic>? availabilitySchedule,
+          final double rating,
+          @JsonKey(name: 'total_reviews') final int totalReviews,
+          @JsonKey(name: 'total_jobs_completed') final int totalJobsCompleted,
+          @JsonKey(name: 'verification_status') final String verificationStatus,
+          @JsonKey(name: 'is_active') final bool isActive,
+          @JsonKey(name: 'is_verified') final bool isVerified,
+          @JsonKey(name: 'fcm_token') final String? fcmToken,
+          @JsonKey(name: 'start_time') final String? startTime,
+          @JsonKey(name: 'close_time') final String? closeTime,
+          @JsonKey(name: 'advance_booking_hours') final int advanceBookingHours,
+          @JsonKey(name: 'is_online') final bool isOnline,
+          @JsonKey(name: 'last_online_at') final DateTime? lastOnlineAt,
+          @JsonKey(name: 'created_at') required final DateTime createdAt,
+          @JsonKey(name: 'updated_at') required final DateTime updatedAt}) =
+      _$VendorModelImpl;
 
   factory _VendorModel.fromJson(Map<String, dynamic> json) =
       _$VendorModelImpl.fromJson;
 
-  /// Unique identifier for the vendor
   @override
-  String get id;
 
-  /// Email of the vendor
+  /// Unique identifier for the vendor
+  String get id;
   @override
-  String get email;
+
+  /// Email of the vendor (optional - can be null)
+  String? get email;
+  @override
 
   /// Phone number of the vendor (optional)
-  @override
   String? get phone;
+  @override
 
   /// Full name of the vendor (optional)
-  @override
+  @JsonKey(name: 'full_name')
   String? get fullName;
+  @override
 
   /// Business name
-  @override
+  @JsonKey(name: 'business_name')
   String? get businessName;
+  @override
 
   /// Type of business
-  @override
+  @JsonKey(name: 'business_type')
   String? get businessType;
+  @override
 
   /// Years of experience
-  @override
+  @JsonKey(name: 'experience_years')
   int get experienceYears;
+  @override
 
   /// Location information (coordinates, address, etc.)
-  @override
   Map<String, dynamic>? get location;
+  @override
 
   /// Profile image URL
-  @override
+  @JsonKey(name: 'profile_image_url')
   String? get profileImageUrl;
+  @override
 
   /// Portfolio images
-  @override
+  @JsonKey(name: 'portfolio_images')
   List<String> get portfolioImages;
+  @override
 
   /// Bio or description
-  @override
   String? get bio;
+  @override
 
   /// Availability schedule
-  @override
+  @JsonKey(name: 'availability_schedule')
   Map<String, dynamic>? get availabilitySchedule;
+  @override
 
   /// Average rating (0-5)
-  @override
   double get rating;
+  @override
 
   /// Total number of reviews
-  @override
+  @JsonKey(name: 'total_reviews')
   int get totalReviews;
+  @override
 
   /// Total jobs completed
-  @override
+  @JsonKey(name: 'total_jobs_completed')
   int get totalJobsCompleted;
+  @override
 
   /// Verification status
-  @override
+  @JsonKey(name: 'verification_status')
   String get verificationStatus;
+  @override
 
   /// Whether the vendor is active
-  @override
+  @JsonKey(name: 'is_active')
   bool get isActive;
+  @override
 
   /// Whether the vendor is verified
-  @override
+  @JsonKey(name: 'is_verified')
   bool get isVerified;
+  @override
 
   /// FCM token for notifications
-  @override
+  @JsonKey(name: 'fcm_token')
   String? get fcmToken;
+  @override
+
+  /// Business hours - start time (HH:mm format)
+  @JsonKey(name: 'start_time')
+  String? get startTime;
+  @override
+
+  /// Business hours - close time (HH:mm format)
+  @JsonKey(name: 'close_time')
+  String? get closeTime;
+  @override
+
+  /// Minimum advance booking time in hours
+  @JsonKey(name: 'advance_booking_hours')
+  int get advanceBookingHours;
+  @override
+
+  /// Whether the vendor is currently online
+  @JsonKey(name: 'is_online')
+  bool get isOnline;
+  @override
+
+  /// Timestamp when vendor was last online
+  @JsonKey(name: 'last_online_at')
+  DateTime? get lastOnlineAt;
+  @override
 
   /// Timestamp when created
-  @override
+  @JsonKey(name: 'created_at')
   DateTime get createdAt;
+  @override
 
   /// Timestamp when last updated
-  @override
+  @JsonKey(name: 'updated_at')
   DateTime get updatedAt;
-
-  /// Create a copy of VendorModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$VendorModelImplCopyWith<_$VendorModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../providers/profile_providers.dart';
 import '../models/user_profile_model.dart';
 
@@ -228,13 +227,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
           'Edit Profile',
           style: TextStyle(
             fontFamily: 'Okra',
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
         backgroundColor: Colors.white,
@@ -253,8 +253,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     'Save',
                     style: TextStyle(
                       color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       fontFamily: 'Okra',
+                      fontSize: 16,
                     ),
                   ),
           ),
@@ -264,20 +265,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildProfileImageSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _buildBasicInfoSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _buildPersonalDetailsSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _buildLocationSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _buildEmergencyContactSection(),
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -293,20 +294,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             onTap: _pickImage,
             child: Stack(
               children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: AppTheme.primaryColor,
-                  backgroundImage: _getProfileImage(),
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.primaryColor,
+                    image: _getProfileImage() != null
+                        ? DecorationImage(
+                            image: _getProfileImage()!,
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
                   child: _getProfileImage() == null
-                      ? Text(
-                          _currentProfile?.fullName?.isNotEmpty == true
-                              ? _currentProfile!.fullName!.substring(0, 1).toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontFamily: 'Okra',
+                      ? Center(
+                          child: Text(
+                            _currentProfile?.fullName?.isNotEmpty == true
+                                ? _currentProfile!.fullName!.substring(0, 1).toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              fontFamily: 'Okra',
+                            ),
                           ),
                         )
                       : null,
@@ -315,10 +327,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(20),
+                      shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: const Icon(
@@ -333,10 +346,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap to change photo',
+            'Change photo',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: AppTheme.primaryColor,
               fontSize: 14,
+              fontWeight: FontWeight.w500,
               fontFamily: 'Okra',
             ),
           ),
@@ -376,10 +390,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
-            if (value?.trim().isEmpty ?? true) {
+            if (value == null || value.trim().isEmpty) {
               return 'Email is required';
             }
-            if (!RegExp(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$').hasMatch(value!)) {
+            final emailRegex = RegExp(
+              r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
+            );
+            if (!emailRegex.hasMatch(value.trim())) {
               return 'Please enter a valid email';
             }
             return null;
@@ -466,8 +483,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,7 +499,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             title,
             style: const TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
               fontFamily: 'Okra',
               color: Colors.black87,
             ),
@@ -507,49 +530,68 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         labelText: label,
         prefixIcon: Icon(icon, color: AppTheme.primaryColor),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: AppTheme.primaryColor),
         ),
-        labelStyle: const TextStyle(fontFamily: 'Okra'),
+        filled: true,
+        fillColor: Colors.grey[50],
+        labelStyle: const TextStyle(
+          fontFamily: 'Okra',
+          fontWeight: FontWeight.w400,
+        ),
       ),
-      style: const TextStyle(fontFamily: 'Okra'),
+      style: const TextStyle(
+        fontFamily: 'Okra',
+        fontWeight: FontWeight.w400,
+      ),
     );
   }
 
   Widget _buildDateField() {
     return GestureDetector(
       onTap: _selectDate,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today_outlined, color: AppTheme.primaryColor),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _selectedDate != null
-                    ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                    : 'Date of Birth',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _selectedDate != null ? Colors.black87 : Colors.grey[600],
-                  fontFamily: 'Okra',
-                ),
-              ),
+      child: AbsorbPointer(
+        child: TextFormField(
+          decoration: InputDecoration(
+            labelText: _selectedDate != null ? 'Date of Birth' : '',
+            hintText: _selectedDate == null ? 'Date of Birth' : null,
+            prefixIcon: Icon(Icons.calendar_today_outlined, color: AppTheme.primaryColor),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey[300]!),
             ),
-          ],
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppTheme.primaryColor),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+            labelStyle: const TextStyle(
+              fontFamily: 'Okra',
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          style: const TextStyle(
+            fontFamily: 'Okra',
+            fontWeight: FontWeight.w400,
+          ),
+          controller: TextEditingController(
+            text: _selectedDate != null
+                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                : '',
+          ),
         ),
       ),
     );
@@ -557,25 +599,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Widget _buildGenderField() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.grey[50],
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedGender,
+        initialValue: _selectedGender,
         decoration: InputDecoration(
           labelText: 'Gender',
           prefixIcon: Icon(Icons.person_outline, color: AppTheme.primaryColor),
           border: InputBorder.none,
-          labelStyle: const TextStyle(fontFamily: 'Okra'),
+          filled: true,
+          fillColor: Colors.grey[50],
+          labelStyle: const TextStyle(
+            fontFamily: 'Okra',
+            fontWeight: FontWeight.w400,
+          ),
         ),
         items: _genderOptions.map((gender) {
           return DropdownMenuItem(
             value: gender,
             child: Text(
               gender,
-              style: const TextStyle(fontFamily: 'Okra'),
+              style: const TextStyle(
+                fontFamily: 'Okra',
+                fontWeight: FontWeight.w400,
+              ),
             ),
           );
         }).toList(),

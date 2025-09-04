@@ -26,7 +26,7 @@ mixin _$ServiceListingModel {
   @JsonKey(name: 'title')
   String get name => throw _privateConstructorUsedError;
   @JsonKey(name: 'cover_photo')
-  String get image => throw _privateConstructorUsedError;
+  String? get image => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   double? get rating => throw _privateConstructorUsedError;
   @JsonKey(name: 'reviews_count')
@@ -86,12 +86,8 @@ mixin _$ServiceListingModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool? get isPriceAdjusted => throw _privateConstructorUsedError;
 
-  /// Serializes this ServiceListingModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ServiceListingModelCopyWith<ServiceListingModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -106,7 +102,7 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       {String id,
       @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'title') String name,
-      @JsonKey(name: 'cover_photo') String image,
+      @JsonKey(name: 'cover_photo') String? image,
       String? description,
       double? rating,
       @JsonKey(name: 'reviews_count') int? reviewsCount,
@@ -154,15 +150,13 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
     Object? vendorId = freezed,
     Object? name = null,
-    Object? image = null,
+    Object? image = freezed,
     Object? description = freezed,
     Object? rating = freezed,
     Object? reviewsCount = freezed,
@@ -207,10 +201,10 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      image: null == image
+      image: freezed == image
           ? _value.image
           : image // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -334,8 +328,6 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     ) as $Val);
   }
 
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $VendorModelCopyWith<$Res>? get vendor {
@@ -361,7 +353,7 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       {String id,
       @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'title') String name,
-      @JsonKey(name: 'cover_photo') String image,
+      @JsonKey(name: 'cover_photo') String? image,
       String? description,
       double? rating,
       @JsonKey(name: 'reviews_count') int? reviewsCount,
@@ -408,15 +400,13 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
       $Res Function(_$ServiceListingModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
     Object? vendorId = freezed,
     Object? name = null,
-    Object? image = null,
+    Object? image = freezed,
     Object? description = freezed,
     Object? rating = freezed,
     Object? reviewsCount = freezed,
@@ -461,10 +451,10 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
-      image: null == image
+      image: freezed == image
           ? _value.image
           : image // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -596,7 +586,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       {required this.id,
       @JsonKey(name: 'vendor_id') required this.vendorId,
       @JsonKey(name: 'title') required this.name,
-      @JsonKey(name: 'cover_photo') required this.image,
+      @JsonKey(name: 'cover_photo') this.image,
       this.description,
       this.rating,
       @JsonKey(name: 'reviews_count') this.reviewsCount,
@@ -651,7 +641,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
   final String name;
   @override
   @JsonKey(name: 'cover_photo')
-  final String image;
+  final String? image;
   @override
   final String? description;
   @override
@@ -865,7 +855,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.isPriceAdjusted == isPriceAdjusted));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
         runtimeType,
@@ -905,9 +895,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
         isPriceAdjusted
       ]);
 
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ServiceListingModelImplCopyWith<_$ServiceListingModelImpl> get copyWith =>
@@ -927,7 +915,7 @@ abstract class _ServiceListingModel implements ServiceListingModel {
       {required final String id,
       @JsonKey(name: 'vendor_id') required final String? vendorId,
       @JsonKey(name: 'title') required final String name,
-      @JsonKey(name: 'cover_photo') required final String image,
+      @JsonKey(name: 'cover_photo') final String? image,
       final String? description,
       final double? rating,
       @JsonKey(name: 'reviews_count') final int? reviewsCount,
@@ -978,7 +966,7 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   String get name;
   @override
   @JsonKey(name: 'cover_photo')
-  String get image;
+  String? get image;
   @override
   String? get description;
   @override
@@ -1012,11 +1000,11 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @JsonKey(name: 'is_active')
   bool? get isActive;
   @override
-  List<String>? get photos; // Array of service images
-  @override
-  String? get category; // Service category for finding related services
+  List<String>? get photos;
+  @override // Array of service images
+  String? get category;
+  @override // Service category for finding related services
 // Enhanced booking fields from database
-  @override
   @JsonKey(name: 'venue_types')
   List<String>? get venueTypes;
   @override
@@ -1045,13 +1033,13 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   String? get videoUrl;
   @override
   @JsonKey(name: 'decoration_type')
-  String? get decorationType; // 'inside', 'outside', or 'both'
+  String? get decorationType;
+  @override // 'inside', 'outside', or 'both'
 // Location fields
-  @override
   double? get latitude;
   @override
-  double? get longitude; // Calculated fields (not from database)
-  @override
+  double? get longitude;
+  @override // Calculated fields (not from database)
   @JsonKey(includeFromJson: false, includeToJson: false)
   double? get distanceKm;
   @override
@@ -1063,11 +1051,8 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool? get isPriceAdjusted;
-
-  /// Create a copy of ServiceListingModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ServiceListingModelImplCopyWith<_$ServiceListingModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

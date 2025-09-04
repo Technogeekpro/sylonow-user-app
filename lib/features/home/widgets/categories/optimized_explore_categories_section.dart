@@ -36,7 +36,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
           const Text(
             'Explore Categories',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               fontFamily: 'Okra',
               color: Color(0xFF2A3143),

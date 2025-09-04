@@ -12,8 +12,8 @@ class AuthService {
   
   AuthService(this._supabaseClient) {
     _googleSignIn = GoogleSignIn(
-      // Use your Web client ID from Google Cloud Console
-      // This should match the OAuth client configured in Supabase
+      scopes: ['email', 'profile'],
+      // This is the WEB Client ID, which is correct for Supabase integration
       serverClientId: '828054656956-9lb66n0bjgeoo7ta808ank5acj09uno7.apps.googleusercontent.com',
     );
   }
@@ -185,45 +185,47 @@ class AuthService {
     return _supabaseClient.auth.currentUser;
   }
   
-  // Sign in with Google
-  Future<AuthResponse?> signInWithGoogle() async {
+  /// Initiates the Google Sign-In process and authenticates with Supabase.
+  /// Returns the AuthResponse from Supabase if successful, otherwise null.
+  /// Now includes app type to differentiate between vendor and customer apps.
+  Future<AuthResponse?> signInWithGoogle({String appType = 'customer'}) async {
     try {
-      // Trigger the authentication flow
+      // 1. Trigger the Google Authentication flow.
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
+      // If the user cancelled the sign-in, return null.
       if (googleUser == null) {
-        // The user canceled the sign-in
+        debugPrint('🔵 Google Sign-In was cancelled by the user.');
         return null;
       }
 
-      // Obtain the auth details from the request
+      // 2. Obtain the authentication details from the request.
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      final accessToken = googleAuth.accessToken;
-      final idToken = googleAuth.idToken;
-
-      if (accessToken == null) {
-        throw 'No Access Token found.';
-      }
-      if (idToken == null) {
-        throw 'No ID Token found.';
+      
+      // Throw an error if the ID token is missing.
+      if (googleAuth.idToken == null) {
+        throw 'Failed to get ID token from Google.';
       }
 
-      // Sign in to Supabase with Google credentials
-      final response = await _supabaseClient.auth.signInWithIdToken(
+      // 3. Use the ID token to sign in to Supabase.
+      final authResponse = await _supabaseClient.auth.signInWithIdToken(
         provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
+        idToken: googleAuth.idToken!,
+        accessToken: googleAuth.accessToken,
       );
 
-      if (response.user != null) {
+      // 🔴 NEW: Create user profile with app type after successful Google sign-in
+      if (authResponse.user != null) {
+        await _createUserProfile(authResponse.user!.id, appType);
+        
+        // Update SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(AppConstants.isLoggedInKey, true);
-        await prefs.setString(AppConstants.userEmailKey, response.user!.email ?? '');
-        await prefs.setString(AppConstants.userIdKey, response.user!.id);
+        await prefs.setString(AppConstants.userEmailKey, authResponse.user!.email ?? '');
+        await prefs.setString(AppConstants.userIdKey, authResponse.user!.id);
       }
 
-      return response;
+      return authResponse;
     } catch (e) {
       debugPrint('Google sign in error: $e');
       rethrow;
@@ -236,6 +238,21 @@ class AuthService {
       await _googleSignIn.signOut();
     } catch (e) {
       debugPrint('Google sign out error: $e');
+    }
+  }
+
+  // 🔴 NEW: Helper method to create user profile with app type
+  Future<void> _createUserProfile(String userId, String appType) async {
+    try {
+      await _supabaseClient.rpc('create_user_profile', params: {
+        'user_id': userId,
+        'app_type': appType,
+      });
+      
+      debugPrint('🟢 User profile created with app type: $appType');
+    } catch (e) {
+      debugPrint('🔴 Failed to create user profile: $e');
+      // Don't throw - this is not critical for auth flow
     }
   }
 
@@ -333,4 +350,8 @@ class AuthService {
       return null;
     }
   }
-} 
+
+  bool get isSignedIn => _supabaseClient.auth.currentUser != null;
+  
+  User? get currentUser => _supabaseClient.auth.currentUser;
+}

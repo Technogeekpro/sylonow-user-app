@@ -26,6 +26,19 @@ _$TheaterScreenModelImpl _$$TheaterScreenModelImplFromJson(
       updatedAt: json['updated_at'] == null
           ? null
           : DateTime.parse(json['updated_at'] as String),
+      totalCapacity: (json['total_capacity'] as num?)?.toInt() ?? 0,
+      allowedCapacity: (json['allowed_capacity'] as num?)?.toInt() ?? 0,
+      chargesExtraPerPerson:
+          (json['charges_extra_per_person'] as num?)?.toDouble() ?? 0.0,
+      videoUrl: json['video_url'] as String?,
+      images: (json['images'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      originalHourlyPrice:
+          (json['original_hourly_price'] as num?)?.toDouble() ?? 0.0,
+      discountedHourlyPrice:
+          (json['discounted_hourly_price'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$TheaterScreenModelImplToJson(
@@ -41,6 +54,13 @@ Map<String, dynamic> _$$TheaterScreenModelImplToJson(
       'is_active': instance.isActive,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
+      'total_capacity': instance.totalCapacity,
+      'allowed_capacity': instance.allowedCapacity,
+      'charges_extra_per_person': instance.chargesExtraPerPerson,
+      'video_url': instance.videoUrl,
+      'images': instance.images,
+      'original_hourly_price': instance.originalHourlyPrice,
+      'discounted_hourly_price': instance.discountedHourlyPrice,
     };
 
 _$TheaterTimeSlotWithScreenModelImpl

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile_model.dart';
 
@@ -130,6 +131,65 @@ class ProfileRepository {
     } catch (e) {
       debugPrint('Error creating user profile: $e');
       throw Exception('Failed to create user profile: $e');
+    }
+  }
+
+  /// Update celebration preferences (date and time)
+  Future<void> updateCelebrationPreferences({
+    required String userId,
+    DateTime? celebrationDate,
+    TimeOfDay? celebrationTime,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      
+      if (celebrationDate != null) {
+        updateData['celebration_date'] = celebrationDate.toIso8601String().split('T')[0];
+      }
+      
+      if (celebrationTime != null) {
+        // Convert TimeOfDay to HH:MM:SS format
+        final hour = celebrationTime.hour.toString().padLeft(2, '0');
+        final minute = celebrationTime.minute.toString().padLeft(2, '0');
+        updateData['celebration_time'] = '$hour:$minute:00';
+      }
+
+      await _supabaseClient
+          .from('user_profiles')
+          .update(updateData)
+          .eq('auth_user_id', userId);
+    } catch (e) {
+      debugPrint('Error updating celebration preferences: $e');
+      throw Exception('Failed to update celebration preferences: $e');
+    }
+  }
+
+  /// Update FCM token for push notifications
+  Future<void> updateFcmToken({
+    required String authUserId,
+    required String fcmToken,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{
+        'fcm_token': fcmToken,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      // Use upsert to handle cases where profile might not exist
+      await _supabaseClient
+          .from('user_profiles')
+          .upsert({
+            'auth_user_id': authUserId,
+            'app_type': 'customer',
+            ...updateData,
+          }, onConflict: 'auth_user_id');
+      
+      debugPrint('FCM token updated successfully for user: $authUserId');
+    } catch (e) {
+      debugPrint('Error updating FCM token: $e');
+      throw Exception('Failed to update FCM token: $e');
     }
   }
 }

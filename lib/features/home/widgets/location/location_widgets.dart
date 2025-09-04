@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 /// Loading screen displayed while getting user location
 class LocationLoadingScreen extends StatelessWidget {
@@ -6,14 +7,18 @@ class LocationLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Colors.pink),
-            SizedBox(height: 24),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              width: MediaQuery.of(context).size.width * 0.4,
+              child: Lottie.asset('assets/animations/truck.json'),
+            ),
+            SizedBox(height: 16),
             Text(
               'Getting your location...',
               style: TextStyle(
@@ -46,7 +51,7 @@ class LocationBlockedScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.location_off, size: 100, color: Colors.grey),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               const Text(
                 'Location Required',
                 textAlign: TextAlign.center,

@@ -23,6 +23,8 @@ mixin _$DecorationModel {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'theater_id')
   String get theaterId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
@@ -35,12 +37,8 @@ mixin _$DecorationModel {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this DecorationModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of DecorationModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $DecorationModelCopyWith<DecorationModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -54,6 +52,7 @@ abstract class $DecorationModelCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'theater_id') String theaterId,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       String name,
       String? description,
       double price,
@@ -73,13 +72,12 @@ class _$DecorationModelCopyWithImpl<$Res, $Val extends DecorationModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of DecorationModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
     Object? theaterId = null,
+    Object? vendorId = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? price = null,
@@ -97,6 +95,10 @@ class _$DecorationModelCopyWithImpl<$Res, $Val extends DecorationModel>
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
               as String,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -140,6 +142,7 @@ abstract class _$$DecorationModelImplCopyWith<$Res>
   $Res call(
       {String id,
       @JsonKey(name: 'theater_id') String theaterId,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       String name,
       String? description,
       double price,
@@ -157,13 +160,12 @@ class __$$DecorationModelImplCopyWithImpl<$Res>
       _$DecorationModelImpl _value, $Res Function(_$DecorationModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of DecorationModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
     Object? theaterId = null,
+    Object? vendorId = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? price = null,
@@ -181,6 +183,10 @@ class __$$DecorationModelImplCopyWithImpl<$Res>
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
               as String,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -219,6 +225,7 @@ class _$DecorationModelImpl implements _DecorationModel {
   const _$DecorationModelImpl(
       {required this.id,
       @JsonKey(name: 'theater_id') required this.theaterId,
+      @JsonKey(name: 'vendor_id') this.vendorId,
       required this.name,
       this.description,
       required this.price,
@@ -235,6 +242,9 @@ class _$DecorationModelImpl implements _DecorationModel {
   @override
   @JsonKey(name: 'theater_id')
   final String theaterId;
+  @override
+  @JsonKey(name: 'vendor_id')
+  final String? vendorId;
   @override
   final String name;
   @override
@@ -256,7 +266,7 @@ class _$DecorationModelImpl implements _DecorationModel {
 
   @override
   String toString() {
-    return 'DecorationModel(id: $id, theaterId: $theaterId, name: $name, description: $description, price: $price, imageUrl: $imageUrl, isAvailable: $isAvailable, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'DecorationModel(id: $id, theaterId: $theaterId, vendorId: $vendorId, name: $name, description: $description, price: $price, imageUrl: $imageUrl, isAvailable: $isAvailable, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -267,6 +277,8 @@ class _$DecorationModelImpl implements _DecorationModel {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.theaterId, theaterId) ||
                 other.theaterId == theaterId) &&
+            (identical(other.vendorId, vendorId) ||
+                other.vendorId == vendorId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -281,14 +293,12 @@ class _$DecorationModelImpl implements _DecorationModel {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, theaterId, name, description,
-      price, imageUrl, isAvailable, createdAt, updatedAt);
+  int get hashCode => Object.hash(runtimeType, id, theaterId, vendorId, name,
+      description, price, imageUrl, isAvailable, createdAt, updatedAt);
 
-  /// Create a copy of DecorationModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$DecorationModelImplCopyWith<_$DecorationModelImpl> get copyWith =>
@@ -307,6 +317,7 @@ abstract class _DecorationModel implements DecorationModel {
   const factory _DecorationModel(
           {required final String id,
           @JsonKey(name: 'theater_id') required final String theaterId,
+          @JsonKey(name: 'vendor_id') final String? vendorId,
           required final String name,
           final String? description,
           required final double price,
@@ -325,6 +336,9 @@ abstract class _DecorationModel implements DecorationModel {
   @JsonKey(name: 'theater_id')
   String get theaterId;
   @override
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId;
+  @override
   String get name;
   @override
   String? get description;
@@ -342,11 +356,8 @@ abstract class _DecorationModel implements DecorationModel {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of DecorationModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$DecorationModelImplCopyWith<_$DecorationModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

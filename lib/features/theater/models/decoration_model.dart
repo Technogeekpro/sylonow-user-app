@@ -8,6 +8,7 @@ class DecorationModel with _$DecorationModel {
   const factory DecorationModel({
     required String id,
     @JsonKey(name: 'theater_id') required String theaterId,
+    @JsonKey(name: 'vendor_id') String? vendorId,
     required String name,
     String? description,
     required double price,

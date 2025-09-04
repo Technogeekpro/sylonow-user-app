@@ -90,7 +90,11 @@ class _AddAddressFormState extends ConsumerState<AddAddressForm> {
               ),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
+                decoration: const InputDecoration(
+                  labelText: 'Whom should we contact when we reach your location?',
+                  hintText: 'Enter phone number',
+                ),
+                keyboardType: TextInputType.phone,
               ),
               DropdownButtonFormField<AddressType>(
                 value: _addressType,

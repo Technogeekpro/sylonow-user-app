@@ -11,6 +11,7 @@ _$DecorationModelImpl _$$DecorationModelImplFromJson(
     _$DecorationModelImpl(
       id: json['id'] as String,
       theaterId: json['theater_id'] as String,
+      vendorId: json['vendor_id'] as String?,
       name: json['name'] as String,
       description: json['description'] as String?,
       price: (json['price'] as num).toDouble(),
@@ -29,6 +30,7 @@ Map<String, dynamic> _$$DecorationModelImplToJson(
     <String, dynamic>{
       'id': instance.id,
       'theater_id': instance.theaterId,
+      'vendor_id': instance.vendorId,
       'name': instance.name,
       'description': instance.description,
       'price': instance.price,

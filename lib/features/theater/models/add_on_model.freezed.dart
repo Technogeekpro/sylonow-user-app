@@ -22,7 +22,8 @@ AddOnModel _$AddOnModelFromJson(Map<String, dynamic> json) {
 mixin _$AddOnModel {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'theater_id')
-  String get theaterId => throw _privateConstructorUsedError;
+  String? get theaterId =>
+      throw _privateConstructorUsedError; // Made nullable to match database
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
@@ -30,19 +31,19 @@ mixin _$AddOnModel {
       throw _privateConstructorUsedError; // "extra_special", "gifts", "special_services", "cakes"
   @JsonKey(name: 'image_url')
   String? get imageUrl => throw _privateConstructorUsedError;
-  @JsonKey(name: 'is_available')
-  bool get isAvailable => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_active')
+  bool get isActive =>
+      throw _privateConstructorUsedError; // Fixed: use is_active
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId =>
+      throw _privateConstructorUsedError; // Added vendor_id field
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this AddOnModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of AddOnModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $AddOnModelCopyWith<AddOnModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -55,13 +56,14 @@ abstract class $AddOnModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      @JsonKey(name: 'theater_id') String theaterId,
+      @JsonKey(name: 'theater_id') String? theaterId,
       String name,
       String? description,
       double price,
       String category,
       @JsonKey(name: 'image_url') String? imageUrl,
-      @JsonKey(name: 'is_available') bool isAvailable,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -76,19 +78,18 @@ class _$AddOnModelCopyWithImpl<$Res, $Val extends AddOnModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of AddOnModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? theaterId = null,
+    Object? theaterId = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? price = null,
     Object? category = null,
     Object? imageUrl = freezed,
-    Object? isAvailable = null,
+    Object? isActive = null,
+    Object? vendorId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -97,10 +98,10 @@ class _$AddOnModelCopyWithImpl<$Res, $Val extends AddOnModel>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      theaterId: null == theaterId
+      theaterId: freezed == theaterId
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -121,10 +122,14 @@ class _$AddOnModelCopyWithImpl<$Res, $Val extends AddOnModel>
           ? _value.imageUrl
           : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      isAvailable: null == isAvailable
-          ? _value.isAvailable
-          : isAvailable // ignore: cast_nullable_to_non_nullable
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -147,13 +152,14 @@ abstract class _$$AddOnModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      @JsonKey(name: 'theater_id') String theaterId,
+      @JsonKey(name: 'theater_id') String? theaterId,
       String name,
       String? description,
       double price,
       String category,
       @JsonKey(name: 'image_url') String? imageUrl,
-      @JsonKey(name: 'is_available') bool isAvailable,
+      @JsonKey(name: 'is_active') bool isActive,
+      @JsonKey(name: 'vendor_id') String? vendorId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -166,19 +172,18 @@ class __$$AddOnModelImplCopyWithImpl<$Res>
       _$AddOnModelImpl _value, $Res Function(_$AddOnModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of AddOnModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? theaterId = null,
+    Object? theaterId = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? price = null,
     Object? category = null,
     Object? imageUrl = freezed,
-    Object? isAvailable = null,
+    Object? isActive = null,
+    Object? vendorId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -187,10 +192,10 @@ class __$$AddOnModelImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      theaterId: null == theaterId
+      theaterId: freezed == theaterId
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -211,10 +216,14 @@ class __$$AddOnModelImplCopyWithImpl<$Res>
           ? _value.imageUrl
           : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
-      isAvailable: null == isAvailable
-          ? _value.isAvailable
-          : isAvailable // ignore: cast_nullable_to_non_nullable
+      isActive: null == isActive
+          ? _value.isActive
+          : isActive // ignore: cast_nullable_to_non_nullable
               as bool,
+      vendorId: freezed == vendorId
+          ? _value.vendorId
+          : vendorId // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -232,13 +241,14 @@ class __$$AddOnModelImplCopyWithImpl<$Res>
 class _$AddOnModelImpl implements _AddOnModel {
   const _$AddOnModelImpl(
       {required this.id,
-      @JsonKey(name: 'theater_id') required this.theaterId,
+      @JsonKey(name: 'theater_id') this.theaterId,
       required this.name,
       this.description,
       required this.price,
       required this.category,
       @JsonKey(name: 'image_url') this.imageUrl,
-      @JsonKey(name: 'is_available') required this.isAvailable,
+      @JsonKey(name: 'is_active') this.isActive = true,
+      @JsonKey(name: 'vendor_id') this.vendorId,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt});
 
@@ -249,7 +259,8 @@ class _$AddOnModelImpl implements _AddOnModel {
   final String id;
   @override
   @JsonKey(name: 'theater_id')
-  final String theaterId;
+  final String? theaterId;
+// Made nullable to match database
   @override
   final String name;
   @override
@@ -263,8 +274,13 @@ class _$AddOnModelImpl implements _AddOnModel {
   @JsonKey(name: 'image_url')
   final String? imageUrl;
   @override
-  @JsonKey(name: 'is_available')
-  final bool isAvailable;
+  @JsonKey(name: 'is_active')
+  final bool isActive;
+// Fixed: use is_active
+  @override
+  @JsonKey(name: 'vendor_id')
+  final String? vendorId;
+// Added vendor_id field
   @override
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -274,7 +290,7 @@ class _$AddOnModelImpl implements _AddOnModel {
 
   @override
   String toString() {
-    return 'AddOnModel(id: $id, theaterId: $theaterId, name: $name, description: $description, price: $price, category: $category, imageUrl: $imageUrl, isAvailable: $isAvailable, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'AddOnModel(id: $id, theaterId: $theaterId, name: $name, description: $description, price: $price, category: $category, imageUrl: $imageUrl, isActive: $isActive, vendorId: $vendorId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -293,22 +309,22 @@ class _$AddOnModelImpl implements _AddOnModel {
                 other.category == category) &&
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
-            (identical(other.isAvailable, isAvailable) ||
-                other.isAvailable == isAvailable) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive) &&
+            (identical(other.vendorId, vendorId) ||
+                other.vendorId == vendorId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, theaterId, name, description,
-      price, category, imageUrl, isAvailable, createdAt, updatedAt);
+      price, category, imageUrl, isActive, vendorId, createdAt, updatedAt);
 
-  /// Create a copy of AddOnModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$AddOnModelImplCopyWith<_$AddOnModelImpl> get copyWith =>
@@ -325,13 +341,14 @@ class _$AddOnModelImpl implements _AddOnModel {
 abstract class _AddOnModel implements AddOnModel {
   const factory _AddOnModel(
           {required final String id,
-          @JsonKey(name: 'theater_id') required final String theaterId,
+          @JsonKey(name: 'theater_id') final String? theaterId,
           required final String name,
           final String? description,
           required final double price,
           required final String category,
           @JsonKey(name: 'image_url') final String? imageUrl,
-          @JsonKey(name: 'is_available') required final bool isAvailable,
+          @JsonKey(name: 'is_active') final bool isActive,
+          @JsonKey(name: 'vendor_id') final String? vendorId,
           @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
       _$AddOnModelImpl;
@@ -343,32 +360,32 @@ abstract class _AddOnModel implements AddOnModel {
   String get id;
   @override
   @JsonKey(name: 'theater_id')
-  String get theaterId;
-  @override
+  String? get theaterId;
+  @override // Made nullable to match database
   String get name;
   @override
   String? get description;
   @override
   double get price;
   @override
-  String get category; // "extra_special", "gifts", "special_services", "cakes"
-  @override
+  String get category;
+  @override // "extra_special", "gifts", "special_services", "cakes"
   @JsonKey(name: 'image_url')
   String? get imageUrl;
   @override
-  @JsonKey(name: 'is_available')
-  bool get isAvailable;
-  @override
+  @JsonKey(name: 'is_active')
+  bool get isActive;
+  @override // Fixed: use is_active
+  @JsonKey(name: 'vendor_id')
+  String? get vendorId;
+  @override // Added vendor_id field
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of AddOnModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$AddOnModelImplCopyWith<_$AddOnModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

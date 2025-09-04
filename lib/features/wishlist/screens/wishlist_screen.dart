@@ -129,7 +129,7 @@ class WishlistScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => GoRouter.of(context).go('/'),
+            onPressed: () => GoRouter.of(context).go('/home'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
@@ -203,15 +203,15 @@ class WishlistScreen extends ConsumerWidget {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      image: service.image.isNotEmpty
+                      image: (service.image?.isNotEmpty ?? false)
                           ? DecorationImage(
-                              image: NetworkImage(service.image),
+                              image: NetworkImage(service.image!),
                               fit: BoxFit.cover,
                             )
                           : null,
-                      color: service.image.isEmpty ? Colors.grey[300] : null,
+                      color: (service.image?.isEmpty ?? true) ? Colors.grey[300] : null,
                     ),
-                    child: service.image.isEmpty
+                    child: (service.image?.isEmpty ?? true)
                         ? const Center(
                             child: Icon(
                               Icons.image_not_supported,

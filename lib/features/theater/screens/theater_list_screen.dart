@@ -115,9 +115,9 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
               data: (theaters) {
                 final filteredTheaters = theaters.where((theater) {
                   return _searchQuery.isEmpty ||
-                      theater.name.toLowerCase().contains(_searchQuery) ||
-                      theater.city.toLowerCase().contains(_searchQuery) ||
-                      theater.address.toLowerCase().contains(_searchQuery);
+                      (theater.name ?? '').toLowerCase().contains(_searchQuery) ||
+                      (theater.city ?? '').toLowerCase().contains(_searchQuery) ||
+                      (theater.address ?? '').toLowerCase().contains(_searchQuery);
                 }).toList();
 
                 if (filteredTheaters.isEmpty) {
@@ -220,12 +220,24 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
       ),
       child: InkWell(
         onTap: () {
-          context.push(
-            '/theater/${theater.id}/detail',
-            extra: {
-              'selectedDate': _selectedDate!.toIso8601String(),
-            },
-          );
+          // Add null safety check for theater.id
+          final theaterId = theater.id ?? '';
+          if (theaterId.isNotEmpty) {
+            context.push(
+              '/theater/$theaterId/screens',
+              extra: {
+                'selectedDate': _selectedDate!.toIso8601String(),
+              },
+            );
+          } else {
+            // Show error if theater ID is invalid
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Invalid theater selection. Please try again.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         },
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(40),
@@ -249,9 +261,9 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                   topRight: Radius.circular(40),
                   bottomLeft: Radius.circular(40),
                 ),
-                child: theater.images.isNotEmpty
+                child: (theater.images ?? []).isNotEmpty
                     ? CachedNetworkImage(
-                        imageUrl: theater.images.first,
+                        imageUrl: (theater.images ?? []).first,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         placeholder: (context, url) => const Center(
@@ -287,7 +299,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          theater.name,
+                          theater.name ?? 'Unknown Theater',
                           style: TextStyle(
                             fontSize: isSmallScreen ? 16 : 18,
                             fontWeight: FontWeight.bold,
@@ -315,7 +327,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              theater.rating.toStringAsFixed(1) ?? '0.0',
+                              (theater.rating ?? 0.0).toStringAsFixed(1),
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -340,7 +352,7 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          '${theater.city}, ${theater.state}',
+                          '${theater.city ?? 'Unknown City'}, ${theater.state ?? 'Unknown State'}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -349,13 +361,13 @@ class _TheaterListScreenState extends ConsumerState<TheaterListScreen> {
                         ),
                       ),
                       const Icon(
-                        Icons.people,
+                        Icons.tv,
                         color: Colors.grey,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${theater.capacity} seats',
+                        '${theater.screens ?? 1} ${(theater.screens ?? 1) == 1 ? 'screen' : 'screens'}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],

@@ -32,12 +32,8 @@ mixin _$WishlistModel {
   @JsonKey(name: 'service_listings')
   ServiceListingModel? get serviceListing => throw _privateConstructorUsedError;
 
-  /// Serializes this WishlistModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $WishlistModelCopyWith<WishlistModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -69,8 +65,6 @@ class _$WishlistModelCopyWithImpl<$Res, $Val extends WishlistModel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -109,8 +103,6 @@ class _$WishlistModelCopyWithImpl<$Res, $Val extends WishlistModel>
     ) as $Val);
   }
 
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ServiceListingModelCopyWith<$Res>? get serviceListing {
@@ -152,8 +144,6 @@ class __$$WishlistModelImplCopyWithImpl<$Res>
       _$WishlistModelImpl _value, $Res Function(_$WishlistModelImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -247,14 +237,12 @@ class _$WishlistModelImpl implements _WishlistModel {
                 other.serviceListing == serviceListing));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, id, userId, serviceId, createdAt, updatedAt, serviceListing);
 
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$WishlistModelImplCopyWith<_$WishlistModelImpl> get copyWith =>
@@ -298,11 +286,8 @@ abstract class _WishlistModel implements WishlistModel {
   @override
   @JsonKey(name: 'service_listings')
   ServiceListingModel? get serviceListing;
-
-  /// Create a copy of WishlistModel
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$WishlistModelImplCopyWith<_$WishlistModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -324,12 +309,8 @@ mixin _$WishlistWithService {
   DateTime get updatedAt => throw _privateConstructorUsedError;
   ServiceListingModel get service => throw _privateConstructorUsedError;
 
-  /// Serializes this WishlistWithService to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $WishlistWithServiceCopyWith<WishlistWithService> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -361,8 +342,6 @@ class _$WishlistWithServiceCopyWithImpl<$Res, $Val extends WishlistWithService>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -401,8 +380,6 @@ class _$WishlistWithServiceCopyWithImpl<$Res, $Val extends WishlistWithService>
     ) as $Val);
   }
 
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ServiceListingModelCopyWith<$Res> get service {
@@ -440,8 +417,6 @@ class __$$WishlistWithServiceImplCopyWithImpl<$Res>
       $Res Function(_$WishlistWithServiceImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -533,14 +508,12 @@ class _$WishlistWithServiceImpl implements _WishlistWithService {
             (identical(other.service, service) || other.service == service));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, id, userId, serviceId, createdAt, updatedAt, service);
 
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$WishlistWithServiceImplCopyWith<_$WishlistWithServiceImpl> get copyWith =>
@@ -583,11 +556,8 @@ abstract class _WishlistWithService implements WishlistWithService {
   DateTime get updatedAt;
   @override
   ServiceListingModel get service;
-
-  /// Create a copy of WishlistWithService
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$WishlistWithServiceImplCopyWith<_$WishlistWithServiceImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

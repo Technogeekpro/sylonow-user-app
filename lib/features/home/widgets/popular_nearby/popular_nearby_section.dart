@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/core/utils/user_location_helper.dart';
-import 'package:sylonow_user/core/utils/location_utils.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
 
@@ -60,25 +59,19 @@ class PopularNearbySection extends ConsumerWidget {
         ),
         // Location-based Popular Nearby Services
         FutureBuilder<Map<String, dynamic>?>(
-          future: UserLocationHelper.getLocationParams(ref, radiusKm: 25.0),
+          future: UserLocationHelper.getLocationParams(ref, radiusKm: 10000.0),
           builder: (context, locationSnapshot) {
-            print('🔍 PopularNearbySection: FutureBuilder state: ${locationSnapshot.connectionState}');
-            
             if (locationSnapshot.connectionState == ConnectionState.waiting) {
-              print('🔍 PopularNearbySection: Still waiting for location...');
               return _buildLoadingState();
             }
 
             final locationParams = locationSnapshot.data;
-            print('🔍 PopularNearbySection: Location params received: $locationParams');
             
             if (locationParams == null) {
-              print('🔍 PopularNearbySection: No location params, falling back to featured services');
               // Fallback to non-location based services
               return Consumer(
                 builder: (context, ref, child) {
                   final featuredServicesState = ref.watch(featuredServicesProvider);
-                  print('🔍 PopularNearbySection: Featured services count: ${featuredServicesState.services.length}');
                   return featuredServicesState.services.isEmpty
                       ? _buildLoadingState()
                       : _buildServicesList(featuredServicesState.services, isLocationBased: false);
@@ -86,7 +79,6 @@ class PopularNearbySection extends ConsumerWidget {
               );
             }
 
-            print('🔍 PopularNearbySection: Using location-based services with params: $locationParams');
             // Use location-based services
             return Consumer(
               builder: (context, ref, child) {
@@ -95,19 +87,12 @@ class PopularNearbySection extends ConsumerWidget {
                 );
                 return servicesAsync.when(
                   data: (services) {
-                    print('🔍 PopularNearbySection: Location-based services loaded: ${services.length}');
                     return services.isEmpty 
                         ? _buildEmptyState() 
                         : _buildServicesList(services, isLocationBased: true);
                   },
-                  loading: () {
-                    print('🔍 PopularNearbySection: Loading location-based services...');
-                    return _buildLoadingState();
-                  },
-                  error: (error, stack) {
-                    print('🔍 PopularNearbySection: Error loading services: $error');
-                    return _buildErrorState();
-                  },
+                  loading: () => _buildLoadingState(),
+                  error: (error, stack) => _buildErrorState(),
                 );
               },
             );
@@ -149,128 +134,132 @@ class PopularNearbySection extends ConsumerWidget {
         );
       },
       child: Container(
-        height: 120,
+        height: 130,
         decoration: BoxDecoration(
           color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+            
+          ],
           borderRadius: BorderRadius.circular(20),
         ),
         clipBehavior: Clip.antiAlias,
-          child: Row(
-            children: [
-              // Image section with gradient overlay
-              Stack(
+        child: Row(
+          children: [
+            // Image section with gradient overlay
+            SizedBox(
+              width: 130,
+              height: 130,
+              child: Stack(
                 children: [
-                  ClipPath(
-                    clipper: ShapeBorderClipper(
-                      shape: ContinuousRectangleBorder(
-                        borderRadius: BorderRadius.circular(40),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: service.image ?? '',
+                      width: 130,
+                      height: 130,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 130,
+                        height: 130,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            bottomLeft: Radius.circular(20),
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 32,
+                          ),
+                        ),
                       ),
                     ),
-                    child: SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: Stack(
+                  ),
+                  // Gradient overlay
+                  Container(
+                    width: 130,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.4),
+                        ],
+                        stops: const [0.0, 0.93],
+                      ),
+                    ),
+                  ),
+                  // Distance badge at bottom
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black],
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CachedNetworkImage(
-                            imageUrl: service.image,
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => SizedBox(
-                              width: 120,
-                              height: 120,
-
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryColor,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(30),
-                                ),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.grey,
-                                  size: 32,
-                                ),
-                              ),
-                            ),
+                          const Icon(
+                            FontAwesomeIcons.locationArrow,
+                            color: Colors.white,
+                            size: 12,
                           ),
-                          // Gradient overlay
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.4),
-                                ],
-                                stops: const [0.0, 0.93],
-                              ),
-                            ),
-                          ),
-                          //Distance badge at bottom
-                          Positioned(
-                            bottom: 0,
-                            child: Container(
-                              width: 120,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Colors.transparent, Colors.black],
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    FontAwesomeIcons.locationArrow,
-                                    color: Colors.white,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    isLocationBased && service.distanceKm != null
-                                        ? '${service.distanceKm!.toStringAsFixed(1)} km'
-                                        : '3.5 km',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'Okra',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          const SizedBox(width: 2),
+                          Text(
+                            isLocationBased && service.distanceKm != null
+                                ? '${service.distanceKm!.toStringAsFixed(1)} km'
+                                : '3.5 km',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Okra',
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
-                  // Distance badge at bottom
                 ],
               ),
+            ),
               // Content section
               Expanded(
                 child: Padding(
@@ -330,7 +319,7 @@ class PopularNearbySection extends ConsumerWidget {
                                 Text(
                                   '₹${service.displayOriginalPrice!.round()}',
                                   style: const TextStyle(
-                                    fontSize: 22,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Okra',
                                     color: Color(0xFF2A3143),
@@ -367,7 +356,7 @@ class PopularNearbySection extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
-                     // Rating section
+                      // Rating section
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -389,13 +378,13 @@ class PopularNearbySection extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 3),
-                            Icon(Icons.star, color: Colors.white, size: 14),
+                            const Icon(Icons.star, color: Colors.white, size: 14),
                           ],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       // Description with More link
-                      Flexible(
+                      Expanded(
                         child: RichText(
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -448,7 +437,7 @@ class PopularNearbySection extends ConsumerWidget {
 
   Widget _buildLoadingCard(BuildContext context) {
     return Container(
-      height: 119,
+      height: 130,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -459,8 +448,8 @@ class PopularNearbySection extends ConsumerWidget {
         children: [
           // Image placeholder
           Container(
-            width: 117,
-            height: 117,
+            width: 130,
+            height: 130,
             decoration: BoxDecoration(
               color: Colors.grey[200],
               borderRadius: const BorderRadius.only(

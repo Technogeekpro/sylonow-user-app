@@ -42,6 +42,12 @@ final serviceCategoriesProvider = FutureProvider<List<ServiceTypeModel>>((ref) a
   return repository.getServiceCategories();
 });
 
+/// Provider for services with specific discount percentage or more
+final servicesWithDiscountProvider = FutureProvider.family<List<ServiceListingModel>, int>((ref, minDiscountPercent) async {
+  final repository = ref.watch(homeRepositoryProvider);
+  return repository.getServicesWithDiscount(minDiscountPercent);
+});
+
 /// State for featured services pagination
 class FeaturedServicesState {
   final List<ServiceListingModel> services;
@@ -137,8 +143,16 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
 
 /// Provider for services by category
 final servicesByCategoryProvider = FutureProvider.family<List<ServiceListingModel>, String>((ref, categoryName) async {
+  print('🔍 Provider: servicesByCategoryProvider called with category: $categoryName');
   final repository = ref.watch(homeRepositoryProvider);
-  return repository.getServicesByCategory(categoryName: categoryName);
+  try {
+    final result = await repository.getServicesByCategory(categoryName: categoryName);
+    print('🔍 Provider: servicesByCategoryProvider returning ${result.length} services');
+    return result;
+  } catch (e) {
+    print('🔍 Provider: servicesByCategoryProvider error: $e');
+    rethrow;
+  }
 });
 
 /// Provider for services by decoration type
@@ -211,4 +225,43 @@ final popularNearbyServicesWithLocationProvider = FutureProvider.family<List<Ser
     decorationType: params['decorationType'] as String?,
     radiusKm: params['radiusKm'] as double? ?? 25.0,
   );
+});
+
+/// Provider for services by category and decoration type
+/// Params: {category, decorationType}
+final servicesByCategoryAndDecorationTypeProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, String>>((ref, params) async {
+  print('🔍 Provider: servicesByCategoryAndDecorationTypeProvider called with params: $params');
+  final repository = ref.watch(homeRepositoryProvider);
+  try {
+    final result = await repository.getServicesByCategoryAndDecorationType(
+      categoryName: params['category']!,
+      decorationType: params['decorationType']!,
+    );
+    print('🔍 Provider: servicesByCategoryAndDecorationTypeProvider returning ${result.length} services');
+    return result;
+  } catch (e) {
+    print('🔍 Provider: servicesByCategoryAndDecorationTypeProvider error: $e');
+    rethrow;
+  }
+});
+
+/// Provider for services by category and decoration type with location
+/// Params: {category, decorationType, userLat, userLon, radiusKm?}
+final servicesByCategoryAndDecorationTypeWithLocationProvider = FutureProvider.family<List<ServiceListingModel>, Map<String, dynamic>>((ref, params) async {
+  print('🔍 Provider: servicesByCategoryAndDecorationTypeWithLocationProvider called with params: $params');
+  final repository = ref.watch(homeRepositoryProvider);
+  try {
+    final result = await repository.getServicesByCategoryAndDecorationTypeWithLocation(
+      categoryName: params['category'] as String,
+      decorationType: params['decorationType'] as String,
+      userLat: params['userLat'] as double,
+      userLon: params['userLon'] as double,
+      radiusKm: params['radiusKm'] as double?,
+    );
+    print('🔍 Provider: servicesByCategoryAndDecorationTypeWithLocationProvider returning ${result.length} services');
+    return result;
+  } catch (e) {
+    print('🔍 Provider: servicesByCategoryAndDecorationTypeWithLocationProvider error: $e');
+    rethrow;
+  }
 }); 
