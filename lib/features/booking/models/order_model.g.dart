@@ -19,15 +19,38 @@ _$OrderModelImpl _$$OrderModelImplFromJson(Map<String, dynamic> json) =>
       serviceDescription: json['service_description'] as String?,
       bookingDate: DateTime.parse(json['booking_date'] as String),
       bookingTime: json['booking_time'] as String?,
-      totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0,
-      advanceAmount: (json['advance_amount'] as num?)?.toDouble() ?? 0,
-      remainingAmount: (json['remaining_amount'] as num?)?.toDouble() ?? 0,
+      totalAmount: json['total_amount'] == null
+          ? 0.0
+          : _doubleFromJson(json['total_amount']),
+      advanceAmount: json['advance_amount'] == null
+          ? 0.0
+          : _doubleFromJson(json['advance_amount']),
+      remainingAmount: json['remaining_amount'] == null
+          ? 0.0
+          : _doubleFromJson(json['remaining_amount']),
       status: json['status'] as String? ?? 'pending',
       paymentStatus: json['payment_status'] as String? ?? 'pending',
       specialRequirements: json['special_requirements'] as String?,
       addressId: json['address_id'] as String?,
       placeImageUrl: json['place_image_url'] as String?,
       serviceImageUrl: json['service_image_url'] as String?,
+      addOnsIds: (json['add_ons_ids'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      qrVerifiedAt: json['qr_verified_at'] == null
+          ? null
+          : DateTime.parse(json['qr_verified_at'] as String),
+      setupStartedAt: json['setup_started_at'] == null
+          ? null
+          : DateTime.parse(json['setup_started_at'] as String),
+      beforeImageUrl: json['before_image_url'] as String?,
+      afterImageUrl: json['after_image_url'] as String?,
+      customisationInput: json['customisation_input'] as String?,
+      beforeDecorationImage: json['before_decoration_image'] as String?,
+      afterDecorationImage: json['after_decoration_image'] as String?,
+      bannerImage: json['banner_image'] as String?,
+      age: (json['age'] as num?)?.toInt(),
+      occasion: json['occasion'] as String?,
       addressFull: json['address_full'] as String?,
       addressArea: json['address_area'] as String?,
       addressNearby: json['address_nearby'] as String?,
@@ -63,6 +86,17 @@ Map<String, dynamic> _$$OrderModelImplToJson(_$OrderModelImpl instance) =>
       'address_id': instance.addressId,
       'place_image_url': instance.placeImageUrl,
       'service_image_url': instance.serviceImageUrl,
+      'add_ons_ids': instance.addOnsIds,
+      'qr_verified_at': instance.qrVerifiedAt?.toIso8601String(),
+      'setup_started_at': instance.setupStartedAt?.toIso8601String(),
+      'before_image_url': instance.beforeImageUrl,
+      'after_image_url': instance.afterImageUrl,
+      'customisation_input': instance.customisationInput,
+      'before_decoration_image': instance.beforeDecorationImage,
+      'after_decoration_image': instance.afterDecorationImage,
+      'banner_image': instance.bannerImage,
+      'age': instance.age,
+      'occasion': instance.occasion,
       'address_full': instance.addressFull,
       'address_area': instance.addressArea,
       'address_nearby': instance.addressNearby,

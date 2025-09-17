@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sylonow_user/features/wallet/providers/wallet_providers.dart';
-import 'package:sylonow_user/features/wallet/models/transaction_model.dart';
 import 'package:intl/intl.dart';
+import 'package:sylonow_user/core/theme/app_theme.dart';
+import 'package:sylonow_user/features/wallet/models/transaction_model.dart';
+import 'package:sylonow_user/features/wallet/providers/wallet_providers.dart';
 
 class WalletScreen extends ConsumerWidget {
   static const String routeName = '/wallet';
-  
+
   const WalletScreen({super.key});
 
   @override
@@ -26,7 +27,7 @@ class WalletScreen extends ConsumerWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.pink,
+
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -45,11 +46,7 @@ class WalletScreen extends ConsumerWidget {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.pink, Color(0xFFE91E63)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -135,11 +132,7 @@ class WalletScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue[600],
-                      size: 20,
-                    ),
+                    Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
@@ -255,18 +248,11 @@ class WalletScreen extends ConsumerWidget {
           color: iconColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: iconColor,
-          size: 20,
-        ),
+        child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(
         transaction.description ?? '',
-        style: const TextStyle(
-          fontFamily: 'Okra',
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(fontFamily: 'Okra', fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         DateFormat('MMM dd, yyyy • hh:mm a').format(transaction.createdAt),
@@ -293,11 +279,7 @@ class WalletScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Icon(
-            Icons.receipt_long,
-            size: 64,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'No transactions yet',
@@ -324,9 +306,7 @@ class WalletScreen extends ConsumerWidget {
   Widget _buildLoadingState() {
     return Container(
       padding: const EdgeInsets.all(32),
-      child: const Center(
-        child: CircularProgressIndicator(color: Colors.pink),
-      ),
+      child: const Center(child: CircularProgressIndicator(color: Colors.pink)),
     );
   }
 
@@ -335,11 +315,7 @@ class WalletScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 64,
-            color: Colors.blue[300],
-          ),
+          Icon(Icons.info_outline, size: 64, color: Colors.blue[300]),
           const SizedBox(height: 16),
           Text(
             'Database Setup Required',
@@ -371,10 +347,7 @@ class WalletScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text(
           'Refund Policy',
-          style: TextStyle(
-            fontFamily: 'Okra',
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontFamily: 'Okra', fontWeight: FontWeight.bold),
         ),
         content: const SingleChildScrollView(
           child: Column(

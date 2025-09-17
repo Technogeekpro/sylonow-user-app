@@ -1,6 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
@@ -14,7 +14,8 @@ class NearbyServicesScreen extends ConsumerStatefulWidget {
   static const String routeName = '/nearby-services';
 
   @override
-  ConsumerState<NearbyServicesScreen> createState() => _NearbyServicesScreenState();
+  ConsumerState<NearbyServicesScreen> createState() =>
+      _NearbyServicesScreenState();
 }
 
 class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
@@ -25,10 +26,7 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
       appBar: AppBar(
         title: const Text(
           'Near by',
-          style: TextStyle(
-            fontFamily: 'Okra',
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontFamily: 'Okra', fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -42,15 +40,20 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
           }
 
           final locationParams = locationSnapshot.data;
-          
+
           if (locationParams == null) {
             // Fallback to featured services
             return Consumer(
               builder: (context, ref, child) {
-                final featuredServicesState = ref.watch(featuredServicesProvider);
+                final featuredServicesState = ref.watch(
+                  featuredServicesProvider,
+                );
                 return featuredServicesState.services.isEmpty
                     ? _buildLoadingGrid()
-                    : _buildServicesGrid(featuredServicesState.services, isLocationBased: false);
+                    : _buildServicesGrid(
+                        featuredServicesState.services,
+                        isLocationBased: false,
+                      );
               },
             );
           }
@@ -59,12 +62,12 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
           return Consumer(
             builder: (context, ref, child) {
               final servicesAsync = ref.watch(
-                popularNearbyServicesWithLocationProvider(locationParams)
+                popularNearbyServicesWithLocationProvider(locationParams),
               );
               return servicesAsync.when(
                 data: (services) {
-                  return services.isEmpty 
-                      ? _buildEmptyState() 
+                  return services.isEmpty
+                      ? _buildEmptyState()
                       : _buildServicesGrid(services, isLocationBased: true);
                 },
                 loading: () => _buildLoadingGrid(),
@@ -77,7 +80,10 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
     );
   }
 
-  Widget _buildServicesGrid(List<ServiceListingModel> services, {bool isLocationBased = false}) {
+  Widget _buildServicesGrid(
+    List<ServiceListingModel> services, {
+    bool isLocationBased = false,
+  }) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -86,17 +92,17 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.75,
+              childAspectRatio: 0.8,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final service = services[index];
-                return _buildServiceCard(service, isLocationBased: isLocationBased);
-              },
-              childCount: services.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final service = services[index];
+              return _buildServiceCard(
+                service,
+                isLocationBased: isLocationBased,
+              );
+            }, childCount: services.length),
           ),
         ),
       ],
@@ -109,18 +115,21 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
       final featuredServicesState = ref.watch(featuredServicesProvider);
       return featuredServicesState.services.isEmpty
           ? _buildShimmerGrid()
-          : _buildServicesGrid(featuredServicesState.services, isLocationBased: false);
+          : _buildServicesGrid(
+              featuredServicesState.services,
+              isLocationBased: false,
+            );
     }
 
     // Use location-based services
     final servicesAsync = ref.watch(
-      popularNearbyServicesWithLocationProvider(locationParams)
+      popularNearbyServicesWithLocationProvider(locationParams),
     );
-    
+
     return servicesAsync.when(
       data: (services) {
-        return services.isEmpty 
-            ? _buildEmptyState() 
+        return services.isEmpty
+            ? _buildEmptyState()
             : _buildServicesGrid(services, isLocationBased: true);
       },
       loading: () => _buildShimmerGrid(),
@@ -136,7 +145,7 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.8,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -145,7 +154,10 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
     );
   }
 
-  Widget _buildServiceCard(ServiceListingModel service, {bool isLocationBased = false}) {
+  Widget _buildServiceCard(
+    ServiceListingModel service, {
+    bool isLocationBased = false,
+  }) {
     return Builder(
       builder: (context) => GestureDetector(
         onTap: () {
@@ -180,7 +192,7 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
             children: [
               // Image section
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: Stack(
                   children: [
                     ClipRRect(
@@ -256,9 +268,9 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
               ),
               // Content section
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -275,6 +287,19 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
+
+                      // Description
+                      Text(
+                        service.description ?? 'Beautiful service description',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Okra',
+                          color: Color(0xFF666666),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       // Price
                       Row(
                         children: [
@@ -328,31 +353,40 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
                       ),
                       const Spacer(),
                       // Rating
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              (service.rating ?? 4.9).toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                fontFamily: 'Okra',
-                              ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
                             ),
-                            const SizedBox(width: 2),
-                            const Icon(Icons.star, color: Colors.white, size: 10),
-                          ],
-                        ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  (service.rating ?? 4.9).toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.yellow,
+                                  size: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -370,7 +404,7 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.8,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -395,7 +429,7 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
       child: Column(
         children: [
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey[200],
@@ -413,9 +447,9 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

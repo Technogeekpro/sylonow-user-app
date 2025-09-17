@@ -8,7 +8,9 @@ class OnboardingDataModel with _$OnboardingDataModel {
   const factory OnboardingDataModel({
     String? userName,
     String? selectedOccasion,
+    String? selectedOccasionId,
     String? celebrationDate,
+    String? celebrationTime,
     @Default(false) bool isCompleted,
   }) = _OnboardingDataModel;
 

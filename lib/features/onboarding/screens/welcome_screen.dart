@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
 
 class WelcomeScreen extends StatelessWidget {
   static const String routeName = '/welcome';
@@ -21,14 +22,23 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                   //welcome image 
+                   AspectRatio(
+                     aspectRatio: 1,
+                     child: Image.asset(
+                      'assets/images/welcome.png',
+                      width: 200,
+                      height: 200,
+                     ),
+                   ),
                     // Title
                     Text(
-                      'Welcome to Sylonow 🎉',
+                      'Welcome to Sylonow',
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Okra',
-                        color: Colors.black,
+                        color: AppTheme.primaryColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -52,7 +62,10 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/onboarding/name'),
+                  onPressed: () {
+                    // Navigate to login screen as per onboarding.md requirements
+                    context.go(AppConstants.loginRoute);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,

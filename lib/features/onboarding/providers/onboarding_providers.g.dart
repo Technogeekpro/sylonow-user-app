@@ -6,7 +6,7 @@ part of 'onboarding_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$onboardingServiceHash() => r'c99e33b0a42a45db23a5a05ee920207a3225c7b4';
+String _$onboardingServiceHash() => r'bbc20879e90f9f38f5172e5c660f812f2e7b3e57';
 
 /// See also [onboardingService].
 @ProviderFor(onboardingService)
@@ -55,7 +55,7 @@ final onboardingDataProvider =
 
 typedef OnboardingDataRef = AutoDisposeFutureProviderRef<OnboardingDataModel>;
 String _$onboardingControllerHash() =>
-    r'1c047b7732ad542b0e2c02ba0b577e61e3476646';
+    r'a25c859fd194230f47454e784c48735c9c2c669f';
 
 /// See also [OnboardingController].
 @ProviderFor(OnboardingController)

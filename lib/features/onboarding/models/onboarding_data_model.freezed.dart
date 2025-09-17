@@ -22,7 +22,9 @@ OnboardingDataModel _$OnboardingDataModelFromJson(Map<String, dynamic> json) {
 mixin _$OnboardingDataModel {
   String? get userName => throw _privateConstructorUsedError;
   String? get selectedOccasion => throw _privateConstructorUsedError;
+  String? get selectedOccasionId => throw _privateConstructorUsedError;
   String? get celebrationDate => throw _privateConstructorUsedError;
+  String? get celebrationTime => throw _privateConstructorUsedError;
   bool get isCompleted => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +42,9 @@ abstract class $OnboardingDataModelCopyWith<$Res> {
   $Res call(
       {String? userName,
       String? selectedOccasion,
+      String? selectedOccasionId,
       String? celebrationDate,
+      String? celebrationTime,
       bool isCompleted});
 }
 
@@ -59,7 +63,9 @@ class _$OnboardingDataModelCopyWithImpl<$Res, $Val extends OnboardingDataModel>
   $Res call({
     Object? userName = freezed,
     Object? selectedOccasion = freezed,
+    Object? selectedOccasionId = freezed,
     Object? celebrationDate = freezed,
+    Object? celebrationTime = freezed,
     Object? isCompleted = null,
   }) {
     return _then(_value.copyWith(
@@ -71,9 +77,17 @@ class _$OnboardingDataModelCopyWithImpl<$Res, $Val extends OnboardingDataModel>
           ? _value.selectedOccasion
           : selectedOccasion // ignore: cast_nullable_to_non_nullable
               as String?,
+      selectedOccasionId: freezed == selectedOccasionId
+          ? _value.selectedOccasionId
+          : selectedOccasionId // ignore: cast_nullable_to_non_nullable
+              as String?,
       celebrationDate: freezed == celebrationDate
           ? _value.celebrationDate
           : celebrationDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      celebrationTime: freezed == celebrationTime
+          ? _value.celebrationTime
+          : celebrationTime // ignore: cast_nullable_to_non_nullable
               as String?,
       isCompleted: null == isCompleted
           ? _value.isCompleted
@@ -94,7 +108,9 @@ abstract class _$$OnboardingDataModelImplCopyWith<$Res>
   $Res call(
       {String? userName,
       String? selectedOccasion,
+      String? selectedOccasionId,
       String? celebrationDate,
+      String? celebrationTime,
       bool isCompleted});
 }
 
@@ -111,7 +127,9 @@ class __$$OnboardingDataModelImplCopyWithImpl<$Res>
   $Res call({
     Object? userName = freezed,
     Object? selectedOccasion = freezed,
+    Object? selectedOccasionId = freezed,
     Object? celebrationDate = freezed,
+    Object? celebrationTime = freezed,
     Object? isCompleted = null,
   }) {
     return _then(_$OnboardingDataModelImpl(
@@ -123,9 +141,17 @@ class __$$OnboardingDataModelImplCopyWithImpl<$Res>
           ? _value.selectedOccasion
           : selectedOccasion // ignore: cast_nullable_to_non_nullable
               as String?,
+      selectedOccasionId: freezed == selectedOccasionId
+          ? _value.selectedOccasionId
+          : selectedOccasionId // ignore: cast_nullable_to_non_nullable
+              as String?,
       celebrationDate: freezed == celebrationDate
           ? _value.celebrationDate
           : celebrationDate // ignore: cast_nullable_to_non_nullable
+              as String?,
+      celebrationTime: freezed == celebrationTime
+          ? _value.celebrationTime
+          : celebrationTime // ignore: cast_nullable_to_non_nullable
               as String?,
       isCompleted: null == isCompleted
           ? _value.isCompleted
@@ -141,7 +167,9 @@ class _$OnboardingDataModelImpl implements _OnboardingDataModel {
   const _$OnboardingDataModelImpl(
       {this.userName,
       this.selectedOccasion,
+      this.selectedOccasionId,
       this.celebrationDate,
+      this.celebrationTime,
       this.isCompleted = false});
 
   factory _$OnboardingDataModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -152,14 +180,18 @@ class _$OnboardingDataModelImpl implements _OnboardingDataModel {
   @override
   final String? selectedOccasion;
   @override
+  final String? selectedOccasionId;
+  @override
   final String? celebrationDate;
+  @override
+  final String? celebrationTime;
   @override
   @JsonKey()
   final bool isCompleted;
 
   @override
   String toString() {
-    return 'OnboardingDataModel(userName: $userName, selectedOccasion: $selectedOccasion, celebrationDate: $celebrationDate, isCompleted: $isCompleted)';
+    return 'OnboardingDataModel(userName: $userName, selectedOccasion: $selectedOccasion, selectedOccasionId: $selectedOccasionId, celebrationDate: $celebrationDate, celebrationTime: $celebrationTime, isCompleted: $isCompleted)';
   }
 
   @override
@@ -171,16 +203,20 @@ class _$OnboardingDataModelImpl implements _OnboardingDataModel {
                 other.userName == userName) &&
             (identical(other.selectedOccasion, selectedOccasion) ||
                 other.selectedOccasion == selectedOccasion) &&
+            (identical(other.selectedOccasionId, selectedOccasionId) ||
+                other.selectedOccasionId == selectedOccasionId) &&
             (identical(other.celebrationDate, celebrationDate) ||
                 other.celebrationDate == celebrationDate) &&
+            (identical(other.celebrationTime, celebrationTime) ||
+                other.celebrationTime == celebrationTime) &&
             (identical(other.isCompleted, isCompleted) ||
                 other.isCompleted == isCompleted));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, userName, selectedOccasion, celebrationDate, isCompleted);
+  int get hashCode => Object.hash(runtimeType, userName, selectedOccasion,
+      selectedOccasionId, celebrationDate, celebrationTime, isCompleted);
 
   @JsonKey(ignore: true)
   @override
@@ -201,7 +237,9 @@ abstract class _OnboardingDataModel implements OnboardingDataModel {
   const factory _OnboardingDataModel(
       {final String? userName,
       final String? selectedOccasion,
+      final String? selectedOccasionId,
       final String? celebrationDate,
+      final String? celebrationTime,
       final bool isCompleted}) = _$OnboardingDataModelImpl;
 
   factory _OnboardingDataModel.fromJson(Map<String, dynamic> json) =
@@ -212,7 +250,11 @@ abstract class _OnboardingDataModel implements OnboardingDataModel {
   @override
   String? get selectedOccasion;
   @override
+  String? get selectedOccasionId;
+  @override
   String? get celebrationDate;
+  @override
+  String? get celebrationTime;
   @override
   bool get isCompleted;
   @override

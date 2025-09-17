@@ -3,20 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../booking/models/order_model.dart';
 import '../../booking/providers/booking_providers.dart';
+import '../../home/providers/home_providers.dart';
 
 class BookingHistoryScreen extends ConsumerStatefulWidget {
   const BookingHistoryScreen({super.key});
 
   @override
-  ConsumerState<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
+  ConsumerState<BookingHistoryScreen> createState() =>
+      _BookingHistoryScreenState();
 }
 
 class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   String _selectedFilter = 'all';
-  final List<String> _filters = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+  final List<String> _filters = [
+    'all',
+    'pending',
+    'confirmed',
+    'on_the_way',
+    'qr_verified',
+    'started',
+    'completed',
+    'cancelled',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +50,11 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
         elevation: 0.5,
         shadowColor: Colors.black12,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor, size: 24),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: AppTheme.textPrimaryColor,
+            size: 24,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -46,18 +62,25 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
         children: [
           _buildFilterChips(),
           Expanded(
-            child: ordersAsyncValue.when(
-              data: (orders) {
-                final filteredOrders = _filterOrders(orders);
-                
-                if (filteredOrders.isEmpty) {
-                  return _buildEmptyState();
-                }
-                
-                return _buildOrdersList(filteredOrders);
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(userOrdersProvider);
+                // Wait for the provider to refresh
+                await ref.read(userOrdersProvider.future);
               },
-              loading: () => _buildLoadingState(),
-              error: (error, stack) => _buildErrorState(error),
+              child: ordersAsyncValue.when(
+                data: (orders) {
+                  final filteredOrders = _filterOrders(orders);
+
+                  if (filteredOrders.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return _buildOrdersList(filteredOrders);
+                },
+                loading: () => _buildLoadingState(),
+                error: (error, stack) => _buildErrorState(error),
+              ),
             ),
           ),
         ],
@@ -83,7 +106,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Okra',
-                    color: isSelected ? Colors.white : AppTheme.textSecondaryColor,
+                    color: isSelected
+                        ? Colors.white
+                        : AppTheme.textSecondaryColor,
                   ),
                 ),
                 selected: isSelected,
@@ -96,7 +121,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                 selectedColor: AppTheme.primaryColor,
                 checkmarkColor: Colors.white,
                 side: BorderSide(
-                  color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                  color: isSelected
+                      ? AppTheme.primaryColor
+                      : Colors.grey.shade300,
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
@@ -159,7 +186,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: order.serviceImageUrl != null 
+                    child: order.serviceImageUrl != null
                         ? Image.network(
                             order.serviceImageUrl!,
                             fit: BoxFit.cover,
@@ -177,7 +204,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Service Title
                 Expanded(
                   child: Text(
@@ -192,46 +219,72 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 // QR Code for Order ID
-                Container(
-                 
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: QrImageView(
-                    data: order.id,
-                    version: QrVersions.auto,
-                    size: 70,
-                    backgroundColor: Colors.transparent,
-                    eyeStyle: QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: AppTheme.textPrimaryColor,
+                GestureDetector(
+                  onTap: () => _showQRCodeDialog(order),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
-                    dataModuleStyle: QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: AppTheme.textPrimaryColor,
+                    child: Stack(
+                      children: [
+                        QrImageView(
+                          data: order.id,
+                          version: QrVersions.auto,
+                          size: 70,
+                          backgroundColor: Colors.transparent,
+                          eyeStyle: QrEyeStyle(
+                            eyeShape: QrEyeShape.square,
+                            color: AppTheme.textPrimaryColor,
+                          ),
+                          dataModuleStyle: QrDataModuleStyle(
+                            dataModuleShape: QrDataModuleShape.square,
+                            color: AppTheme.textPrimaryColor,
+                          ),
+                        ),
+                        // Tap indicator
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.zoom_in,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Progress Bar
-            _buildProgressBar(order.status),
-            
+            _buildProgressBar(order.status, order.id),
+
             const SizedBox(height: 16),
 
             //Order Cost
             _buildOrderCost(order),
 
             // Booking Time
-            
             Row(
               children: [
                 Icon(
@@ -250,9 +303,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Actions
             Row(
               children: [
@@ -277,30 +330,47 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                     ),
                   ),
                 ),
-                if (order.status == 'pending') ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _showCancelDialog(order),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                // Conditional Cancel Button based on timing
+                FutureBuilder<bool>(
+                  future: _canCancelOrder(order),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox(width: 12);
+                    }
+
+                    final canCancel = snapshot.data ?? false;
+                    if (!canCancel) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _showCancelDialog(order),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel Order',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Cancel Order',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ],
@@ -310,49 +380,140 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   }
 
   Widget _buildOrderCost(OrderModel order) {
+    // Calculate order cost from advance_amount + remaining_amount from database
+    final double calculatedOrderCost =
+        order.advanceAmount + order.remainingAmount;
+
+    // Check if order is incomplete and has remaining amount to pay
+    final bool isOrderIncomplete =
+        order.status.toLowerCase() != 'completed' &&
+        order.status.toLowerCase() != 'cancelled';
+    final bool hasRemainingAmount = order.remainingAmount > 0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-        ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
         children: [
-          Text('Order Cost - ₹${_formatAmount(order.totalAmount)}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Okra',
-              color: AppTheme.textPrimaryColor,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Order Cost - ₹${_formatAmount(calculatedOrderCost)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Okra',
+                  color: AppTheme.textPrimaryColor,
+                ),
+              ),
+
+              //Payment Status
+              _buildPaymentStatus(order.paymentStatus),
+            ],
           ),
-          
-          //Payment Status
-          _buildPaymentStatus(order.paymentStatus),
+
+          // Show remaining amount for incomplete orders
+          if (isOrderIncomplete && hasRemainingAmount) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.payment, size: 16, color: Colors.orange.shade700),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Remaining: ₹${_formatAmount(order.remainingAmount)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildPaymentStatus(String paymentStatus) {
+    // Get user-friendly payment status text
+    String displayText = _formatPaymentStatusDisplay(paymentStatus);
+    Color backgroundColor;
+    Color textColor;
+
+    switch (paymentStatus.toLowerCase()) {
+      case 'pending':
+        backgroundColor = Colors.blue.shade50;
+        textColor = Colors.blue.shade700;
+        break;
+      case 'advance_paid':
+        backgroundColor = Colors.orange.shade50;
+        textColor = Colors.orange.shade700;
+        break;
+      case 'completed':
+        backgroundColor = Colors.green.shade50;
+        textColor = Colors.green.shade700;
+        break;
+      case 'failed':
+        backgroundColor = Colors.red.shade50;
+        textColor = Colors.red.shade700;
+        break;
+      case 'refunded':
+        backgroundColor = Colors.purple.shade50;
+        textColor = Colors.purple.shade700;
+        break;
+      default:
+        backgroundColor = Colors.grey.shade50;
+        textColor = Colors.grey.shade700;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: paymentStatus.toLowerCase() == 'pending' ? Colors.orange.shade200 : Colors.green.shade50,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(paymentStatus,
-        style: const TextStyle(
+      child: Text(
+        displayText,
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           fontFamily: 'Okra',
-          color: AppTheme.textPrimaryColor,
+          color: textColor,
         ),
       ),
     );
+  }
+
+  String _formatPaymentStatusDisplay(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Processing';
+      case 'advance_paid':
+        return 'Advance Paid';
+      case 'completed':
+        return 'Paid';
+      case 'failed':
+        return 'Failed';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return status.toUpperCase();
+    }
   }
 
   Widget _buildDetailItem({
@@ -362,13 +523,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: AppTheme.textSecondaryColor,
-        ),
+        Icon(icon, size: 16, color: AppTheme.textSecondaryColor),
         const SizedBox(width: 6),
-        if (fullWidth) 
+        if (fullWidth)
           Expanded(
             child: Text(
               label,
@@ -381,7 +538,6 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
           )
         else
           Flexible(
-            
             child: Text(
               label,
               style: const TextStyle(
@@ -399,7 +555,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   Widget _buildStatusChip(String status) {
     Color backgroundColor;
     Color textColor;
-    
+
     switch (status.toLowerCase()) {
       case 'pending':
         backgroundColor = Colors.orange.shade50;
@@ -408,6 +564,10 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       case 'confirmed':
         backgroundColor = Colors.blue.shade50;
         textColor = Colors.blue.shade700;
+        break;
+      case 'qr_verified':
+        backgroundColor = Colors.purple.shade50;
+        textColor = Colors.purple.shade700;
         break;
       case 'completed':
         backgroundColor = Colors.green.shade50;
@@ -441,32 +601,22 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   }
 
   String _formatAmount(double amount) {
-    return amount.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!$))'),
-      (Match m) => '${m[1]},',
-    );
+    return amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!$))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
   String _formatPaymentStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Pending';
-      case 'advance_paid':
-        return 'Advance Paid';
-      case 'completed':
-        return 'Completed';
-      case 'failed':
-        return 'Failed';
-      case 'refunded':
-        return 'Refunded';
-      default:
-        return status.toUpperCase();
-    }
+    // Use the same formatting logic as display
+    return _formatPaymentStatusDisplay(status);
   }
 
-  Widget _buildProgressBar(String status) {
+  Widget _buildProgressBar(String status, String orderId) {
     final steps = _getHorizontalTimelineSteps(status);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -481,14 +631,16 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: steps[i]['completed'] ? AppTheme.successColor : Colors.grey.shade300,
+                    color: steps[i]['completed']
+                        ? AppTheme.successColor
+                        : Colors.grey.shade300,
                     shape: BoxShape.circle,
                   ),
                   child: steps[i]['completed']
                       ? const Icon(Icons.check, size: 10, color: Colors.white)
                       : null,
                 ),
-                
+
                 // Connecting Line (except for last step)
                 if (i < steps.length - 1)
                   Expanded(
@@ -496,39 +648,55 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                       height: 2,
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
-                        color: steps[i]['completed'] && steps[i + 1]['completed'] 
-                            ? AppTheme.successColor 
+                        color:
+                            steps[i]['completed'] && steps[i + 1]['completed']
+                            ? AppTheme.successColor
                             : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
                   ),
               ],
-            ],  
+            ],
           ),
         ),
-        
+
+        //Order Id
+        Text(
+          'Order ID: $orderId',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Okra',
+            color: AppTheme.textSecondaryColor,
+          ),
+        ),
+
         const SizedBox(height: 12),
-        
+
         // Step Labels
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: steps.map<Widget>((step) => Expanded(
-            child: Text(
-              step['title'],
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Okra',
-                color: step['completed'] 
-                    ? AppTheme.textPrimaryColor 
-                    : Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )).toList(),
+          children: steps
+              .map<Widget>(
+                (step) => Expanded(
+                  child: Text(
+                    step['title'],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Okra',
+                      color: step['completed']
+                          ? AppTheme.textPrimaryColor
+                          : Colors.grey.shade600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
         ),
       ],
     );
@@ -537,11 +705,15 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'Order Confirmed';
+        return 'Order Pending';
       case 'confirmed':
-        return 'Vendor Assigned';
-      case 'in_progress':
-        return 'Service In Progress';
+        return 'Order Accepted';
+      case 'on_the_way':
+        return 'On the Way';
+      case 'qr_verified':
+        return 'QR Verified';
+      case 'started':
+        return 'Service Started';
       case 'completed':
         return 'Service Completed';
       case 'cancelled':
@@ -553,23 +725,52 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
 
   String _formatBookingDateTime(OrderModel order) {
     final date = DateFormat('MMM dd, yyyy').format(order.bookingDate);
-    final time = order.bookingTime != null 
-        ? DateFormat('h:mm a').format(
-            DateTime.parse('2000-01-01 ${order.bookingTime}')
-          ).toUpperCase()
+    final time = order.bookingTime != null
+        ? DateFormat('h:mm a')
+              .format(DateTime.parse('2000-01-01 ${order.bookingTime}'))
+              .toUpperCase()
         : 'Time TBD';
     return '$date at $time';
   }
 
   List<Map<String, dynamic>> _getHorizontalTimelineSteps(String currentStatus) {
+    // Handle cancelled orders separately
+    if (currentStatus.toLowerCase() == 'cancelled') {
+      return [
+        {'title': 'Order Accepted', 'completed': true},
+        {'title': 'Cancelled', 'completed': true},
+        {'title': 'On the Way', 'completed': false},
+        {'title': 'Completed', 'completed': false},
+      ];
+    }
+
+    // Define the 4-step process for normal orders
     final steps = [
       {
         'title': 'Order Accepted',
-        'completed': true, // Always completed once order exists
+        'completed': [
+          'confirmed',
+          'on_the_way',
+          'qr_verified',
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
       },
       {
-        'title': 'Service Verified',
-        'completed': ['confirmed', 'in_progress', 'completed'].contains(currentStatus.toLowerCase()),
+        'title': 'On the Way',
+        'completed': [
+          'on_the_way',
+          'qr_verified',
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
+      },
+      {
+        'title': 'Started',
+        'completed': [
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
       },
       {
         'title': 'Completed',
@@ -577,85 +778,77 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       },
     ];
 
-    // Handle cancelled orders
-    if (currentStatus.toLowerCase() == 'cancelled') {
-      return [
-        {
-          'title': 'Order Accepted',
-          'completed': true,
-        },
-        {
-          'title': 'Cancelled',
-          'completed': true,
-        },
-        {
-          'title': 'Completed',
-          'completed': false,
-        },
-      ];
-    }
-
     return steps;
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.history_outlined,
-            size: 64,
-            color: AppTheme.textSecondaryColor,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No bookings yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Okra',
-              color: AppTheme.textPrimaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Your booking history will appear here',
-            style: TextStyle(
-              fontSize: 14,
-              fontFamily: 'Okra',
-              color: AppTheme.textSecondaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => context.go('/home'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+    return SingleChildScrollView(
+      physics:
+          const AlwaysScrollableScrollPhysics(), // Allow pull-to-refresh even when empty
+      child: SizedBox(
+        height:
+            MediaQuery.of(context).size.height -
+            200, // Adjust for app bar and filter chips
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.history_outlined,
+                size: 64,
+                color: AppTheme.textSecondaryColor,
               ),
-            ),
-            child: const Text(
-              'Explore Services',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Okra',
+              const SizedBox(height: 16),
+              const Text(
+                'No bookings yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                  color: AppTheme.textPrimaryColor,
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
+              const Text(
+                'Your booking history will appear here',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Okra',
+                  color: AppTheme.textSecondaryColor,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go('/home'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Explore Services',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildErrorState(Object error) {
@@ -663,11 +856,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red.shade400,
-          ),
+          Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
           Text(
             'Failed to load bookings',
@@ -721,6 +910,158 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
     );
   }
 
+  void _showQRCodeDialog(OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Order QR Code',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                      color: AppTheme.textPrimaryColor,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppTheme.textSecondaryColor,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Service Info
+              Text(
+                order.serviceTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Okra',
+                  color: AppTheme.textPrimaryColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                'Order ID: ${order.id.substring(order.id.length - 12)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Okra',
+                  color: AppTheme.textSecondaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Enlarged QR Code
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200, width: 1),
+                ),
+                child: QrImageView(
+                  data: order.id,
+                  version: QrVersions.auto,
+                  size: 250,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Colors.black,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Instructions
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Show this QR code to the vendor for verification',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Okra',
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Close Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrderDetailsSheet(OrderModel order) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
@@ -743,16 +1084,13 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
+
           // Header
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.shade200,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Colors.grey.shade200, width: 1),
               ),
             ),
             child: Row(
@@ -790,7 +1128,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -800,15 +1138,15 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   // Service Info Card
                   _buildServiceInfoCard(order),
                   const SizedBox(height: 24),
-                  
+
                   // Order Timeline
                   _buildOrderTimeline(order),
                   const SizedBox(height: 24),
-                  
+
                   // Order Summary
                   _buildOrderSummary(order),
                   const SizedBox(height: 24),
-                  
+
                   // Rating Section (only for completed orders)
                   if (order.status.toLowerCase() == 'completed')
                     _buildRatingSection(order),
@@ -904,7 +1242,10 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               const Spacer(),
               if (order.status.toLowerCase() == 'completed')
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(16),
@@ -933,12 +1274,12 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
             ),
           ],
           const SizedBox(height: 24),
-          
+
           // Timeline Steps
           _buildTimelineSteps(order),
-          
+
           const SizedBox(height: 20),
-          
+
           // Order Info
           _buildOrderInfo(order),
         ],
@@ -948,13 +1289,13 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
 
   Widget _buildTimelineSteps(OrderModel order) {
     final steps = _getOrderSteps(order.status);
-    
+
     return Column(
       children: steps.asMap().entries.map((entry) {
         final index = entry.key;
         final step = entry.value;
         final isLast = index == steps.length - 1;
-        
+
         return Row(
           children: [
             Column(
@@ -963,7 +1304,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: step['completed'] ? Colors.green : Colors.grey.shade300,
+                    color: step['completed']
+                        ? Colors.green
+                        : Colors.grey.shade300,
                     shape: BoxShape.circle,
                   ),
                   child: step['completed']
@@ -971,11 +1314,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                       : null,
                 ),
                 if (!isLast)
-                  Container(
-                    width: 2,
-                    height: 40,
-                    color: Colors.grey.shade300,
-                  ),
+                  Container(width: 2, height: 40, color: Colors.grey.shade300),
               ],
             ),
             const SizedBox(width: 16),
@@ -989,8 +1328,8 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Okra',
-                      color: step['completed'] 
-                          ? AppTheme.textPrimaryColor 
+                      color: step['completed']
+                          ? AppTheme.textPrimaryColor
                           : Colors.grey.shade600,
                     ),
                   ),
@@ -1015,6 +1354,10 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   }
 
   Widget _buildOrderInfo(OrderModel order) {
+    // Calculate order cost from advance_amount + remaining_amount from database
+    final double calculatedOrderCost =
+        order.advanceAmount + order.remainingAmount;
+
     return Column(
       children: [
         Row(
@@ -1029,7 +1372,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               ),
             ),
             Text(
-              '₹${_formatAmount(order.totalAmount)}',
+              '₹${_formatAmount(calculatedOrderCost)}',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -1088,12 +1431,18 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
           ),
           const SizedBox(height: 16),
           _buildSummaryRow('Order ID', order.id),
-          _buildSummaryRow('Booking Date', DateFormat('MMM dd, yyyy').format(order.bookingDate)),
+          _buildSummaryRow(
+            'Booking Date',
+            DateFormat('MMM dd, yyyy').format(order.bookingDate),
+          ),
           _buildSummaryRow('Booking Time', order.bookingTime ?? 'Time TBD'),
           _buildSummaryRow('Customer', order.customerName),
           if (order.customerPhone != null)
             _buildSummaryRow('Phone', order.customerPhone!),
-          _buildSummaryRow('Payment Status', _formatPaymentStatus(order.paymentStatus)),
+          _buildSummaryRow(
+            'Payment Status',
+            _formatPaymentStatus(order.paymentStatus),
+          ),
         ],
       ),
     );
@@ -1152,12 +1501,12 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Star Rating
           _buildStarRating(),
-          
+
           const SizedBox(height: 20),
-          
+
           // Submit Button
           SizedBox(
             width: double.infinity,
@@ -1199,7 +1548,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
     return StatefulBuilder(
       builder: (context, setState) {
         int selectedRating = 0;
-        
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
@@ -1227,11 +1576,15 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   String _getTimelineTitle(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'Order Confirmed';
+        return 'Order Pending';
       case 'confirmed':
-        return 'Vendor Assigned';
-      case 'in_progress':
-        return 'Service In Progress';
+        return 'Order Accepted';
+      case 'on_the_way':
+        return 'Vendor On the Way';
+      case 'qr_verified':
+        return 'QR Code Verified';
+      case 'started':
+        return 'Service Started';
       case 'completed':
         return 'Service Completed';
       case 'cancelled':
@@ -1244,11 +1597,15 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   String _getTimelineSubtitle(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'Your order has been confirmed and we are looking for a vendor.';
+        return 'Your order is pending and waiting for confirmation.';
       case 'confirmed':
-        return 'A vendor has been assigned to your order.';
-      case 'in_progress':
-        return 'The vendor is currently working on your service.';
+        return 'Your order has been accepted and a vendor has been assigned.';
+      case 'on_the_way':
+        return 'The vendor is on the way to your location.';
+      case 'qr_verified':
+        return 'The vendor has scanned your QR code and verified your order.';
+      case 'started':
+        return 'The vendor has started working on your service.';
       case 'completed':
         return 'Your service has been completed successfully.';
       default:
@@ -1259,25 +1616,49 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
   List<Map<String, dynamic>> _getOrderSteps(String currentStatus) {
     final allSteps = [
       {
-        'title': 'Order Confirmed',
+        'title': 'Order Accepted',
         'date': DateFormat('MMM dd, yyyy').format(DateTime.now()),
-        'completed': true,
+        'completed': [
+          'confirmed',
+          'on_the_way',
+          'qr_verified',
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
       },
       {
-        'title': 'Vendor Assigned',
-        'date': currentStatus != 'pending' ? DateFormat('MMM dd, yyyy').format(DateTime.now()) : null,
-        'completed': ['confirmed', 'in_progress', 'completed'].contains(currentStatus.toLowerCase()),
+        'title': 'Vendor On the Way',
+        'date':
+            [
+              'on_the_way',
+              'qr_verified',
+              'started',
+              'completed',
+            ].contains(currentStatus.toLowerCase())
+            ? DateFormat('MMM dd, yyyy').format(DateTime.now())
+            : null,
+        'completed': [
+          'on_the_way',
+          'qr_verified',
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
       },
       {
-        'title': 'Service In Progress',
-        'date': ['in_progress', 'completed'].contains(currentStatus.toLowerCase()) 
-            ? DateFormat('MMM dd, yyyy').format(DateTime.now()) : null,
-        'completed': ['in_progress', 'completed'].contains(currentStatus.toLowerCase()),
+        'title': 'Service Started',
+        'date': ['started', 'completed'].contains(currentStatus.toLowerCase())
+            ? DateFormat('MMM dd, yyyy').format(DateTime.now())
+            : null,
+        'completed': [
+          'started',
+          'completed',
+        ].contains(currentStatus.toLowerCase()),
       },
       {
         'title': 'Service Completed',
-        'date': currentStatus.toLowerCase() == 'completed' 
-            ? DateFormat('MMM dd, yyyy').format(DateTime.now()) : null,
+        'date': currentStatus.toLowerCase() == 'completed'
+            ? DateFormat('MMM dd, yyyy').format(DateTime.now())
+            : null,
         'completed': currentStatus.toLowerCase() == 'completed',
       },
     ];
@@ -1285,20 +1666,14 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
     return allSteps;
   }
 
-
   void _showCancelDialog(OrderModel order) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Cancel Order',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Okra',
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Okra'),
         ),
         content: const Text(
           'Are you sure you want to cancel this order?',
@@ -1341,7 +1716,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
         orderId: order.id,
         status: 'cancelled',
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1370,37 +1745,189 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
     }
 
     List<String> addressParts = [];
-    
+
     // Add name if available
     if (order.addressName?.isNotEmpty == true) {
       addressParts.add(order.addressName!);
     }
-    
+
     // Add main address
     if (order.addressFull?.isNotEmpty == true) {
       addressParts.add(order.addressFull!);
     }
-    
+
     // Add floor if available
     if (order.addressFloor?.isNotEmpty == true) {
       addressParts.add('Floor: ${order.addressFloor!}');
     }
-    
+
     // Add area
     if (order.addressArea?.isNotEmpty == true) {
       addressParts.add(order.addressArea!);
     }
-    
+
     // Add nearby landmark
     if (order.addressNearby?.isNotEmpty == true) {
       addressParts.add('Near ${order.addressNearby!}');
     }
-    
+
     // If no address info is available, fall back to address ID
     if (addressParts.isEmpty && order.addressId != null) {
       return 'Address ID: ${order.addressId!.substring(order.addressId!.length - 8)}'; // Show last 8 chars
     }
-    
+
     return addressParts.join(', ');
+  }
+
+  /// Parse setup time string to hours
+  int _parseSetupTimeToHours(String? setupTime) {
+    if (setupTime == null || setupTime.isEmpty) {
+      return 0;
+    }
+
+    final lowerCaseTime = setupTime.toLowerCase().trim();
+
+    // Extract numbers from the string
+    final RegExp numberRegex = RegExp(r'(\d+(?:\.\d+)?)');
+    final match = numberRegex.firstMatch(lowerCaseTime);
+
+    if (match == null) {
+      return 0;
+    }
+
+    final double number = double.tryParse(match.group(1)!) ?? 0;
+
+    // Check if it's minutes and convert to hours
+    if (lowerCaseTime.contains('min')) {
+      return (number / 60).ceil(); // Convert minutes to hours, round up
+    }
+
+    // Assume it's hours if contains 'hour', 'hr', or just a number
+    return number.ceil();
+  }
+
+  /// Check if user can cancel order based on timing conditions
+  Future<bool> _canCancelOrder(OrderModel order) async {
+    try {
+      // Only allow cancellation for pending orders
+      if (order.status.toLowerCase() != 'pending') {
+        return false;
+      }
+
+      // Get service listing details to fetch setup time
+      final homeRepository = ref.read(homeRepositoryProvider);
+
+      if (order.serviceListingId == null) {
+        debugPrint('❌ Order has no service listing ID');
+        return false;
+      }
+
+      final serviceListing = await homeRepository.getServiceById(
+        order.serviceListingId!,
+      );
+
+      if (serviceListing == null) {
+        debugPrint('❌ Could not fetch service listing');
+        return false;
+      }
+
+      // Parse setup time from service listing
+      final setupTimeHours = _parseSetupTimeToHours(serviceListing.setupTime);
+      debugPrint(
+        '📋 Setup time: ${serviceListing.setupTime} -> $setupTimeHours hours',
+      );
+
+      // Calculate cancellation deadline
+      // Formula: booking_date + booking_time - (setup_time + 1 hour)
+      DateTime serviceDateTime;
+
+      if (order.bookingTime != null && order.bookingTime!.isNotEmpty) {
+        // Parse booking time (format: "HH:mm:ss")
+        final timeParts = order.bookingTime!.split(':');
+        final hour = int.tryParse(timeParts[0]) ?? 12;
+        final minute =
+            int.tryParse(timeParts.length > 1 ? timeParts[1] : '0') ?? 0;
+
+        serviceDateTime = DateTime(
+          order.bookingDate.year,
+          order.bookingDate.month,
+          order.bookingDate.day,
+          hour,
+          minute,
+        );
+      } else {
+        // If no specific time, assume 12:00 PM
+        serviceDateTime = DateTime(
+          order.bookingDate.year,
+          order.bookingDate.month,
+          order.bookingDate.day,
+          12,
+          0,
+        );
+      }
+
+      // Calculate deadline: service time - setup time - 1 hour buffer
+      final cancellationDeadline = serviceDateTime.subtract(
+        Duration(hours: setupTimeHours + 1),
+      );
+      final now = DateTime.now();
+
+      debugPrint('🕐 Service DateTime: $serviceDateTime');
+      debugPrint('⏰ Cancellation Deadline: $cancellationDeadline');
+      debugPrint('🕒 Current Time: $now');
+      debugPrint('✅ Can Cancel: ${now.isBefore(cancellationDeadline)}');
+
+      return now.isBefore(cancellationDeadline);
+    } catch (e) {
+      debugPrint('❌ Error checking cancel eligibility: $e');
+      return false; // Default to not allowing cancellation if there's an error
+    }
+  }
+
+  /// Get cancellation deadline for informational display
+  Future<DateTime?> _getCancellationDeadline(OrderModel order) async {
+    try {
+      if (order.status.toLowerCase() != 'pending' ||
+          order.serviceListingId == null) {
+        return null;
+      }
+
+      final homeRepository = ref.read(homeRepositoryProvider);
+      final serviceListing = await homeRepository.getServiceById(
+        order.serviceListingId!,
+      );
+
+      if (serviceListing == null) return null;
+
+      final setupTimeHours = _parseSetupTimeToHours(serviceListing.setupTime);
+
+      DateTime serviceDateTime;
+      if (order.bookingTime != null && order.bookingTime!.isNotEmpty) {
+        final timeParts = order.bookingTime!.split(':');
+        final hour = int.tryParse(timeParts[0]) ?? 12;
+        final minute =
+            int.tryParse(timeParts.length > 1 ? timeParts[1] : '0') ?? 0;
+
+        serviceDateTime = DateTime(
+          order.bookingDate.year,
+          order.bookingDate.month,
+          order.bookingDate.day,
+          hour,
+          minute,
+        );
+      } else {
+        serviceDateTime = DateTime(
+          order.bookingDate.year,
+          order.bookingDate.month,
+          order.bookingDate.day,
+          12,
+          0,
+        );
+      }
+
+      return serviceDateTime.subtract(Duration(hours: setupTimeHours + 1));
+    } catch (e) {
+      return null;
+    }
   }
 }

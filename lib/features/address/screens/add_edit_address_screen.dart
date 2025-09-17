@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
@@ -15,7 +16,8 @@ class AddEditAddressScreen extends ConsumerStatefulWidget {
   static const routeName = '/add-edit-address';
 
   @override
-  ConsumerState<AddEditAddressScreen> createState() => _AddEditAddressScreenState();
+  ConsumerState<AddEditAddressScreen> createState() =>
+      _AddEditAddressScreenState();
 }
 
 class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
@@ -41,7 +43,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
 
   Future<void> _loadExistingAddress() async {
     if (widget.addressId == null) return;
-    
+
     setState(() => _isLoading = true);
     try {
       final addresses = await ref.read(addressesProvider.future);
@@ -49,7 +51,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         (address) => address.id == widget.addressId,
         orElse: () => throw Exception('Address not found'),
       );
-      
+
       _nameController.text = _existingAddress?.name ?? '';
       _addressController.text = _existingAddress?.address ?? '';
       _areaController.text = _existingAddress?.area ?? '';
@@ -59,9 +61,9 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
       _addressType = _existingAddress?.addressFor ?? AddressType.home;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading address: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading address: $e')));
         context.pop();
       }
     } finally {
@@ -88,7 +90,10 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
       final locationService = ref.read(locationServiceProvider);
       final position = await locationService.getCurrentLocation();
       if (position != null) {
-        final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           _addressController.text = '${p.street}, ${p.subLocality}';
@@ -97,7 +102,9 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error fetching location: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error fetching location: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -136,7 +143,9 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
           context.pop();
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving address: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving address: $e')));
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
@@ -173,16 +182,22 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                       controller: _nameController,
                       label: 'Full Name',
                       hint: 'Enter your full name',
-                      validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your name' : null,
                     ),
                     const SizedBox(height: 16),
-                    
+
                     _buildSectionTitle('Address Details'),
+                    // Use Current Location button - moved up for better accessibility
+                    _buildLocationButton(),
+                    const SizedBox(height: 16),
                     _buildTextField(
                       controller: _addressController,
                       label: 'Street Address',
                       hint: 'House number, street name',
-                      validator: (value) => value!.isEmpty ? 'Please enter your street address' : null,
+                      validator: (value) => value!.isEmpty
+                          ? 'Please enter your street address'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -210,12 +225,9 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     _buildSectionTitle('Address Type'),
                     _buildAddressTypeSelector(),
-                    const SizedBox(height: 32),
-                    
-                    _buildLocationButton(),
                   ],
                 ),
               ),
@@ -277,46 +289,55 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        children: AddressType.values.map((type) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _addressType = type;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _addressType == type 
-                      ? Theme.of(context).primaryColor 
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      type == AddressType.home 
-                          ? Icons.home_outlined 
-                          : type == AddressType.work 
-                              ? Icons.work_outline 
-                              : Icons.location_on_outlined,
-                      color: _addressType == type ? Colors.white : Colors.grey[700],
+        children: AddressType.values
+            .where((type) => type != AddressType.hotel)
+            .map((type) {
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _addressType = type;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _addressType == type
+                          ? Theme.of(context).primaryColor
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      type.toString().split('.').last.capitalize(),
-                      style: TextStyle(
-                        color: _addressType == type ? Colors.white : Colors.grey[700],
-                        fontWeight: _addressType == type ? FontWeight.bold : FontWeight.normal,
-                      ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          type == AddressType.home
+                              ? Icons.home_outlined
+                              : type == AddressType.work
+                              ? Icons.work_outline
+                              : Icons.place_outlined,
+                          color: _addressType == type
+                              ? Colors.white
+                              : Colors.grey[700],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          type.toString().split('.').last.capitalize(),
+                          style: TextStyle(
+                            color: _addressType == type
+                                ? Colors.white
+                                : Colors.grey[700],
+                            fontWeight: _addressType == type
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            })
+            .toList(),
       ),
     );
   }
@@ -356,7 +377,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         child: ElevatedButton(
           onPressed: _isLoading ? null : _saveAddress,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1581C6),
+            backgroundColor: AppTheme.primaryColor,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -391,4 +412,4 @@ extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${substring(1)}";
   }
-} 
+}

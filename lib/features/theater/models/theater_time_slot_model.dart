@@ -3,22 +3,30 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'theater_time_slot_model.freezed.dart';
 part 'theater_time_slot_model.g.dart';
 
+/// Helper function to safely convert nullable numeric values to double
+double _safeDoubleFromJson(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) {
+    final parsed = double.tryParse(value);
+    return parsed ?? 0.0;
+  }
+  return 0.0;
+}
+
 @freezed
 class TheaterTimeSlotModel with _$TheaterTimeSlotModel {
   const factory TheaterTimeSlotModel({
     required String id,
     @JsonKey(name: 'theater_id') required String theaterId,
-    @JsonKey(name: 'slot_name') required String slotName,
+    @JsonKey(name: 'screen_id') String? screenId,
     @JsonKey(name: 'start_time') required String startTime,
     @JsonKey(name: 'end_time') required String endTime,
-    @JsonKey(name: 'base_price') required double basePrice,
-    @JsonKey(name: 'price_per_hour') required double pricePerHour,
-    @JsonKey(name: 'weekday_multiplier') required double weekdayMultiplier,
-    @JsonKey(name: 'weekend_multiplier') required double weekendMultiplier,
-    @JsonKey(name: 'holiday_multiplier') required double holidayMultiplier,
-    @JsonKey(name: 'max_duration_hours') required int maxDurationHours,
-    @JsonKey(name: 'min_duration_hours') required int minDurationHours,
-    @JsonKey(name: 'is_active') required bool isActive,
+    @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson) @Default(0.0) double basePrice,
+    @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson) @Default(0.0) double discountedPrice,
+    @JsonKey(name: 'is_available') @Default(true) bool isAvailable,
+    @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _TheaterTimeSlotModel;
@@ -38,7 +46,7 @@ class TheaterSlotBookingModel with _$TheaterSlotBookingModel {
     @JsonKey(name: 'end_time') required String endTime,
     required String status, // 'available', 'booked', 'blocked', 'maintenance'
     @JsonKey(name: 'booking_id') String? bookingId,
-    @JsonKey(name: 'slot_price') required double slotPrice,
+    @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson) @Default(0.0) double slotPrice,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _TheaterSlotBookingModel;

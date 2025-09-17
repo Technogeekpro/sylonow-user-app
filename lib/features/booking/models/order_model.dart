@@ -3,6 +3,18 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'order_model.freezed.dart';
 part 'order_model.g.dart';
 
+/// Helper function to safely convert nullable numeric values to double
+double _doubleFromJson(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) {
+    final parsed = double.tryParse(value);
+    return parsed ?? 0.0;
+  }
+  return 0.0;
+}
+
 @freezed
 class OrderModel with _$OrderModel {
   const factory OrderModel({
@@ -17,15 +29,27 @@ class OrderModel with _$OrderModel {
     @JsonKey(name: 'service_description') String? serviceDescription,
     @JsonKey(name: 'booking_date') required DateTime bookingDate,
     @JsonKey(name: 'booking_time') String? bookingTime,
-    @JsonKey(name: 'total_amount') @Default(0) double totalAmount,
-    @JsonKey(name: 'advance_amount') @Default(0) double advanceAmount,
-    @JsonKey(name: 'remaining_amount') @Default(0) double remainingAmount,
+    @JsonKey(name: 'total_amount', fromJson: _doubleFromJson) @Default(0.0) double totalAmount,
+    @JsonKey(name: 'advance_amount', fromJson: _doubleFromJson) @Default(0.0) double advanceAmount,
+    @JsonKey(name: 'remaining_amount', fromJson: _doubleFromJson) @Default(0.0) double remainingAmount,
     @Default('pending') String status,
     @JsonKey(name: 'payment_status') @Default('pending') String paymentStatus,
     @JsonKey(name: 'special_requirements') String? specialRequirements,
     @JsonKey(name: 'address_id') String? addressId,
     @JsonKey(name: 'place_image_url') String? placeImageUrl,
     @JsonKey(name: 'service_image_url') String? serviceImageUrl,
+    // Additional database fields
+    @JsonKey(name: 'add_ons_ids') List<String>? addOnsIds,
+    @JsonKey(name: 'qr_verified_at') DateTime? qrVerifiedAt,
+    @JsonKey(name: 'setup_started_at') DateTime? setupStartedAt,
+    @JsonKey(name: 'before_image_url') String? beforeImageUrl,
+    @JsonKey(name: 'after_image_url') String? afterImageUrl,
+    @JsonKey(name: 'customisation_input') String? customisationInput,
+    @JsonKey(name: 'before_decoration_image') String? beforeDecorationImage,
+    @JsonKey(name: 'after_decoration_image') String? afterDecorationImage,
+    @JsonKey(name: 'banner_image') String? bannerImage,
+    int? age,
+    String? occasion,
     // Address information from joined addresses table
     @JsonKey(name: 'address_full') String? addressFull,
     @JsonKey(name: 'address_area') String? addressArea,

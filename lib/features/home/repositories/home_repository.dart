@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/home/models/quote_model.dart';
 import 'package:sylonow_user/features/home/models/vendor_model.dart';
@@ -1032,5 +1033,249 @@ class HomeRepository {
     } catch (e) {
       throw Exception('Failed to fetch services with discount: $e');
     }
+  }
+
+  /// Fetches service addons for a specific vendor
+  /// 
+  /// Returns a list of service addons from the service_add_ons table
+  Future<List<dynamic>> getServiceAddons(String vendorId) async {
+    try {
+      debugPrint('🔍 HomeRepository: Fetching addons for vendor ID: $vendorId');
+      
+      final response = await _supabase
+          .from('service_add_ons')
+          .select('*')
+          .eq('vendor_id', vendorId)
+          .eq('is_available', true)
+          .order('sort_order', ascending: true);
+
+      debugPrint('✅ HomeRepository: Found ${response.length} addons for vendor $vendorId');
+      
+      return response.map((json) {
+        return {
+          'id': json['id'],
+          'name': json['name'],
+          'description': json['description'],
+          'price': json['discount_price'] ?? json['original_price'], // Use discount price if available
+          'original_price': json['original_price'],
+          'discount_price': json['discount_price'], // Include discount_price for character calculations
+          'images': json['images'], // Keep original images array
+          'image_url': json['images'] != null && (json['images'] as List).isNotEmpty 
+              ? (json['images'] as List).first 
+              : null,
+          'is_customizable': json['is_customizable'],
+          'customization_input_type': json['customization_input_type'],
+        };
+      }).toList();
+    } catch (e) {
+      debugPrint('❌ HomeRepository: Failed to fetch service addons: $e');
+      throw Exception('Failed to fetch service addons: $e');
+    }
+  }
+
+  /// Fetches existing bookings for a service on a specific date
+  /// 
+  /// Returns list of booked time slots in 'hh:mm a' format
+  Future<List<String>> getExistingBookings(String serviceId, String date) async {
+    try {
+      debugPrint('🔍 HomeRepository: Fetching bookings for service $serviceId on $date');
+      
+      // Query for orders on the specific date
+      // booking_date is a timestamp, so we need to filter by date range
+      final startOfDay = '${date}T00:00:00Z';
+      final endOfDay = '${date}T23:59:59Z';
+      
+      debugPrint('🔍 Querying orders from $startOfDay to $endOfDay');
+      
+      final response = await _supabase
+          .from('orders')
+          .select('booking_time, booking_date, status')
+          .eq('service_listing_id', serviceId)
+          .gte('booking_date', startOfDay)
+          .lte('booking_date', endOfDay)
+          .neq('status', 'cancelled') // Exclude cancelled bookings
+          .neq('status', 'completed') // Exclude completed bookings
+          .order('booking_time');
+
+      debugPrint('🔍 Raw response: $response');
+      
+      if (response.isEmpty) {
+        debugPrint('🔍 HomeRepository: No existing bookings found');
+        return [];
+      }
+
+      final bookedTimes = <String>[];
+      for (final booking in response) {
+        debugPrint('🔍 Processing booking: $booking');
+        final bookingTime = booking['booking_time'] as String?;
+        final bookingDate = booking['booking_date'] as String?;
+        final status = booking['status'] as String?;
+        
+        debugPrint('🔍 Booking details: time=$bookingTime, date=$bookingDate, status=$status');
+        
+        if (bookingTime != null) {
+          // Convert time from HH:mm:ss or HH:mm format to hh:mm a format
+          try {
+            final timeParts = bookingTime.split(':');
+            final hour = int.parse(timeParts[0]);
+            final minute = int.parse(timeParts[1]);
+            
+            final dateTime = DateTime(2000, 1, 1, hour, minute);
+            final formattedTime = DateFormat('hh:mm a').format(dateTime);
+            bookedTimes.add(formattedTime);
+            
+            debugPrint('🔍 Found booked time: $bookingTime -> $formattedTime');
+          } catch (e) {
+            debugPrint('❌ Error parsing booking time $bookingTime: $e');
+          }
+        }
+      }
+
+      debugPrint('🔍 HomeRepository: Found ${bookedTimes.length} booked time slots');
+      return bookedTimes;
+    } catch (e) {
+      debugPrint('❌ HomeRepository: Failed to fetch existing bookings: $e');
+      throw Exception('Failed to fetch existing bookings: $e');
+    }
+  }
+
+  /// Fetches all service listings for a vendor to get their booking notice periods
+  Future<List<ServiceListingModel>> getVendorServiceListings(String vendorId) async {
+    try {
+      debugPrint('🔍 HomeRepository: Fetching service listings for vendor $vendorId');
+      
+      final response = await _supabase
+          .from('service_listings')
+          .select()
+          .eq('vendor_id', vendorId);
+
+      final List<ServiceListingModel> services = [];
+      for (final item in response) {
+        try {
+          services.add(ServiceListingModel.fromJson(item));
+        } catch (e) {
+          debugPrint('❌ Error parsing service listing: $e');
+        }
+      }
+
+      debugPrint('🔍 Found ${services.length} service listings for vendor $vendorId');
+      return services;
+    } catch (e) {
+      debugPrint('❌ HomeRepository: Failed to fetch vendor service listings: $e');
+      throw Exception('Failed to fetch vendor service listings: $e');
+    }
+  }
+
+  /// Fetches all active bookings for a vendor within a date range
+  Future<List<Map<String, dynamic>>> getVendorBookings(String vendorId, DateTime startDate, DateTime endDate) async {
+    try {
+      debugPrint('🔍 HomeRepository: Fetching vendor bookings for $vendorId from ${DateFormat('yyyy-MM-dd').format(startDate)} to ${DateFormat('yyyy-MM-dd').format(endDate)}');
+      
+      final startOfRange = DateFormat('yyyy-MM-dd').format(startDate);
+      final endOfRange = DateFormat('yyyy-MM-dd').format(endDate);
+      
+      final response = await _supabase
+          .from('orders')
+          .select('booking_date, booking_time, status, service_listing_id')
+          .eq('vendor_id', vendorId)
+          .gte('booking_date', startOfRange)
+          .lte('booking_date', endOfRange)
+          .neq('status', 'cancelled')
+          .neq('status', 'completed')
+          .order('booking_date');
+
+      debugPrint('🔍 Found ${response.length} active vendor bookings');
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('❌ HomeRepository: Failed to fetch vendor bookings: $e');
+      throw Exception('Failed to fetch vendor bookings: $e');
+    }
+  }
+
+  /// Calculates blocked dates for a vendor based on existing bookings and their notice periods
+  Future<List<DateTime>> getVendorBlockedDates(String vendorId) async {
+    try {
+      debugPrint('🔍 HomeRepository: Calculating blocked dates for vendor $vendorId');
+      
+      // Get all service listings for this vendor to know their booking notice periods
+      final vendorServices = await getVendorServiceListings(vendorId);
+      
+      // Create a map of service listing ID to booking notice hours
+      final Map<String, int> serviceNoticeHours = {};
+      for (final service in vendorServices) {
+        serviceNoticeHours[service.id] = _parseBookingNoticeToHours(service.bookingNotice);
+      }
+      
+      // Get all active bookings for this vendor for the next 30 days (buffer for calculation)
+      final now = DateTime.now();
+      final futureDate = now.add(const Duration(days: 30));
+      final vendorBookings = await getVendorBookings(vendorId, now, futureDate);
+      
+      final Set<DateTime> blockedDates = {};
+      
+      for (final booking in vendorBookings) {
+        final bookingDateStr = booking['booking_date'] as String?;
+        final serviceListingId = booking['service_listing_id'] as String?;
+        
+        if (bookingDateStr == null || serviceListingId == null) continue;
+        
+        try {
+          final bookingDate = DateTime.parse(bookingDateStr);
+          final noticeHours = serviceNoticeHours[serviceListingId] ?? 0;
+          
+          // Calculate the blocked period: from (booking date - notice period) to booking date
+          final blockStartDate = bookingDate.subtract(Duration(hours: noticeHours));
+          
+          debugPrint('📅 Booking on ${DateFormat('dd/MM/yyyy').format(bookingDate)} blocks from ${DateFormat('dd/MM/yyyy HH:mm').format(blockStartDate)} to ${DateFormat('dd/MM/yyyy').format(bookingDate)}');
+          
+          // Add all dates in the blocked period
+          DateTime current = DateTime(blockStartDate.year, blockStartDate.month, blockStartDate.day);
+          final endDate = DateTime(bookingDate.year, bookingDate.month, bookingDate.day);
+          
+          while (current.isBefore(endDate) || current.isAtSameMomentAs(endDate)) {
+            blockedDates.add(current);
+            current = current.add(const Duration(days: 1));
+          }
+          
+        } catch (e) {
+          debugPrint('❌ Error processing booking date: $e');
+        }
+      }
+      
+      debugPrint('🚫 Vendor $vendorId has ${blockedDates.length} blocked dates: ${blockedDates.map((d) => DateFormat('dd/MM').format(d)).join(', ')}');
+      return blockedDates.toList()..sort();
+      
+    } catch (e) {
+      debugPrint('❌ HomeRepository: Failed to calculate blocked dates: $e');
+      throw Exception('Failed to calculate blocked dates: $e');
+    }
+  }
+
+  /// Helper method to parse booking notice string to hours
+  int _parseBookingNoticeToHours(String? bookingNotice) {
+    if (bookingNotice == null || bookingNotice.isEmpty) {
+      return 0;
+    }
+
+    final lowerCaseNotice = bookingNotice.toLowerCase().trim();
+    final RegExp numberRegex = RegExp(r'(\d+(?:\.\d+)?)');
+    final match = numberRegex.firstMatch(lowerCaseNotice);
+    
+    if (match == null) {
+      return 0;
+    }
+    
+    final double number = double.tryParse(match.group(1)!) ?? 0;
+    
+    if (lowerCaseNotice.contains('day')) {
+      return (number * 24).round();
+    } else if (lowerCaseNotice.contains('hour')) {
+      return number.round();
+    } else if (lowerCaseNotice.contains('week')) {
+      return (number * 7 * 24).round();
+    }
+    
+    // Default assumption: assume days and convert to hours
+    return (number * 24).round();
   }
 } 

@@ -72,7 +72,7 @@ class GradientElevatedButton extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(8),
-                  
+
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,

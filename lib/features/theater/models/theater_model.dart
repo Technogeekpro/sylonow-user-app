@@ -23,6 +23,7 @@ class TheaterModel with _$TheaterModel {
     double? rating,
     @JsonKey(name: 'total_reviews') int? totalReviews,
     @JsonKey(name: 'is_active') bool? isActive,
+    @JsonKey(name: 'is_verified') bool? isVerified,
     @JsonKey(name: 'owner_id') String? ownerId,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,

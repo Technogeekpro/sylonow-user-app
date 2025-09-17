@@ -172,8 +172,23 @@ class AuthService {
   // Check if user is authenticated
   Future<bool> isAuthenticated() async {
     try {
+      // Check if there's a valid Supabase user session
+      final user = _supabaseClient.auth.currentUser;
+      final hasValidSession = user != null;
+      
+      // Also check SharedPreferences for consistency
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(AppConstants.isLoggedInKey) ?? false;
+      final isLoggedInFromPrefs = prefs.getBool(AppConstants.isLoggedInKey) ?? false;
+      
+      // If SharedPreferences says logged in but no valid session, clear the flag
+      if (isLoggedInFromPrefs && !hasValidSession) {
+        await prefs.setBool(AppConstants.isLoggedInKey, false);
+        await prefs.remove(AppConstants.userEmailKey);
+        await prefs.remove(AppConstants.userIdKey);
+        await prefs.remove(AppConstants.userPhoneKey);
+      }
+      
+      return hasValidSession;
     } catch (e) {
       debugPrint('Authentication check error: $e');
       return false;
@@ -242,12 +257,20 @@ class AuthService {
   }
 
   // 🔴 NEW: Helper method to create user profile with app type
-  Future<void> _createUserProfile(String userId, String appType) async {
+  Future<void> _createUserProfile(String userId, String appType, {String? phoneNumber}) async {
     try {
       await _supabaseClient.rpc('create_user_profile', params: {
         'user_id': userId,
         'app_type': appType,
       });
+      
+      // If phone number is provided, update the profile with phone number
+      if (phoneNumber != null) {
+        await _supabaseClient
+            .from('user_profiles')
+            .update({'phone_number': phoneNumber})
+            .eq('auth_user_id', userId);
+      }
       
       debugPrint('🟢 User profile created with app type: $appType');
     } catch (e) {
@@ -285,6 +308,9 @@ class AuthService {
       );
       
       if (response.user != null) {
+        // Create user profile with app type after successful phone sign-in
+        await _createUserProfile(response.user!.id, 'customer', phoneNumber: phoneNumber);
+        
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(AppConstants.isLoggedInKey, true);
         await prefs.setString(AppConstants.userPhoneKey, phoneNumber);
@@ -329,6 +355,99 @@ class AuthService {
       debugPrint('Profile check error: $e');
       // If profile doesn't exist or there's an error, assume it's incomplete
       return false;
+    }
+  }
+
+  // Check if user has completed onboarding
+  Future<bool> isOnboardingCompleted() async {
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) return false;
+      
+      final response = await _supabaseClient
+          .from('user_profiles')
+          .select('is_onboarding_completed')
+          .eq('auth_user_id', user.id)
+          .single();
+      
+      final isCompleted = response['is_onboarding_completed'] as bool?;
+      
+      return isCompleted ?? false;
+    } catch (e) {
+      debugPrint('Onboarding check error: $e');
+      // If profile doesn't exist or there's an error, assume onboarding not completed
+      return false;
+    }
+  }
+
+  // Complete onboarding for the current user
+  Future<void> completeOnboarding() async {
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) throw Exception('No authenticated user');
+      
+      await _supabaseClient
+          .from('user_profiles')
+          .update({'is_onboarding_completed': true})
+          .eq('auth_user_id', user.id);
+      
+      debugPrint('Onboarding completed for user: ${user.id}');
+    } catch (e) {
+      debugPrint('Complete onboarding error: $e');
+      rethrow;
+    }
+  }
+
+  // Save onboarding data to user profile
+  Future<void> saveOnboardingData({
+    String? userName,
+    String? selectedOccasion,
+    String? selectedOccasionId,
+    String? celebrationDate,
+    String? celebrationTime,
+    String? phoneNumber,
+  }) async {
+    try {
+      final user = _supabaseClient.auth.currentUser;
+      if (user == null) throw Exception('No authenticated user');
+      
+      final updateData = <String, dynamic>{};
+      
+      if (userName != null) updateData['full_name'] = userName;
+      // Save category_id from selected occasion
+      if (selectedOccasionId != null && selectedOccasionId.isNotEmpty) {
+        // Validate that it's a proper UUID format (36 chars with 4 hyphens)
+        final RegExp uuidRegex = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false);
+        if (uuidRegex.hasMatch(selectedOccasionId)) {
+          updateData['category_id'] = selectedOccasionId;
+        } else {
+          updateData['category_id'] = null;
+        }
+      }
+      if (celebrationDate != null) {
+        // Parse ISO string to date format for database
+        try {
+          final parsedDate = DateTime.parse(celebrationDate);
+          updateData['celebration_date'] = parsedDate.toIso8601String().split('T')[0];
+        } catch (e) {
+          updateData['celebration_date'] = celebrationDate;
+        }
+      }
+      if (celebrationTime != null) updateData['celebration_time'] = celebrationTime;
+      if (phoneNumber != null) updateData['phone_number'] = phoneNumber;
+      
+      // Always set app_type to 'customer' for this app
+      updateData['app_type'] = 'customer';
+      
+      if (updateData.isNotEmpty) {
+        await _supabaseClient
+            .from('user_profiles')
+            .update(updateData)
+            .eq('auth_user_id', user.id);
+      }
+    } catch (e) {
+      debugPrint('Save onboarding data error: $e');
+      rethrow;
     }
   }
   

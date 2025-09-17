@@ -578,6 +578,11 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     }
 
     try {
+      // Extract customer details from booking data
+      final customization = bookingData['customization'] as Map<String, dynamic>? ?? {};
+      final customerAge = customization['customerAge'] as int?;
+      final occasion = customization['occasion'] as String?;
+
       // First create the order in the database (without place image initially)
       final order = await ref.read(orderCreationProvider.notifier).createOrder(
         userId: user.id,
@@ -587,6 +592,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         serviceTitle: service.name,
         bookingDate: bookingData['selectedDate'] ?? DateTime.now(),
         totalAmount: totalAmount,
+        advanceAmount: advanceAmount,
+        remainingAmount: remainingAmount,
         customerPhone: user.phone ?? bookingData['customerPhone'],
         customerEmail: user.email,
         serviceDescription: service.description,
@@ -594,6 +601,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         specialRequirements: bookingData['specialRequirements'],
         addressId: bookingData['selectedAddressId'],
         placeImageUrl: null, // Will be updated after payment success
+        age: customerAge,
+        occasion: occasion,
       );
 
       // Store the order in the current order provider

@@ -24,6 +24,9 @@ class OrderRepository {
     String? specialRequirements,
     String? addressId,
     String? placeImageUrl,
+    String? bannerImage,
+    int? age,
+    String? occasion,
   }) async {
     print('🏪 [REPOSITORY] OrderRepository.createOrder() called');
     try {
@@ -91,6 +94,18 @@ class OrderRepository {
       if (placeImageUrl?.isNotEmpty == true) {
         orderData['place_image_url'] = placeImageUrl;
         print('➕ [REPOSITORY] Added place_image_url: $placeImageUrl');
+      }
+      if (bannerImage?.isNotEmpty == true) {
+        orderData['banner_image'] = bannerImage;
+        print('➕ [REPOSITORY] Added banner_image: $bannerImage');
+      }
+      if (age != null && age > 0) {
+        orderData['age'] = age;
+        print('➕ [REPOSITORY] Added age: $age');
+      }
+      if (occasion?.isNotEmpty == true) {
+        orderData['occasion'] = occasion;
+        print('➕ [REPOSITORY] Added occasion: $occasion');
       }
 
       print('📤 [REPOSITORY] Final order data to be inserted:');
@@ -218,6 +233,7 @@ class OrderRepository {
         // Remove the nested data as it's not part of OrderModel
         orderJson.remove('service_listings');
         orderJson.remove('addresses');
+        
         return OrderModel.fromJson(orderJson);
       }).toList();
     } catch (e) {

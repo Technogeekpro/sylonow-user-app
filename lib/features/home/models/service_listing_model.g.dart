@@ -24,8 +24,11 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
       inclusions: (json['inclusions'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      originalPrice: (json['original_price'] as num?)?.toDouble(),
-      offerPrice: (json['offer_price'] as num?)?.toDouble(),
+      exclusions: (json['exclusions'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      originalPrice: _safeNullableDoubleFromJson(json['original_price']),
+      offerPrice: _safeNullableDoubleFromJson(json['offer_price']),
       isFeatured: json['is_featured'] as bool?,
       createdAt: json['created_at'] == null
           ? null
@@ -52,8 +55,10 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
           .toList(),
       videoUrl: json['video_url'] as String?,
       decorationType: json['decoration_type'] as String?,
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
+      providesBanner: json['provides_banner'] as bool?,
+      bannerText: json['banner_text'] as String?,
+      latitude: _safeNullableDoubleFromJson(json['latitude']),
+      longitude: _safeNullableDoubleFromJson(json['longitude']),
     );
 
 Map<String, dynamic> _$$ServiceListingModelImplToJson(
@@ -70,6 +75,7 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'vendor': instance.vendor,
       'promotional_tag': instance.promotionalTag,
       'inclusions': instance.inclusions,
+      'exclusions': instance.exclusions,
       'original_price': instance.originalPrice,
       'offer_price': instance.offerPrice,
       'is_featured': instance.isFeatured,
@@ -87,6 +93,8 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'service_environment': instance.serviceEnvironment,
       'video_url': instance.videoUrl,
       'decoration_type': instance.decorationType,
+      'provides_banner': instance.providesBanner,
+      'banner_text': instance.bannerText,
       'latitude': instance.latitude,
       'longitude': instance.longitude,
     };

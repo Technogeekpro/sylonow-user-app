@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/theme/app_theme.dart';
 
 class HelpSupportScreen extends ConsumerStatefulWidget {
@@ -15,7 +15,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
   String _selectedCategory = 'General Inquiry';
-  
+
   final List<String> _categories = [
     'General Inquiry',
     'Booking Issue',
@@ -26,7 +26,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     'Refund Request',
     'Report Bug',
     'Feature Request',
-    'Other'
+    'Other',
   ];
 
   @override
@@ -75,7 +75,6 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     return _buildSection(
       title: 'Quick Actions',
       children: [
-     
         _buildQuickActionTile(
           icon: Icons.chat,
           title: 'Live Chat',
@@ -90,7 +89,6 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
           onTap: () => _sendEmail(),
         ),
         _buildDivider(),
-     
       ],
     );
   }
@@ -101,22 +99,26 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
       children: [
         _buildFAQTile(
           question: 'How do I cancel my booking?',
-          answer: 'You can cancel your booking by going to your booking history and selecting the cancel option. Cancellation policies apply based on the service type.',
+          answer:
+              'You can cancel your booking by going to your booking history and selecting the cancel option. Cancellation policies apply based on the service type.',
         ),
         _buildDivider(),
         _buildFAQTile(
           question: 'How do I get a refund?',
-          answer: 'Refunds are processed based on our refund policy. Contact our support team with your booking details to initiate a refund request.',
+          answer:
+              'Refunds are processed based on our refund policy. Contact our support team with your booking details to initiate a refund request.',
         ),
         _buildDivider(),
         _buildFAQTile(
           question: 'How can I change my address?',
-          answer: 'You can update your address from the profile section. Go to "My Addresses" and add or edit your saved addresses.',
+          answer:
+              'You can update your address from the profile section. Go to "My Addresses" and add or edit your saved addresses.',
         ),
         _buildDivider(),
         _buildFAQTile(
           question: 'How do payments work?',
-          answer: 'We accept payments through multiple methods including credit/debit cards, UPI, net banking, and digital wallets. All transactions are secure and encrypted.',
+          answer:
+              'We accept payments through multiple methods including credit/debit cards, UPI, net banking, and digital wallets. All transactions are secure and encrypted.',
         ),
         _buildDivider(),
         _buildMenuTile(
@@ -133,9 +135,8 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     return _buildSection(
       title: 'Contact Information',
       children: [
-       
         _buildDivider(),
-     
+
         _buildContactTile(
           icon: Icons.email,
           title: 'Email Address',
@@ -173,12 +174,15 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 items: _categories.map((category) {
                   return DropdownMenuItem(
@@ -213,7 +217,10 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 style: const TextStyle(fontFamily: 'Okra'),
               ),
@@ -361,10 +368,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     );
   }
 
-  Widget _buildFAQTile({
-    required String question,
-    required String answer,
-  }) {
+  Widget _buildFAQTile({required String question, required String answer}) {
     return ExpansionTile(
       title: Text(
         question,
@@ -517,10 +521,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     await launchUrl(launchUri);
   }
 
@@ -557,15 +558,10 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Live Chat',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Okra',
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Okra'),
         ),
         content: const Text(
           'Live chat feature is coming soon. For immediate assistance, please call our support team.',
@@ -640,23 +636,27 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   children: [
                     _buildFAQTile(
                       question: 'How do I create an account?',
-                      answer: 'You can create an account by downloading the app and following the registration process. You can sign up using your email or phone number.',
+                      answer:
+                          'You can create an account by downloading the app and following the registration process. You can sign up using your email or phone number.',
                     ),
                     _buildFAQTile(
                       question: 'How do I book a service?',
-                      answer: 'Browse through our available services, select the one you need, choose your preferred date and time, and complete the booking process.',
+                      answer:
+                          'Browse through our available services, select the one you need, choose your preferred date and time, and complete the booking process.',
                     ),
                     _buildFAQTile(
                       question: 'Can I reschedule my booking?',
-                      answer: 'Yes, you can reschedule your booking up to 24 hours before the scheduled time. Additional charges may apply.',
+                      answer: 'We will providing this feature soon.',
                     ),
                     _buildFAQTile(
                       question: 'How do I track my service provider?',
-                      answer: 'Once your booking is confirmed, you can track your service provider\'s location and estimated arrival time through the app.',
+                      answer:
+                          'Once your booking is confirmed, you can track your service provider\'s location and estimated arrival time through the app.',
                     ),
                     _buildFAQTile(
                       question: 'What payment methods do you accept?',
-                      answer: 'We accept all major credit/debit cards, UPI, net banking, and popular digital wallets.',
+                      answer:
+                          'We accept all major credit/debit cards, UPI, net banking, and popular digital wallets.',
                     ),
                   ],
                 ),
@@ -682,15 +682,10 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Message Sent',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Okra',
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Okra'),
         ),
         content: const Text(
           'Thank you for contacting us. We will get back to you within 24 hours.',

@@ -5,12 +5,13 @@ import 'package:sylonow_user/features/home/widgets/categories/optimized_explore_
 import 'package:sylonow_user/features/home/widgets/featured/featured_section.dart';
 import 'package:sylonow_user/features/home/widgets/collage/image_collage_section.dart';
 import 'package:sylonow_user/features/home/widgets/popular_nearby/popular_nearby_section.dart';
-import 'package:sylonow_user/features/home/widgets/welcome/welcome_overlay.dart';
+import 'package:sylonow_user/features/home/widgets/welcome/user_celebration_overlay.dart';
 import 'package:sylonow_user/features/home/widgets/location/location_widgets.dart';
 import 'package:sylonow_user/features/home/widgets/app_bar/custom_app_bar.dart';
 import 'package:sylonow_user/features/home/widgets/theater/theater_section.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:sylonow_user/core/providers/welcome_providers.dart';
+import 'package:sylonow_user/features/home/providers/home_providers.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
@@ -39,6 +40,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   late final ValueNotifier<double> _scrollOffsetNotifier;
   bool _isLocationEnabled = false;
   bool _isLocationLoading = true;
+  bool _isLocationServiceDisabled = false;
 
   // Global keys for UI elements
   static final GlobalKey locationKey = GlobalKey();
@@ -85,17 +87,26 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
       // Wait for UI to be fully built
       await Future.delayed(const Duration(milliseconds: 500));
       
-      final welcomeService = ref.read(welcomePreferencesServiceProvider);
-      final hasShownWelcome = await welcomeService.hasShownWelcome();
-      
-      if (!hasShownWelcome && mounted) {
-        debugPrint('🎯 Showing welcome overlay for the first time...');
+      // FOR TESTING: Always show the overlay
+      debugPrint('🎯 [TESTING MODE] Always showing welcome overlay...');
+      if (mounted) {
         setState(() {
           _showWelcomeOverlay = true;
         });
-      } else {
-        debugPrint('🎯 Welcome overlay already shown, skipping...');
       }
+      
+      // COMMENTED OUT FOR TESTING - Original logic:
+      // final welcomeService = ref.read(welcomePreferencesServiceProvider);
+      // final hasShownWelcome = await welcomeService.hasShownWelcome();
+      // 
+      // if (!hasShownWelcome && mounted) {
+      //   debugPrint('🎯 Showing welcome overlay for the first time...');
+      //   setState(() {
+      //     _showWelcomeOverlay = true;
+      //   });
+      // } else {
+      //   debugPrint('🎯 Welcome overlay already shown, skipping...');
+      // }
     } catch (e) {
       debugPrint('Welcome overlay check error: $e');
     }
@@ -257,6 +268,11 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   // Performance optimization: Run location operations asynchronously
   Future<void> _checkLocationPermissionAsync() async {
     try {
+      debugPrint('🔍 Location permission check started...');
+      setState(() {
+        _isLocationLoading = true;
+        _isLocationServiceDisabled = false; // Reset the service disabled flag
+      });
       await _checkLocationPermission();
     } catch (e) {
       debugPrint('Location check error: $e');
@@ -273,65 +289,111 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   Future<void> _checkLocationPermission() async {
     final locationService = ref.read(locationServiceProvider);
     final permissionStatus = await locationService.getPermissionStatus();
+    
+    debugPrint('🔍 Current permission status: $permissionStatus');
 
-    if (permissionStatus == LocationPermission.denied ||
-        permissionStatus == LocationPermission.deniedForever) {
-      setState(() {
-        _isLocationLoading = false;
-        _isLocationEnabled = false;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showLocationPermissionDialog();
-      });
+    if (permissionStatus == LocationPermission.denied) {
+      debugPrint('🔍 Permission denied, requesting permission...');
+      // Request permission directly using system prompt
+      final newStatus = await locationService.requestPermission();
+      debugPrint('🔍 New permission status after request: $newStatus');
+      
+      if (newStatus == LocationPermission.whileInUse ||
+          newStatus == LocationPermission.always) {
+        debugPrint('🔍 Permission granted, checking location service...');
+        _checkLocationService();
+      } else {
+        debugPrint('🔍 Permission still denied, showing blocked screen');
+        setState(() {
+          _isLocationLoading = false;
+          _isLocationEnabled = false;
+          _isLocationServiceDisabled = false; // This is a permission issue, not service
+        });
+      }
     } else if (permissionStatus == LocationPermission.whileInUse ||
         permissionStatus == LocationPermission.always) {
+      debugPrint('🔍 Permission already granted, checking location service...');
       _checkLocationService();
     } else {
+      // Permission denied forever or other states - show blocked screen
+      debugPrint('🔍 Permission denied forever or other state, showing blocked screen');
       setState(() {
         _isLocationLoading = false;
         _isLocationEnabled = false;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showLocationPermissionDialog();
+        _isLocationServiceDisabled = false; // This is a permission issue, not service
       });
     }
   }
 
   Future<void> _checkLocationService() async {
     final locationService = ref.read(locationServiceProvider);
+    debugPrint('🔍 Checking if location service is enabled...');
     final serviceEnabled = await locationService.isLocationServiceEnabled();
+    debugPrint('🔍 Location service enabled: $serviceEnabled');
 
     if (!serviceEnabled) {
-      setState(() {
-        _isLocationLoading = false;
-        _isLocationEnabled = false;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showEnableLocationDialog();
-      });
+      // Location service is disabled - prompt user to enable it
+      debugPrint('🔍 Location service disabled, prompting user to enable...');
+      try {
+        debugPrint('🔍 Opening native location settings dialog...');
+        await locationService.openLocationSettings();
+        
+        // Wait a moment for the user to potentially enable location
+        await Future.delayed(const Duration(milliseconds: 1500));
+        
+        // Check again if location service is now enabled
+        debugPrint('🔍 Re-checking location service after settings dialog...');
+        final newServiceEnabled = await locationService.isLocationServiceEnabled();
+        debugPrint('🔍 Location service enabled after dialog: $newServiceEnabled');
+        
+        if (newServiceEnabled) {
+          debugPrint('🔍 Location service now enabled, getting current location...');
+          _getCurrentLocation();
+        } else {
+          debugPrint('🔍 Location service still disabled, showing blocked screen');
+          setState(() {
+            _isLocationLoading = false;
+            _isLocationEnabled = false;
+            _isLocationServiceDisabled = true;
+          });
+        }
+      } catch (e) {
+        debugPrint('🔍 Error opening location settings: $e');
+        setState(() {
+          _isLocationLoading = false;
+          _isLocationEnabled = false;
+          _isLocationServiceDisabled = true;
+        });
+      }
     } else {
+      debugPrint('🔍 Location service enabled, getting current location...');
       _getCurrentLocation();
     }
   }
 
   Future<void> _getCurrentLocation() async {
     try {
+      debugPrint('🔍 Getting current location...');
       final locationService = ref.read(locationServiceProvider);
       final position = await locationService.getCurrentLocation().timeout(
         const Duration(seconds: 30),
       );
+      
+      debugPrint('🔍 Location result: ${position != null ? "Success (${position.latitude}, ${position.longitude})" : "Failed - null position"}');
 
       if (position != null && mounted) {
+        debugPrint('🔍 Processing location data...');
         // Performance optimization: Run geocoding on background isolate
         _processLocationData(position);
       } else if (mounted) {
+        debugPrint('🔍 Position is null, showing blocked screen');
         setState(() {
           _isLocationLoading = false;
           _isLocationEnabled = false;
         });
       }
     } catch (e) {
-      debugPrint('Location error: $e');
+      debugPrint('🔍 Location error: $e');
       if (mounted) {
         setState(() {
           _isLocationLoading = false;
@@ -343,10 +405,12 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
 
   void _processLocationData(Position position) async {
     try {
+      debugPrint('🔍 Processing location data for coordinates: (${position.latitude}, ${position.longitude})');
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
+      debugPrint('🔍 Geocoding result: ${placemarks.isNotEmpty ? "Success - ${placemarks.length} placemarks found" : "No placemarks found"}');
 
       if (mounted) {
         final placemark = placemarks.isNotEmpty ? placemarks.first : null;
@@ -361,20 +425,23 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
           name: 'Current Location',
         );
 
+        debugPrint('🔍 Setting address: ${currentAddress.address}');
         ref.read(selectedAddressProvider.notifier).state = currentAddress;
 
         setState(() {
           _isLocationEnabled = true;
           _isLocationLoading = false;
         });
+        debugPrint('🔍 ✅ Location setup completed successfully!');
       }
     } catch (e) {
-      debugPrint('Geocoding error: $e');
+      debugPrint('🔍 Geocoding error: $e');
       if (mounted) {
         setState(() {
           _isLocationEnabled = true;
           _isLocationLoading = false;
         });
+        debugPrint('🔍 ✅ Location setup completed with geocoding error (using coordinates)');
       }
     }
   }
@@ -388,7 +455,10 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     }
 
     if (!_isLocationEnabled) {
-      return LocationBlockedScreen(onRetry: _checkLocationPermissionAsync);
+      return LocationBlockedScreen(
+        onRetry: _checkLocationPermissionAsync,
+        isServiceDisabled: _isLocationServiceDisabled,
+      );
     }
 
     return Scaffold(
@@ -411,15 +481,44 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                const SliverToBoxAdapter(child: FeaturedSection()),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // Conditionally show featured section
+                Consumer(
+                  builder: (context, ref, child) {
+                    final featuredState = ref.watch(featuredServicesProvider);
+                    // Only show if there are services or still loading (hasMore = true)
+                    if (featuredState.services.isNotEmpty || featuredState.hasMore) {
+                      return const SliverToBoxAdapter(child: FeaturedSection());
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  },
+                ),
+                // Conditionally show spacing only if featured section is shown
+                Consumer(
+                  builder: (context, ref, child) {
+                    final featuredState = ref.watch(featuredServicesProvider);
+                    if (featuredState.services.isNotEmpty || featuredState.hasMore) {
+                      return const SliverToBoxAdapter(child: SizedBox(height: 24));
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  },
+                ),
                 SliverToBoxAdapter(
                   child: Container(
                     key: theaterKey,
                     child: const TheaterSection(),
                   ),
                 ),
-                const SliverToBoxAdapter(child: ImageCollageSection()),
+                // Conditionally show image collage section
+                Consumer(
+                  builder: (context, ref, child) {
+                    final featuredState = ref.watch(featuredServicesProvider);
+                    // Only show if there are services available
+                    if (featuredState.services.isNotEmpty) {
+                      return const SliverToBoxAdapter(child: ImageCollageSection());
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  },
+                ),
                 const SliverToBoxAdapter(child: PopularNearbySection()),
               ],
             ),
@@ -436,11 +535,10 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
                 );
               },
             ),
-            // Welcome overlay
+            // User celebration overlay
             if (_showWelcomeOverlay)
-              WelcomeOverlay(
-                onSkip: _markWelcomeCompleted,
-                onNext: _markWelcomeCompleted,
+              UserCelebrationOverlay(
+                onContinue: _markWelcomeCompleted,
               ),
           ],
         ),
@@ -448,53 +546,4 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
     );
   }
 
-  // Simplified dialogs without heavy styling for better performance
-  void _showLocationPermissionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => LocationPermissionDialog(
-        onPermissionGranted: () {
-          Navigator.of(context).pop();
-          _checkLocationService();
-        },
-        onOpenSettings: () {
-          Navigator.of(context).pop();
-          _showOpenSettingsDialog();
-        },
-        locationService: ref.read(locationServiceProvider),
-      ),
-    );
-  }
-
-  void _showOpenSettingsDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => OpenSettingsDialog(
-        onSettingsOpened: () {
-          Navigator.of(context).pop();
-          Future.delayed(
-            const Duration(seconds: 1),
-            _checkLocationPermissionAsync,
-          );
-        },
-        locationService: ref.read(locationServiceProvider),
-      ),
-    );
-  }
-
-  void _showEnableLocationDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => EnableLocationDialog(
-        onLocationEnabled: () {
-          Navigator.of(context).pop();
-          Future.delayed(const Duration(seconds: 1), _checkLocationService);
-        },
-        locationService: ref.read(locationServiceProvider),
-      ),
-    );
-  }
 }

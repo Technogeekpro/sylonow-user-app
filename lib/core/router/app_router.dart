@@ -7,7 +7,6 @@ import 'package:sylonow_user/features/address/screens/manage_address_screen.dart
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/phone_input_screen.dart';
-import '../../features/auth/screens/profile_completion_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/onboarding/screens/welcome_screen.dart';
@@ -33,6 +32,7 @@ import '../../features/reviews/screens/reviews_screen.dart';
 import '../../features/categories/screens/all_categories_screen.dart';
 import '../../features/categories/screens/category_services_screen.dart';
 import '../../features/booking/screens/checkout_screen.dart';
+import '../../features/booking/screens/service_booking_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
 import '../../features/theater/screens/theater_detail_screen_new.dart';
@@ -46,9 +46,17 @@ import '../../features/theater/screens/theater_checkout_screen.dart';
 import '../../features/wishlist/screens/wishlist_screen.dart';
 import '../../features/offers/screens/offers_screen.dart';
 import '../../features/offers/screens/discount_offers_screen.dart';
+import '../../features/discounts/screens/discounted_services_screen.dart';
 import '../../features/home/screens/nearby_services_screen.dart';
 import '../../features/cakes/screens/cakes_screen.dart';
 import '../../features/theater/screens/theater_booking_history_screen.dart';
+import '../../features/outside/screens/outside_screen.dart';
+import '../../features/outside/screens/theater_screen_detail_screen.dart';
+import '../../features/outside/models/theater_screen_model.dart';
+import '../../features/outside/screens/outside_occasions_screen.dart';
+import '../../features/outside/screens/outside_special_services_screen.dart';
+import '../../features/outside/screens/outside_addons_screen.dart';
+import '../../features/outside/screens/outside_checkout_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -107,10 +115,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: ProfileCompletionScreen.routeName,
-        builder: (context, state) => const ProfileCompletionScreen(),
-      ),
-      GoRoute(
         path: AppConstants.homeRoute,
         builder: (context, state) => const MainScreen(),
       ),
@@ -138,6 +142,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: OffersScreen.routeName,
         builder: (context, state) => const OffersScreen(),
+      ),
+      // Discounted Services route
+      GoRoute(
+        path: DiscountedServicesScreen.routeName,
+        builder: (context, state) => const DiscountedServicesScreen(),
       ),
       // Discount Offers route
       GoRoute(
@@ -224,18 +233,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      // Booking flow routes
+      // Service booking route
       GoRoute(
-        path: CheckoutScreen.routeName,
+        path: '/service/:serviceId/booking',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          
-          // Handle null extra gracefully
           if (extra == null) {
-            throw Exception('CheckoutScreen requires service data in navigation extra');
+            throw Exception('ServiceBookingScreen requires service data in navigation extra');
           }
           
-          // Safe casting for service - handle both ServiceListingModel and Map cases
+          // Handle service data - can be ServiceListingModel or Map
           late ServiceListingModel service;
           final serviceData = extra['service'];
           
@@ -250,11 +257,62 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             throw Exception('Invalid service data type: ${serviceData.runtimeType}');
           }
           
-          final selectedAddressId = extra['selectedAddressId'] as String?;
-          final customization = extra['customization'] as Map<String, dynamic>?;
-          final selectedTimeSlot = extra['selectedTimeSlot'];
-          final selectedScreen = extra['selectedScreen'];
-          final selectedDate = extra['selectedDate'] as String?;
+          return ServiceBookingScreen(
+            service: service,
+            addedAddons: extra['addedAddons'] as Map<String, Map<String, dynamic>>? ?? {},
+          );
+        },
+      ),
+      // Booking flow routes
+      GoRoute(
+        path: CheckoutScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          
+          // Handle null extra gracefully by providing mock data for development/testing
+          late ServiceListingModel service;
+          
+          if (extra == null || extra['service'] == null) {
+            // Create mock service data for widget selection mode or missing data
+            service = const ServiceListingModel(
+              id: 'mock-service-id',
+              vendorId: 'mock-vendor-id',
+              name: 'Mock Service for Testing',
+              description: 'This is a mock service used for development and testing purposes',
+              offerPrice: 4500.0,
+              originalPrice: 5000.0,
+              isActive: true,
+            );
+          } else {
+            // Safe casting for service - handle both ServiceListingModel and Map cases
+            final serviceData = extra['service'];
+            
+            if (serviceData is ServiceListingModel) {
+              service = serviceData;
+            } else if (serviceData is Map<String, dynamic>) {
+              // If it's a Map (happens during hot reload/DevTools inspection), 
+              // reconstruct the ServiceListingModel
+              service = ServiceListingModel.fromJson(serviceData);
+            } else {
+              // Fallback to mock data instead of throwing exception
+              service = const ServiceListingModel(
+                id: 'fallback-service-id',
+                vendorId: 'fallback-vendor-id',
+                name: 'Fallback Service',
+                description: 'Fallback service for invalid data type',
+                offerPrice: 1000.0,
+                originalPrice: 1200.0,
+                isActive: true,
+              );
+            }
+          }
+          
+          final selectedAddressId = extra?['selectedAddressId'] as String?;
+          final customization = extra?['customization'] as Map<String, dynamic>?;
+          final selectedTimeSlot = extra?['selectedTimeSlot'];
+          final selectedScreen = extra?['selectedScreen'];
+          final selectedDate = extra?['selectedDate'] as String?;
+          final selectedAddOns = extra?['selectedAddOns'] as Map<String, Map<String, dynamic>>?;
           
           return CheckoutScreen(
             service: service,
@@ -263,6 +321,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             selectedTimeSlot: selectedTimeSlot,
             selectedScreen: selectedScreen,
             selectedDate: selectedDate,
+            selectedAddOns: selectedAddOns,
           );
         },
       ),
@@ -435,6 +494,100 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/theater-bookings',
         builder: (context, state) => const TheaterBookingHistoryScreen(),
+      ),
+
+      // Outside screen with back button (when navigated from home)
+      GoRoute(
+        path: '/outside-theaters',
+        builder: (context, state) => const OutsideScreen(showBackButton: true),
+      ),
+      // Theater Screen Detail route
+      GoRoute(
+        path: TheaterScreenDetailScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null || extra['screen'] == null) {
+            throw Exception('TheaterScreenDetailScreen requires screen data in navigation extra');
+          }
+
+          final screen = extra['screen'];
+          TheaterScreen theaterScreen;
+
+          // Handle both TheaterScreen object and Map<String, dynamic>
+          if (screen is TheaterScreen) {
+            theaterScreen = screen;
+          } else if (screen is Map<String, dynamic>) {
+            theaterScreen = TheaterScreen.fromJson(screen);
+          } else {
+            throw Exception('Invalid screen data type: ${screen.runtimeType}');
+          }
+
+          return TheaterScreenDetailScreen(
+            screen: theaterScreen,
+            selectedDate: extra['selectedDate'] as String?,
+          );
+        },
+      ),
+      // Outside booking flow routes
+      // Outside occasions selection route
+      GoRoute(
+        path: '/outside/:screenId/occasions',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra as Map<String, dynamic>;
+          return OutsideOccasionsScreen(
+            screenId: screenId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
+      ),
+      // Outside special services selection route
+      GoRoute(
+        path: '/outside/:screenId/special-services',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra as Map<String, dynamic>;
+          return OutsideSpecialServicesScreen(
+            screenId: screenId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
+      ),
+      // Outside addons selection route
+      GoRoute(
+        path: '/outside/:screenId/addons',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra as Map<String, dynamic>;
+          return OutsideAddonsScreen(
+            screenId: screenId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
+      ),
+      // Outside checkout route
+      GoRoute(
+        path: '/outside/:screenId/checkout',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+          final selectedDate = extra['selectedDate'] as String;
+          final selectionData = extra as Map<String, dynamic>;
+          return OutsideCheckoutScreen(
+            screenId: screenId,
+            selectedDate: selectedDate,
+            selectionData: selectionData,
+          );
+        },
       ),
     ],
     redirect: (context, state) async {

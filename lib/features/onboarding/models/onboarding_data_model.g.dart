@@ -11,7 +11,9 @@ _$OnboardingDataModelImpl _$$OnboardingDataModelImplFromJson(
     _$OnboardingDataModelImpl(
       userName: json['userName'] as String?,
       selectedOccasion: json['selectedOccasion'] as String?,
+      selectedOccasionId: json['selectedOccasionId'] as String?,
       celebrationDate: json['celebrationDate'] as String?,
+      celebrationTime: json['celebrationTime'] as String?,
       isCompleted: json['isCompleted'] as bool? ?? false,
     );
 
@@ -20,7 +22,9 @@ Map<String, dynamic> _$$OnboardingDataModelImplToJson(
     <String, dynamic>{
       'userName': instance.userName,
       'selectedOccasion': instance.selectedOccasion,
+      'selectedOccasionId': instance.selectedOccasionId,
       'celebrationDate': instance.celebrationDate,
+      'celebrationTime': instance.celebrationTime,
       'isCompleted': instance.isCompleted,
     };
 

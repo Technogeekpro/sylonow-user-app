@@ -99,239 +99,212 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                
-                // Title 
-                Text(
-                  'Enter your phone number',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Subtitle
-                Text(
-                  'We\'ll send you a 6-digit OTP to verify your mobile number',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontFamily: 'Okra',
-                    height: 1.4,
-                  ),
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Phone Input Field with fixed +91 prefix
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 
+                          MediaQuery.of(context).viewInsets.bottom - 
+                          MediaQuery.of(context).viewPadding.top - 48,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
                   children: [
-                    // +91 Prefix Container
-                    Container(
-                      height: 67,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          bottomLeft: Radius.circular(16),
-                        ),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Center(
-                        child: Row(
-                          children: [
-                            Text(
-                              '🇮🇳',
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '+91',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontFamily: 'Okra',
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 60),
+                    
+                    // Title 
+                    Text(
+                      'Continue with phone',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        fontFamily: 'Okra',
                       ),
                     ),
-                    // Phone Number Input
-                    Expanded(
-                      child: TextFormField(
-                        controller: _phoneController,
-                        focusNode: _focusNode,
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'Okra',
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: '9876543210',
-                          counterText: '',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontFamily: 'Okra',
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            borderSide: const BorderSide(color: Colors.red),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: const BorderRadius.only(
-                              topRight: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            borderSide: const BorderSide(color: Colors.red, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        ),
-                        validator: (value) => _validateIndianMobile(value),
-                        onFieldSubmitted: (_) => _sendOTP(),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Info Text
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: AppTheme.primaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Enter your 10-digit mobile number. We support all Indian networks.',
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Subtitle
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
                         style: TextStyle(
-                          color: AppTheme.primaryColor,
                           fontSize: 14,
+                          color: Colors.grey[600],
                           fontFamily: 'Okra',
+                          height: 1.4,
+                        ),
+                        children: [
+                          TextSpan(text: 'We will send '),
+                          TextSpan(
+                            text: 'One Time Password',
+                            style: TextStyle(color: AppTheme.primaryColor),
+                          ),
+                          TextSpan(text: ' on this phone number'),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 40),
+                    
+                    // OTP Illustration - Hide when keyboard is open
+                    if (MediaQuery.of(context).viewInsets.bottom == 0) ...[
+                      Container(
+                        height: 200,
+                        width: 200,
+                       
+                        child: Image.asset(
+                          'assets/images/otp_hand.png',
+                          height: 120,
+                          width: 120,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ] else ...[
+                      const SizedBox(height: 20),
+                    ],
+                    
+                    // Label
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Enter your phone number',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Phone Input Field
+                    TextFormField(
+                      controller: _phoneController,
+                      focusNode: _focusNode,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Okra',
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🇮🇳', style: TextStyle(fontSize: 20)),
+                              const SizedBox(width: 8),
+                              Text(
+                                '+91',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Okra',
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                height: 20,
+                                width: 1,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                          ),
+                        ),
+                        hintText: '9876543210',
+                        counterText: '',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontFamily: 'Okra',
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide: const BorderSide(color: Colors.red),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          borderSide: const BorderSide(color: Colors.red, width: 2),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                      ),
+                      validator: (value) => _validateIndianMobile(value),
+                      onFieldSubmitted: (_) => _sendOTP(),
+                    ),
+                    
+                    const Spacer(),
+                    
+                    // Get OTP Button
+                    Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 32,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _sendOTP,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E3A5F),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Get OTP',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                
-                const Spacer(),
-                
-                // Continue Button
-                // SizedBox(
-                //   width: double.infinity,
-                //   height: 56,
-                //   child: ElevatedButton(
-                //     onPressed: _isLoading ? null : _sendOTP,
-                //     style: ElevatedButton.styleFrom(
-                //       backgroundColor: AppTheme.primaryColor,
-                //       foregroundColor: Colors.white,
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(16),
-                //       ),
-                //       elevation: 0,
-                //       disabledBackgroundColor: Colors.grey[300],
-                //     ),
-                //     child: _isLoading
-                //         ? const SizedBox(
-                //             width: 24,
-                //             height: 24,
-                //             child: CircularProgressIndicator(
-                //               strokeWidth: 2,
-                //               color: Colors.white,
-                //             ),
-                //           )
-                //         : const Text(
-                //             'Send Verification Code',
-                //             style: TextStyle(
-                //               fontSize: 16,
-                //               fontWeight: FontWeight.w600,
-                //               fontFamily: 'Okra',
-                //             ),
-                //           ),
-                //   ),
-                // ),
-                GradientElevatedButton(
-                  text: 'Send Verification Code',
-                  icon: Icon(Icons.arrow_forward),
-                  onPressed: _isLoading ? null : _sendOTP,
-                ),
-                
-                const SizedBox(height: 20),
-                
-                // Terms Text
-                Text(
-                  'By continuing, you agree to receive SMS verification from Sylonow. Standard SMS charges may apply as per your telecom provider.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                    fontFamily: 'Okra',
-                    height: 1.4,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

@@ -382,6 +382,8 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
     required String serviceTitle,
     required DateTime bookingDate,
     required double totalAmount,
+    required double advanceAmount,
+    required double remainingAmount,
     String? customerPhone,
     String? customerEmail,
     String? serviceDescription,
@@ -389,6 +391,9 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
     String? specialRequirements,
     String? addressId,
     String? placeImageUrl,
+    String? bannerImage,
+    int? age,
+    String? occasion,
   }) async {
     print('🔄 [PROVIDER] OrderCreationNotifier.createOrder() called');
     print('🔄 [PROVIDER] Parameters:');
@@ -406,13 +411,14 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
     print('🔄 [PROVIDER]   specialRequirements: $specialRequirements');
     print('🔄 [PROVIDER]   addressId: $addressId');
     print('🔄 [PROVIDER]   placeImageUrl: $placeImageUrl');
+    print('🔄 [PROVIDER]   bannerImage: $bannerImage');
+    print('🔄 [PROVIDER]   age: $age');
+    print('🔄 [PROVIDER]   occasion: $occasion');
     
     state = const AsyncValue.loading();
 
     try {
-      print('💰 [PROVIDER] Calculating amounts');
-      final advanceAmount = totalAmount * 0.6; // 60% advance
-      final remainingAmount = totalAmount * 0.4; // 40% remaining
+      print('💰 [PROVIDER] Using provided payment amounts');
       print('💰 [PROVIDER] Advance: $advanceAmount, Remaining: $remainingAmount');
 
       print('🏗️ [PROVIDER] Calling _orderRepository.createOrder()');
@@ -433,6 +439,9 @@ class OrderCreationNotifier extends StateNotifier<AsyncValue<OrderModel?>> {
         specialRequirements: specialRequirements,
         addressId: addressId,
         placeImageUrl: placeImageUrl,
+        bannerImage: bannerImage,
+        age: age,
+        occasion: occasion,
       );
 
       print('✅ [PROVIDER] Order created successfully in repository');

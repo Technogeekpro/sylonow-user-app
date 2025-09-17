@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../../features/home/models/service_listing_model.dart';
+import '../utils/price_calculator.dart';
 
 class DecorationCard extends StatelessWidget {
   final ServiceListingModel service;
@@ -271,47 +272,75 @@ class DecorationCard extends StatelessWidget {
       print('🐛 adjustedOfferPrice: ${service.adjustedOfferPrice}');
       print('🐛 adjustedOriginalPrice: ${service.adjustedOriginalPrice}');
       
-      return Row(
+      // Calculate tax-inclusive prices
+      double? taxInclusiveOfferPrice;
+      double? taxInclusiveOriginalPrice;
+      
+      if (service.displayOfferPrice != null) {
+        taxInclusiveOfferPrice = PriceCalculator.calculateTotalPriceWithTaxes(service.displayOfferPrice!);
+      }
+      
+      if (service.displayOriginalPrice != null) {
+        taxInclusiveOriginalPrice = PriceCalculator.calculateTotalPriceWithTaxes(service.displayOriginalPrice!);
+      }
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Offer price
-          if (service.displayOfferPrice != null)
-            Text(
-              '₹${(service.displayOfferPrice ?? 0.0).toInt()}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-                fontFamily: 'Okra',
-              ),
+          Row(
+            children: [
+              // Offer price (tax-inclusive)
+              if (taxInclusiveOfferPrice != null)
+                Text(
+                  PriceCalculator.formatPriceAsInt(taxInclusiveOfferPrice),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              
+              // Original price (crossed out, tax-inclusive)
+              if (taxInclusiveOriginalPrice != null &&
+                  taxInclusiveOfferPrice != null &&
+                  taxInclusiveOriginalPrice > taxInclusiveOfferPrice) ...[
+                const SizedBox(width: 6),
+                Text(
+                  PriceCalculator.formatPriceAsInt(taxInclusiveOriginalPrice),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
+              
+              // Show only original price if no offer price (tax-inclusive)
+              if (taxInclusiveOfferPrice == null && taxInclusiveOriginalPrice != null)
+                Text(
+                  PriceCalculator.formatPriceAsInt(taxInclusiveOriginalPrice),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+            ],
+          ),
+          // Tax inclusive indicator
+          const SizedBox(height: 2),
+          const Text(
+            'All taxes included',
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.green,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Okra',
             ),
-          
-          // Original price (crossed out)
-          if (service.displayOriginalPrice != null &&
-              service.displayOfferPrice != null &&
-              (service.displayOriginalPrice ?? 0.0) > (service.displayOfferPrice ?? 0.0)) ...[
-            const SizedBox(width: 6),
-            Text(
-              '₹${(service.displayOriginalPrice ?? 0.0).toInt()}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                decoration: TextDecoration.lineThrough,
-                fontFamily: 'Okra',
-              ),
-            ),
-          ],
-          
-          // Show only original price if no offer price
-          if (service.displayOfferPrice == null && service.displayOriginalPrice != null)
-            Text(
-              '₹${(service.displayOriginalPrice ?? 0.0).toInt()}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-                fontFamily: 'Okra',
-              ),
-            ),
+          ),
         ],
       );
     } catch (e, stackTrace) {

@@ -37,9 +37,10 @@ mixin _$ServiceListingModel {
   @JsonKey(name: 'promotional_tag')
   String? get promotionalTag => throw _privateConstructorUsedError;
   List<String>? get inclusions => throw _privateConstructorUsedError;
-  @JsonKey(name: 'original_price')
+  List<String>? get exclusions => throw _privateConstructorUsedError;
+  @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
   double? get originalPrice => throw _privateConstructorUsedError;
-  @JsonKey(name: 'offer_price')
+  @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
   double? get offerPrice => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_featured')
   bool? get isFeatured => throw _privateConstructorUsedError;
@@ -73,8 +74,15 @@ mixin _$ServiceListingModel {
   @JsonKey(name: 'decoration_type')
   String? get decorationType =>
       throw _privateConstructorUsedError; // 'inside', 'outside', or 'both'
-// Location fields
+// Banner fields
+  @JsonKey(name: 'provides_banner')
+  bool? get providesBanner => throw _privateConstructorUsedError;
+  @JsonKey(name: 'banner_text')
+  String? get bannerText =>
+      throw _privateConstructorUsedError; // Location fields
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get latitude => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get longitude =>
       throw _privateConstructorUsedError; // Calculated fields (not from database)
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -110,8 +118,11 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       VendorModel? vendor,
       @JsonKey(name: 'promotional_tag') String? promotionalTag,
       List<String>? inclusions,
-      @JsonKey(name: 'original_price') double? originalPrice,
-      @JsonKey(name: 'offer_price') double? offerPrice,
+      List<String>? exclusions,
+      @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
+      double? originalPrice,
+      @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
+      double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive,
@@ -127,8 +138,10 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
       @JsonKey(name: 'video_url') String? videoUrl,
       @JsonKey(name: 'decoration_type') String? decorationType,
-      double? latitude,
-      double? longitude,
+      @JsonKey(name: 'provides_banner') bool? providesBanner,
+      @JsonKey(name: 'banner_text') String? bannerText,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
       @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
       @JsonKey(includeFromJson: false, includeToJson: false)
       double? adjustedOfferPrice,
@@ -164,6 +177,7 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? vendor = freezed,
     Object? promotionalTag = freezed,
     Object? inclusions = freezed,
+    Object? exclusions = freezed,
     Object? originalPrice = freezed,
     Object? offerPrice = freezed,
     Object? isFeatured = freezed,
@@ -181,6 +195,8 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? serviceEnvironment = freezed,
     Object? videoUrl = freezed,
     Object? decorationType = freezed,
+    Object? providesBanner = freezed,
+    Object? bannerText = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? distanceKm = freezed,
@@ -232,6 +248,10 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
       inclusions: freezed == inclusions
           ? _value.inclusions
           : inclusions // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      exclusions: freezed == exclusions
+          ? _value.exclusions
+          : exclusions // ignore: cast_nullable_to_non_nullable
               as List<String>?,
       originalPrice: freezed == originalPrice
           ? _value.originalPrice
@@ -301,6 +321,14 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.decorationType
           : decorationType // ignore: cast_nullable_to_non_nullable
               as String?,
+      providesBanner: freezed == providesBanner
+          ? _value.providesBanner
+          : providesBanner // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      bannerText: freezed == bannerText
+          ? _value.bannerText
+          : bannerText // ignore: cast_nullable_to_non_nullable
+              as String?,
       latitude: freezed == latitude
           ? _value.latitude
           : latitude // ignore: cast_nullable_to_non_nullable
@@ -361,8 +389,11 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       VendorModel? vendor,
       @JsonKey(name: 'promotional_tag') String? promotionalTag,
       List<String>? inclusions,
-      @JsonKey(name: 'original_price') double? originalPrice,
-      @JsonKey(name: 'offer_price') double? offerPrice,
+      List<String>? exclusions,
+      @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
+      double? originalPrice,
+      @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
+      double? offerPrice,
       @JsonKey(name: 'is_featured') bool? isFeatured,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'is_active') bool? isActive,
@@ -378,8 +409,10 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
       @JsonKey(name: 'video_url') String? videoUrl,
       @JsonKey(name: 'decoration_type') String? decorationType,
-      double? latitude,
-      double? longitude,
+      @JsonKey(name: 'provides_banner') bool? providesBanner,
+      @JsonKey(name: 'banner_text') String? bannerText,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
       @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
       @JsonKey(includeFromJson: false, includeToJson: false)
       double? adjustedOfferPrice,
@@ -414,6 +447,7 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? vendor = freezed,
     Object? promotionalTag = freezed,
     Object? inclusions = freezed,
+    Object? exclusions = freezed,
     Object? originalPrice = freezed,
     Object? offerPrice = freezed,
     Object? isFeatured = freezed,
@@ -431,6 +465,8 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? serviceEnvironment = freezed,
     Object? videoUrl = freezed,
     Object? decorationType = freezed,
+    Object? providesBanner = freezed,
+    Object? bannerText = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? distanceKm = freezed,
@@ -482,6 +518,10 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
       inclusions: freezed == inclusions
           ? _value._inclusions
           : inclusions // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      exclusions: freezed == exclusions
+          ? _value._exclusions
+          : exclusions // ignore: cast_nullable_to_non_nullable
               as List<String>?,
       originalPrice: freezed == originalPrice
           ? _value.originalPrice
@@ -551,6 +591,14 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.decorationType
           : decorationType // ignore: cast_nullable_to_non_nullable
               as String?,
+      providesBanner: freezed == providesBanner
+          ? _value.providesBanner
+          : providesBanner // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      bannerText: freezed == bannerText
+          ? _value.bannerText
+          : bannerText // ignore: cast_nullable_to_non_nullable
+              as String?,
       latitude: freezed == latitude
           ? _value.latitude
           : latitude // ignore: cast_nullable_to_non_nullable
@@ -594,8 +642,11 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       this.vendor,
       @JsonKey(name: 'promotional_tag') this.promotionalTag,
       final List<String>? inclusions,
-      @JsonKey(name: 'original_price') this.originalPrice,
-      @JsonKey(name: 'offer_price') this.offerPrice,
+      final List<String>? exclusions,
+      @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
+      this.originalPrice,
+      @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
+      this.offerPrice,
       @JsonKey(name: 'is_featured') this.isFeatured,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'is_active') this.isActive,
@@ -612,8 +663,10 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       final List<String>? serviceEnvironment,
       @JsonKey(name: 'video_url') this.videoUrl,
       @JsonKey(name: 'decoration_type') this.decorationType,
-      this.latitude,
-      this.longitude,
+      @JsonKey(name: 'provides_banner') this.providesBanner,
+      @JsonKey(name: 'banner_text') this.bannerText,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) this.latitude,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) this.longitude,
       @JsonKey(includeFromJson: false, includeToJson: false) this.distanceKm,
       @JsonKey(includeFromJson: false, includeToJson: false)
       this.adjustedOfferPrice,
@@ -622,6 +675,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       @JsonKey(includeFromJson: false, includeToJson: false)
       this.isPriceAdjusted})
       : _inclusions = inclusions,
+        _exclusions = exclusions,
         _photos = photos,
         _venueTypes = venueTypes,
         _themeTags = themeTags,
@@ -667,11 +721,21 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<String>? _exclusions;
   @override
-  @JsonKey(name: 'original_price')
+  List<String>? get exclusions {
+    final value = _exclusions;
+    if (value == null) return null;
+    if (_exclusions is EqualUnmodifiableListView) return _exclusions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  @override
+  @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
   final double? originalPrice;
   @override
-  @JsonKey(name: 'offer_price')
+  @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
   final double? offerPrice;
   @override
   @JsonKey(name: 'is_featured')
@@ -763,10 +827,19 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
   @JsonKey(name: 'decoration_type')
   final String? decorationType;
 // 'inside', 'outside', or 'both'
+// Banner fields
+  @override
+  @JsonKey(name: 'provides_banner')
+  final bool? providesBanner;
+  @override
+  @JsonKey(name: 'banner_text')
+  final String? bannerText;
 // Location fields
   @override
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   final double? latitude;
   @override
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   final double? longitude;
 // Calculated fields (not from database)
   @override
@@ -784,7 +857,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, vendorId: $vendorId, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl, decorationType: $decorationType, latitude: $latitude, longitude: $longitude, distanceKm: $distanceKm, adjustedOfferPrice: $adjustedOfferPrice, adjustedOriginalPrice: $adjustedOriginalPrice, isPriceAdjusted: $isPriceAdjusted)';
+    return 'ServiceListingModel(id: $id, vendorId: $vendorId, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, exclusions: $exclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl, decorationType: $decorationType, providesBanner: $providesBanner, bannerText: $bannerText, latitude: $latitude, longitude: $longitude, distanceKm: $distanceKm, adjustedOfferPrice: $adjustedOfferPrice, adjustedOriginalPrice: $adjustedOriginalPrice, isPriceAdjusted: $isPriceAdjusted)';
   }
 
   @override
@@ -809,6 +882,8 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.promotionalTag == promotionalTag) &&
             const DeepCollectionEquality()
                 .equals(other._inclusions, _inclusions) &&
+            const DeepCollectionEquality()
+                .equals(other._exclusions, _exclusions) &&
             (identical(other.originalPrice, originalPrice) ||
                 other.originalPrice == originalPrice) &&
             (identical(other.offerPrice, offerPrice) ||
@@ -841,6 +916,10 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.videoUrl == videoUrl) &&
             (identical(other.decorationType, decorationType) ||
                 other.decorationType == decorationType) &&
+            (identical(other.providesBanner, providesBanner) ||
+                other.providesBanner == providesBanner) &&
+            (identical(other.bannerText, bannerText) ||
+                other.bannerText == bannerText) &&
             (identical(other.latitude, latitude) ||
                 other.latitude == latitude) &&
             (identical(other.longitude, longitude) ||
@@ -870,6 +949,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
         vendor,
         promotionalTag,
         const DeepCollectionEquality().hash(_inclusions),
+        const DeepCollectionEquality().hash(_exclusions),
         originalPrice,
         offerPrice,
         isFeatured,
@@ -887,6 +967,8 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
         const DeepCollectionEquality().hash(_serviceEnvironment),
         videoUrl,
         decorationType,
+        providesBanner,
+        bannerText,
         latitude,
         longitude,
         distanceKm,
@@ -923,8 +1005,11 @@ abstract class _ServiceListingModel implements ServiceListingModel {
       final VendorModel? vendor,
       @JsonKey(name: 'promotional_tag') final String? promotionalTag,
       final List<String>? inclusions,
-      @JsonKey(name: 'original_price') final double? originalPrice,
-      @JsonKey(name: 'offer_price') final double? offerPrice,
+      final List<String>? exclusions,
+      @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
+      final double? originalPrice,
+      @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
+      final double? offerPrice,
       @JsonKey(name: 'is_featured') final bool? isFeatured,
       @JsonKey(name: 'created_at') final DateTime? createdAt,
       @JsonKey(name: 'is_active') final bool? isActive,
@@ -942,8 +1027,10 @@ abstract class _ServiceListingModel implements ServiceListingModel {
       final List<String>? serviceEnvironment,
       @JsonKey(name: 'video_url') final String? videoUrl,
       @JsonKey(name: 'decoration_type') final String? decorationType,
-      final double? latitude,
-      final double? longitude,
+      @JsonKey(name: 'provides_banner') final bool? providesBanner,
+      @JsonKey(name: 'banner_text') final String? bannerText,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) final double? latitude,
+      @JsonKey(fromJson: _safeNullableDoubleFromJson) final double? longitude,
       @JsonKey(includeFromJson: false, includeToJson: false)
       final double? distanceKm,
       @JsonKey(includeFromJson: false, includeToJson: false)
@@ -985,10 +1072,12 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @override
   List<String>? get inclusions;
   @override
-  @JsonKey(name: 'original_price')
+  List<String>? get exclusions;
+  @override
+  @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson)
   double? get originalPrice;
   @override
-  @JsonKey(name: 'offer_price')
+  @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson)
   double? get offerPrice;
   @override
   @JsonKey(name: 'is_featured')
@@ -1035,9 +1124,17 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @JsonKey(name: 'decoration_type')
   String? get decorationType;
   @override // 'inside', 'outside', or 'both'
-// Location fields
+// Banner fields
+  @JsonKey(name: 'provides_banner')
+  bool? get providesBanner;
+  @override
+  @JsonKey(name: 'banner_text')
+  String? get bannerText;
+  @override // Location fields
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get latitude;
   @override
+  @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get longitude;
   @override // Calculated fields (not from database)
   @JsonKey(includeFromJson: false, includeToJson: false)

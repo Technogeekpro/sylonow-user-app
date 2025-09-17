@@ -23,26 +23,18 @@ mixin _$TheaterTimeSlotModel {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'theater_id')
   String get theaterId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'slot_name')
-  String get slotName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'screen_id')
+  String? get screenId => throw _privateConstructorUsedError;
   @JsonKey(name: 'start_time')
   String get startTime => throw _privateConstructorUsedError;
   @JsonKey(name: 'end_time')
   String get endTime => throw _privateConstructorUsedError;
-  @JsonKey(name: 'base_price')
+  @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
   double get basePrice => throw _privateConstructorUsedError;
-  @JsonKey(name: 'price_per_hour')
-  double get pricePerHour => throw _privateConstructorUsedError;
-  @JsonKey(name: 'weekday_multiplier')
-  double get weekdayMultiplier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'weekend_multiplier')
-  double get weekendMultiplier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'holiday_multiplier')
-  double get holidayMultiplier => throw _privateConstructorUsedError;
-  @JsonKey(name: 'max_duration_hours')
-  int get maxDurationHours => throw _privateConstructorUsedError;
-  @JsonKey(name: 'min_duration_hours')
-  int get minDurationHours => throw _privateConstructorUsedError;
+  @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+  double get discountedPrice => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_available')
+  bool get isAvailable => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -65,16 +57,14 @@ abstract class $TheaterTimeSlotModelCopyWith<$Res> {
   $Res call(
       {String id,
       @JsonKey(name: 'theater_id') String theaterId,
-      @JsonKey(name: 'slot_name') String slotName,
+      @JsonKey(name: 'screen_id') String? screenId,
       @JsonKey(name: 'start_time') String startTime,
       @JsonKey(name: 'end_time') String endTime,
-      @JsonKey(name: 'base_price') double basePrice,
-      @JsonKey(name: 'price_per_hour') double pricePerHour,
-      @JsonKey(name: 'weekday_multiplier') double weekdayMultiplier,
-      @JsonKey(name: 'weekend_multiplier') double weekendMultiplier,
-      @JsonKey(name: 'holiday_multiplier') double holidayMultiplier,
-      @JsonKey(name: 'max_duration_hours') int maxDurationHours,
-      @JsonKey(name: 'min_duration_hours') int minDurationHours,
+      @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
+      double basePrice,
+      @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+      double discountedPrice,
+      @JsonKey(name: 'is_available') bool isAvailable,
       @JsonKey(name: 'is_active') bool isActive,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -96,16 +86,12 @@ class _$TheaterTimeSlotModelCopyWithImpl<$Res,
   $Res call({
     Object? id = null,
     Object? theaterId = null,
-    Object? slotName = null,
+    Object? screenId = freezed,
     Object? startTime = null,
     Object? endTime = null,
     Object? basePrice = null,
-    Object? pricePerHour = null,
-    Object? weekdayMultiplier = null,
-    Object? weekendMultiplier = null,
-    Object? holidayMultiplier = null,
-    Object? maxDurationHours = null,
-    Object? minDurationHours = null,
+    Object? discountedPrice = null,
+    Object? isAvailable = null,
     Object? isActive = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -119,10 +105,10 @@ class _$TheaterTimeSlotModelCopyWithImpl<$Res,
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
               as String,
-      slotName: null == slotName
-          ? _value.slotName
-          : slotName // ignore: cast_nullable_to_non_nullable
-              as String,
+      screenId: freezed == screenId
+          ? _value.screenId
+          : screenId // ignore: cast_nullable_to_non_nullable
+              as String?,
       startTime: null == startTime
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
@@ -135,30 +121,14 @@ class _$TheaterTimeSlotModelCopyWithImpl<$Res,
           ? _value.basePrice
           : basePrice // ignore: cast_nullable_to_non_nullable
               as double,
-      pricePerHour: null == pricePerHour
-          ? _value.pricePerHour
-          : pricePerHour // ignore: cast_nullable_to_non_nullable
+      discountedPrice: null == discountedPrice
+          ? _value.discountedPrice
+          : discountedPrice // ignore: cast_nullable_to_non_nullable
               as double,
-      weekdayMultiplier: null == weekdayMultiplier
-          ? _value.weekdayMultiplier
-          : weekdayMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      weekendMultiplier: null == weekendMultiplier
-          ? _value.weekendMultiplier
-          : weekendMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      holidayMultiplier: null == holidayMultiplier
-          ? _value.holidayMultiplier
-          : holidayMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      maxDurationHours: null == maxDurationHours
-          ? _value.maxDurationHours
-          : maxDurationHours // ignore: cast_nullable_to_non_nullable
-              as int,
-      minDurationHours: null == minDurationHours
-          ? _value.minDurationHours
-          : minDurationHours // ignore: cast_nullable_to_non_nullable
-              as int,
+      isAvailable: null == isAvailable
+          ? _value.isAvailable
+          : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
       isActive: null == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
@@ -186,16 +156,14 @@ abstract class _$$TheaterTimeSlotModelImplCopyWith<$Res>
   $Res call(
       {String id,
       @JsonKey(name: 'theater_id') String theaterId,
-      @JsonKey(name: 'slot_name') String slotName,
+      @JsonKey(name: 'screen_id') String? screenId,
       @JsonKey(name: 'start_time') String startTime,
       @JsonKey(name: 'end_time') String endTime,
-      @JsonKey(name: 'base_price') double basePrice,
-      @JsonKey(name: 'price_per_hour') double pricePerHour,
-      @JsonKey(name: 'weekday_multiplier') double weekdayMultiplier,
-      @JsonKey(name: 'weekend_multiplier') double weekendMultiplier,
-      @JsonKey(name: 'holiday_multiplier') double holidayMultiplier,
-      @JsonKey(name: 'max_duration_hours') int maxDurationHours,
-      @JsonKey(name: 'min_duration_hours') int minDurationHours,
+      @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
+      double basePrice,
+      @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+      double discountedPrice,
+      @JsonKey(name: 'is_available') bool isAvailable,
       @JsonKey(name: 'is_active') bool isActive,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -214,16 +182,12 @@ class __$$TheaterTimeSlotModelImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? theaterId = null,
-    Object? slotName = null,
+    Object? screenId = freezed,
     Object? startTime = null,
     Object? endTime = null,
     Object? basePrice = null,
-    Object? pricePerHour = null,
-    Object? weekdayMultiplier = null,
-    Object? weekendMultiplier = null,
-    Object? holidayMultiplier = null,
-    Object? maxDurationHours = null,
-    Object? minDurationHours = null,
+    Object? discountedPrice = null,
+    Object? isAvailable = null,
     Object? isActive = null,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -237,10 +201,10 @@ class __$$TheaterTimeSlotModelImplCopyWithImpl<$Res>
           ? _value.theaterId
           : theaterId // ignore: cast_nullable_to_non_nullable
               as String,
-      slotName: null == slotName
-          ? _value.slotName
-          : slotName // ignore: cast_nullable_to_non_nullable
-              as String,
+      screenId: freezed == screenId
+          ? _value.screenId
+          : screenId // ignore: cast_nullable_to_non_nullable
+              as String?,
       startTime: null == startTime
           ? _value.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
@@ -253,30 +217,14 @@ class __$$TheaterTimeSlotModelImplCopyWithImpl<$Res>
           ? _value.basePrice
           : basePrice // ignore: cast_nullable_to_non_nullable
               as double,
-      pricePerHour: null == pricePerHour
-          ? _value.pricePerHour
-          : pricePerHour // ignore: cast_nullable_to_non_nullable
+      discountedPrice: null == discountedPrice
+          ? _value.discountedPrice
+          : discountedPrice // ignore: cast_nullable_to_non_nullable
               as double,
-      weekdayMultiplier: null == weekdayMultiplier
-          ? _value.weekdayMultiplier
-          : weekdayMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      weekendMultiplier: null == weekendMultiplier
-          ? _value.weekendMultiplier
-          : weekendMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      holidayMultiplier: null == holidayMultiplier
-          ? _value.holidayMultiplier
-          : holidayMultiplier // ignore: cast_nullable_to_non_nullable
-              as double,
-      maxDurationHours: null == maxDurationHours
-          ? _value.maxDurationHours
-          : maxDurationHours // ignore: cast_nullable_to_non_nullable
-              as int,
-      minDurationHours: null == minDurationHours
-          ? _value.minDurationHours
-          : minDurationHours // ignore: cast_nullable_to_non_nullable
-              as int,
+      isAvailable: null == isAvailable
+          ? _value.isAvailable
+          : isAvailable // ignore: cast_nullable_to_non_nullable
+              as bool,
       isActive: null == isActive
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
@@ -299,17 +247,15 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
   const _$TheaterTimeSlotModelImpl(
       {required this.id,
       @JsonKey(name: 'theater_id') required this.theaterId,
-      @JsonKey(name: 'slot_name') required this.slotName,
+      @JsonKey(name: 'screen_id') this.screenId,
       @JsonKey(name: 'start_time') required this.startTime,
       @JsonKey(name: 'end_time') required this.endTime,
-      @JsonKey(name: 'base_price') required this.basePrice,
-      @JsonKey(name: 'price_per_hour') required this.pricePerHour,
-      @JsonKey(name: 'weekday_multiplier') required this.weekdayMultiplier,
-      @JsonKey(name: 'weekend_multiplier') required this.weekendMultiplier,
-      @JsonKey(name: 'holiday_multiplier') required this.holidayMultiplier,
-      @JsonKey(name: 'max_duration_hours') required this.maxDurationHours,
-      @JsonKey(name: 'min_duration_hours') required this.minDurationHours,
-      @JsonKey(name: 'is_active') required this.isActive,
+      @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
+      this.basePrice = 0.0,
+      @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+      this.discountedPrice = 0.0,
+      @JsonKey(name: 'is_available') this.isAvailable = true,
+      @JsonKey(name: 'is_active') this.isActive = true,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt});
 
@@ -322,8 +268,8 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
   @JsonKey(name: 'theater_id')
   final String theaterId;
   @override
-  @JsonKey(name: 'slot_name')
-  final String slotName;
+  @JsonKey(name: 'screen_id')
+  final String? screenId;
   @override
   @JsonKey(name: 'start_time')
   final String startTime;
@@ -331,26 +277,14 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
   @JsonKey(name: 'end_time')
   final String endTime;
   @override
-  @JsonKey(name: 'base_price')
+  @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
   final double basePrice;
   @override
-  @JsonKey(name: 'price_per_hour')
-  final double pricePerHour;
+  @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+  final double discountedPrice;
   @override
-  @JsonKey(name: 'weekday_multiplier')
-  final double weekdayMultiplier;
-  @override
-  @JsonKey(name: 'weekend_multiplier')
-  final double weekendMultiplier;
-  @override
-  @JsonKey(name: 'holiday_multiplier')
-  final double holidayMultiplier;
-  @override
-  @JsonKey(name: 'max_duration_hours')
-  final int maxDurationHours;
-  @override
-  @JsonKey(name: 'min_duration_hours')
-  final int minDurationHours;
+  @JsonKey(name: 'is_available')
+  final bool isAvailable;
   @override
   @JsonKey(name: 'is_active')
   final bool isActive;
@@ -363,7 +297,7 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
 
   @override
   String toString() {
-    return 'TheaterTimeSlotModel(id: $id, theaterId: $theaterId, slotName: $slotName, startTime: $startTime, endTime: $endTime, basePrice: $basePrice, pricePerHour: $pricePerHour, weekdayMultiplier: $weekdayMultiplier, weekendMultiplier: $weekendMultiplier, holidayMultiplier: $holidayMultiplier, maxDurationHours: $maxDurationHours, minDurationHours: $minDurationHours, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TheaterTimeSlotModel(id: $id, theaterId: $theaterId, screenId: $screenId, startTime: $startTime, endTime: $endTime, basePrice: $basePrice, discountedPrice: $discountedPrice, isAvailable: $isAvailable, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -374,25 +308,17 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.theaterId, theaterId) ||
                 other.theaterId == theaterId) &&
-            (identical(other.slotName, slotName) ||
-                other.slotName == slotName) &&
+            (identical(other.screenId, screenId) ||
+                other.screenId == screenId) &&
             (identical(other.startTime, startTime) ||
                 other.startTime == startTime) &&
             (identical(other.endTime, endTime) || other.endTime == endTime) &&
             (identical(other.basePrice, basePrice) ||
                 other.basePrice == basePrice) &&
-            (identical(other.pricePerHour, pricePerHour) ||
-                other.pricePerHour == pricePerHour) &&
-            (identical(other.weekdayMultiplier, weekdayMultiplier) ||
-                other.weekdayMultiplier == weekdayMultiplier) &&
-            (identical(other.weekendMultiplier, weekendMultiplier) ||
-                other.weekendMultiplier == weekendMultiplier) &&
-            (identical(other.holidayMultiplier, holidayMultiplier) ||
-                other.holidayMultiplier == holidayMultiplier) &&
-            (identical(other.maxDurationHours, maxDurationHours) ||
-                other.maxDurationHours == maxDurationHours) &&
-            (identical(other.minDurationHours, minDurationHours) ||
-                other.minDurationHours == minDurationHours) &&
+            (identical(other.discountedPrice, discountedPrice) ||
+                other.discountedPrice == discountedPrice) &&
+            (identical(other.isAvailable, isAvailable) ||
+                other.isAvailable == isAvailable) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.createdAt, createdAt) ||
@@ -407,16 +333,12 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
       runtimeType,
       id,
       theaterId,
-      slotName,
+      screenId,
       startTime,
       endTime,
       basePrice,
-      pricePerHour,
-      weekdayMultiplier,
-      weekendMultiplier,
-      holidayMultiplier,
-      maxDurationHours,
-      minDurationHours,
+      discountedPrice,
+      isAvailable,
       isActive,
       createdAt,
       updatedAt);
@@ -439,25 +361,20 @@ class _$TheaterTimeSlotModelImpl implements _TheaterTimeSlotModel {
 
 abstract class _TheaterTimeSlotModel implements TheaterTimeSlotModel {
   const factory _TheaterTimeSlotModel(
-      {required final String id,
-      @JsonKey(name: 'theater_id') required final String theaterId,
-      @JsonKey(name: 'slot_name') required final String slotName,
-      @JsonKey(name: 'start_time') required final String startTime,
-      @JsonKey(name: 'end_time') required final String endTime,
-      @JsonKey(name: 'base_price') required final double basePrice,
-      @JsonKey(name: 'price_per_hour') required final double pricePerHour,
-      @JsonKey(name: 'weekday_multiplier')
-      required final double weekdayMultiplier,
-      @JsonKey(name: 'weekend_multiplier')
-      required final double weekendMultiplier,
-      @JsonKey(name: 'holiday_multiplier')
-      required final double holidayMultiplier,
-      @JsonKey(name: 'max_duration_hours') required final int maxDurationHours,
-      @JsonKey(name: 'min_duration_hours') required final int minDurationHours,
-      @JsonKey(name: 'is_active') required final bool isActive,
-      @JsonKey(name: 'created_at') final DateTime? createdAt,
-      @JsonKey(name: 'updated_at')
-      final DateTime? updatedAt}) = _$TheaterTimeSlotModelImpl;
+          {required final String id,
+          @JsonKey(name: 'theater_id') required final String theaterId,
+          @JsonKey(name: 'screen_id') final String? screenId,
+          @JsonKey(name: 'start_time') required final String startTime,
+          @JsonKey(name: 'end_time') required final String endTime,
+          @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
+          final double basePrice,
+          @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+          final double discountedPrice,
+          @JsonKey(name: 'is_available') final bool isAvailable,
+          @JsonKey(name: 'is_active') final bool isActive,
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
+      _$TheaterTimeSlotModelImpl;
 
   factory _TheaterTimeSlotModel.fromJson(Map<String, dynamic> json) =
       _$TheaterTimeSlotModelImpl.fromJson;
@@ -468,8 +385,8 @@ abstract class _TheaterTimeSlotModel implements TheaterTimeSlotModel {
   @JsonKey(name: 'theater_id')
   String get theaterId;
   @override
-  @JsonKey(name: 'slot_name')
-  String get slotName;
+  @JsonKey(name: 'screen_id')
+  String? get screenId;
   @override
   @JsonKey(name: 'start_time')
   String get startTime;
@@ -477,26 +394,14 @@ abstract class _TheaterTimeSlotModel implements TheaterTimeSlotModel {
   @JsonKey(name: 'end_time')
   String get endTime;
   @override
-  @JsonKey(name: 'base_price')
+  @JsonKey(name: 'base_price', fromJson: _safeDoubleFromJson)
   double get basePrice;
   @override
-  @JsonKey(name: 'price_per_hour')
-  double get pricePerHour;
+  @JsonKey(name: 'discounted_price', fromJson: _safeDoubleFromJson)
+  double get discountedPrice;
   @override
-  @JsonKey(name: 'weekday_multiplier')
-  double get weekdayMultiplier;
-  @override
-  @JsonKey(name: 'weekend_multiplier')
-  double get weekendMultiplier;
-  @override
-  @JsonKey(name: 'holiday_multiplier')
-  double get holidayMultiplier;
-  @override
-  @JsonKey(name: 'max_duration_hours')
-  int get maxDurationHours;
-  @override
-  @JsonKey(name: 'min_duration_hours')
-  int get minDurationHours;
+  @JsonKey(name: 'is_available')
+  bool get isAvailable;
   @override
   @JsonKey(name: 'is_active')
   bool get isActive;
@@ -534,7 +439,7 @@ mixin _$TheaterSlotBookingModel {
       throw _privateConstructorUsedError; // 'available', 'booked', 'blocked', 'maintenance'
   @JsonKey(name: 'booking_id')
   String? get bookingId => throw _privateConstructorUsedError;
-  @JsonKey(name: 'slot_price')
+  @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
   double get slotPrice => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
@@ -562,7 +467,8 @@ abstract class $TheaterSlotBookingModelCopyWith<$Res> {
       @JsonKey(name: 'end_time') String endTime,
       String status,
       @JsonKey(name: 'booking_id') String? bookingId,
-      @JsonKey(name: 'slot_price') double slotPrice,
+      @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
+      double slotPrice,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -660,7 +566,8 @@ abstract class _$$TheaterSlotBookingModelImplCopyWith<$Res>
       @JsonKey(name: 'end_time') String endTime,
       String status,
       @JsonKey(name: 'booking_id') String? bookingId,
-      @JsonKey(name: 'slot_price') double slotPrice,
+      @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
+      double slotPrice,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
@@ -751,7 +658,8 @@ class _$TheaterSlotBookingModelImpl implements _TheaterSlotBookingModel {
       @JsonKey(name: 'end_time') required this.endTime,
       required this.status,
       @JsonKey(name: 'booking_id') this.bookingId,
-      @JsonKey(name: 'slot_price') required this.slotPrice,
+      @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
+      this.slotPrice = 0.0,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt});
 
@@ -782,7 +690,7 @@ class _$TheaterSlotBookingModelImpl implements _TheaterSlotBookingModel {
   @JsonKey(name: 'booking_id')
   final String? bookingId;
   @override
-  @JsonKey(name: 'slot_price')
+  @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
   final double slotPrice;
   @override
   @JsonKey(name: 'created_at')
@@ -863,7 +771,8 @@ abstract class _TheaterSlotBookingModel implements TheaterSlotBookingModel {
           @JsonKey(name: 'end_time') required final String endTime,
           required final String status,
           @JsonKey(name: 'booking_id') final String? bookingId,
-          @JsonKey(name: 'slot_price') required final double slotPrice,
+          @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
+          final double slotPrice,
           @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
       _$TheaterSlotBookingModelImpl;
@@ -894,7 +803,7 @@ abstract class _TheaterSlotBookingModel implements TheaterSlotBookingModel {
   @JsonKey(name: 'booking_id')
   String? get bookingId;
   @override
-  @JsonKey(name: 'slot_price')
+  @JsonKey(name: 'slot_price', fromJson: _safeDoubleFromJson)
   double get slotPrice;
   @override
   @JsonKey(name: 'created_at')

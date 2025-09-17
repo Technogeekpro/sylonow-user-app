@@ -30,4 +30,10 @@ final isAuthenticatedProvider = FutureProvider<bool>((ref) async {
 final currentUserProvider = Provider<User?>((ref) {
   final authService = ref.watch(authServiceProvider);
   return authService.getCurrentUser();
+});
+
+// Is Onboarding Completed Provider
+final isOnboardingCompletedProvider = FutureProvider<bool>((ref) async {
+  final authService = ref.watch(authServiceProvider);
+  return authService.isOnboardingCompleted();
 }); 

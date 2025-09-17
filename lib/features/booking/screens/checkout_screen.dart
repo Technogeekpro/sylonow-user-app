@@ -1,32 +1,50 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
-import '../../../core/services/image_upload_service.dart';
 import '../../address/models/address_model.dart';
 import '../../address/providers/address_providers.dart';
-import '../../home/models/service_listing_model.dart';
 import '../../coupons/models/coupon_model.dart';
 import '../../coupons/providers/coupon_providers.dart';
-import '../providers/booking_providers.dart';
+import '../../home/models/service_listing_model.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../../theater/models/add_on_model.dart';
 import '../../theater/models/selected_add_on_model.dart';
 import '../../theater/models/theater_screen_model.dart';
+import '../providers/booking_providers.dart';
 import 'payment_screen.dart';
+
+/// Helper function to safely convert dynamic values to double
+double _safeToDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    final parsed = double.tryParse(value);
+    return parsed ?? 0.0;
+  }
+  return 0.0;
+}
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final ServiceListingModel service;
   final Map<String, dynamic>? customization;
   final String? selectedAddressId;
-  final TheaterTimeSlotWithScreenModel? selectedTimeSlot; // Theater time slot data
+  final TheaterTimeSlotWithScreenModel?
+  selectedTimeSlot; // Theater time slot data
   final TheaterScreenModel? selectedScreen; // Theater screen data
   final String? selectedDate; // Selected date for booking
+  final Map<String, Map<String, dynamic>>?
+  selectedAddOns; // Selected add-ons from service detail
 
   const CheckoutScreen({
     super.key,
@@ -36,14 +54,15 @@ class CheckoutScreen extends ConsumerStatefulWidget {
     this.selectedTimeSlot,
     this.selectedScreen,
     this.selectedDate,
+    this.selectedAddOns,
   });
- 
+
   static const String routeName = '/checkout';
 
   @override
   ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
- 
+
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String? selectedAddressId;
   bool isProcessing = false;
@@ -54,10 +73,37 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool isBillDetailsExpanded = false;
   CouponModel? appliedCoupon;
 
+  // Booking for section state
+  bool bookingForSelf = true;
+  final TextEditingController _customerNameController = TextEditingController();
+  final TextEditingController _customerPhoneController =
+      TextEditingController();
+  final GlobalKey<FormState> _bookingFormKey = GlobalKey<FormState>();
+
+  // Editable addons state
+  Map<String, Map<String, dynamic>>? editableAddOns;
+
+  // Vendor GST status
+  bool vendorHasGst = false;
+  bool isLoadingVendorGst = false;
+
+  // Advance payment calculation
+  Map<String, dynamic>? advancePaymentData;
+  bool isLoadingAdvancePayment = false;
+
   @override
   void initState() {
     super.initState();
     selectedAddressId = widget.selectedAddressId;
+
+    // Initialize editable addons with a copy of the original data
+    if (widget.selectedAddOns != null) {
+      editableAddOns = Map<String, Map<String, dynamic>>.from(
+        widget.selectedAddOns!.map(
+          (key, value) => MapEntry(key, Map<String, dynamic>.from(value)),
+        ),
+      );
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (selectedAddressId == null) {
@@ -69,33 +115,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           }
         });
       }
+
+      // Load user profile data for booking
+      _loadUserProfileData();
+
+      // Load vendor GST status and then calculate advance payment
+      _loadVendorGstStatus().then((_) {
+        _calculateAdvancePayment();
+      });
     });
   }
 
   @override
   void didUpdateWidget(CheckoutScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Check if any important parameters have changed and update the UI
     bool shouldUpdate = false;
-    
+
     if (oldWidget.selectedDate != widget.selectedDate ||
         oldWidget.selectedTimeSlot != widget.selectedTimeSlot ||
         oldWidget.selectedScreen != widget.selectedScreen ||
         oldWidget.selectedAddressId != widget.selectedAddressId) {
       shouldUpdate = true;
     }
-    
+
     if (shouldUpdate) {
       debugPrint('🔄 [CHECKOUT] Parameters updated - refreshing UI');
       debugPrint('🔄 [CHECKOUT] New date: ${widget.selectedDate}');
-      debugPrint('🔄 [CHECKOUT] New time slot: ${widget.selectedTimeSlot?.startTime} - ${widget.selectedTimeSlot?.endTime}');
-      
+      debugPrint(
+        '🔄 [CHECKOUT] New time slot: ${widget.selectedTimeSlot?.startTime} - ${widget.selectedTimeSlot?.endTime}',
+      );
+
       // Update selected address if it changed
       if (oldWidget.selectedAddressId != widget.selectedAddressId) {
         selectedAddressId = widget.selectedAddressId;
       }
-      
+
       // Force a rebuild by calling setState
       if (mounted) {
         setState(() {
@@ -138,29 +194,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const SizedBox(height: 12),
               _buildAddressSection(userAddresses),
               const SizedBox(height: 12),
-              _buildUpgradeServiceSection(),
-              const SizedBox(height: 12),
-              if (widget.customization != null) ...[
-                _buildCustomizationSummary(),
-                const SizedBox(height: 12),
-              ],
-              // Only show coupon section if service has available coupons
-              FutureBuilder<bool>(
-                future: _hasAvailableCoupons(),
-                builder: (context, snapshot) {
-                  if (snapshot.data == true) {
-                    return Column(
-                      children: [
-                        _buildCouponSection(),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              _buildServiceDetailsSection(),
-              const SizedBox(height: 12),
               _buildBillDetails(),
               const SizedBox(height: 12),
               _buildCancellationPolicy(),
@@ -178,7 +211,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       elevation: 0.5,
       shadowColor: Colors.black.withOpacity(0.1),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor, size: 24),
+        icon: const Icon(
+          Icons.arrow_back,
+          color: AppTheme.textPrimaryColor,
+          size: 24,
+        ),
         onPressed: () => context.pop(),
       ),
       title: const Text(
@@ -200,7 +237,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.successColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppTheme.successColor.withOpacity(0.4)),
+                border: Border.all(
+                  color: AppTheme.successColor.withOpacity(0.4),
+                ),
               ),
               child: Text(
                 'SECURE',
@@ -245,7 +284,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  widget.selectedTimeSlot != null ? Icons.movie : Icons.receipt_long,
+                  widget.selectedTimeSlot != null
+                      ? Icons.movie
+                      : Icons.receipt_long,
                   color: AppTheme.primaryColor,
                   size: 20,
                 ),
@@ -269,7 +310,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '1 item',
+                  '${1 + (editableAddOns?.length ?? 0)} item${(1 + (editableAddOns?.length ?? 0)) > 1 ? 's' : ''}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -318,7 +359,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     // Show service booking information for all services
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 12, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 12,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _getSelectedDate(),
@@ -329,7 +374,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.access_time, size: 12, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.access_time,
+                          size: 12,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _getSelectedTimeRange(),
@@ -343,11 +392,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     const SizedBox(height: 4),
                     // Show screen information only for theater services
-                    if (widget.selectedScreen != null || 
-                        (widget.selectedTimeSlot != null && widget.selectedTimeSlot!.screenName != null)) ...[
+                    if (widget.selectedScreen != null ||
+                        (widget.selectedTimeSlot != null &&
+                            widget.selectedTimeSlot!.screenName != null)) ...[
                       Row(
                         children: [
-                          const Icon(Icons.movie, size: 12, color: AppTheme.textSecondaryColor),
+                          const Icon(
+                            Icons.movie,
+                            size: 12,
+                            color: AppTheme.textSecondaryColor,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             _getScreenName(),
@@ -364,10 +418,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     // Show service category and location information
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 12, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.location_on,
+                          size: 12,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.selectedTimeSlot != null ? 'Theater Service' : 'Home Service',
+                          widget.selectedTimeSlot != null
+                              ? 'Theater Service'
+                              : 'Home Service',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textSecondaryColor,
@@ -390,7 +450,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                         if (widget.service.originalPrice != null &&
                             widget.service.offerPrice != null &&
-                            widget.service.originalPrice! > widget.service.offerPrice!) ...[
+                            widget.service.originalPrice! >
+                                widget.service.offerPrice!) ...[
                           const SizedBox(width: 8),
                           Text(
                             '₹${_formatPrice(widget.service.originalPrice!)}',
@@ -403,7 +464,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.successColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
@@ -426,18 +490,292 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ],
           ),
+          // Show editable add-ons if any
+          if (editableAddOns != null && editableAddOns!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(color: AppTheme.backgroundColor),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.restaurant_menu,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Your Add-ons',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: AppTheme.textPrimaryColor,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${editableAddOns!.length} item${editableAddOns!.length > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondaryColor,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...editableAddOns!.entries.map((entry) {
+              final addOnKey = entry.key;
+              final addOnData = entry.value;
+              final addOnName = addOnData['name'] as String;
+              final addOnPrice = _safeToDouble(addOnData['price']);
+              final isCustomizable =
+                  addOnData['isCustomizable'] as bool? ?? false;
+              final customText = addOnData['customText'] as String?;
+              final characterCount = addOnData['characterCount'] as int?;
+              final totalPrice = _safeToDouble(addOnData['totalPrice'] ?? addOnPrice);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Addon icon
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.extension,
+                              color: AppTheme.primaryColor,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Addon details
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  addOnName,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Okra',
+                                    color: AppTheme.textPrimaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '₹${_formatPrice(totalPrice)}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Okra',
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Remove button
+                          GestureDetector(
+                            onTap: () => _removeAddOn(addOnKey),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                color: Colors.red.shade600,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Customization details
+                      if (isCustomizable &&
+                          customText != null &&
+                          customText.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit_note,
+                                    size: 14,
+                                    color: Colors.orange.shade700,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Custom Message:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.orange.shade700,
+                                      fontFamily: 'Okra',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '"$customText"',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: AppTheme.textSecondaryColor,
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
+                              if (characterCount != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$characterCount characters',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange.shade600,
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
   }
 
   int _calculateDiscount() {
-    if (widget.service.originalPrice != null && widget.service.offerPrice != null) {
+    if (widget.service.originalPrice != null &&
+        widget.service.offerPrice != null) {
       final discount =
-          ((widget.service.originalPrice! - widget.service.offerPrice!) / widget.service.originalPrice!) * 100;
+          ((widget.service.originalPrice! - widget.service.offerPrice!) /
+              widget.service.originalPrice!) *
+          100;
       return discount.round();
     }
     return 0;
+  }
+
+  double _calculateSelectedAddOnsTotal() {
+    if (editableAddOns == null || editableAddOns!.isEmpty) {
+      return 0.0;
+    }
+
+    double total = 0.0;
+    debugPrint('=== ADD-ON CALCULATION DEBUG ===');
+    for (final entry in editableAddOns!.entries) {
+      final addOnId = entry.key;
+      final addOnData = entry.value;
+      final storedTotalPrice = _safeToDouble(addOnData['totalPrice']);
+      final rawPrice = _safeToDouble(addOnData['price']);
+      final name = addOnData['name'] as String?;
+      
+      debugPrint('Add-on: $name (ID: $addOnId)');
+      debugPrint('  - Stored totalPrice: $storedTotalPrice');
+      debugPrint('  - Raw price: $rawPrice');
+      
+      if (storedTotalPrice > 0) {
+        total += storedTotalPrice;
+        debugPrint('  - Using stored totalPrice: ₹$storedTotalPrice');
+      } else if (rawPrice > 0) {
+        final priceWithFees = rawPrice + (rawPrice * 0.0354);
+        total += priceWithFees;
+        debugPrint('  - Calculated with fees: ₹$priceWithFees');
+      }
+    }
+    debugPrint('Selected add-ons total (with fees): ₹$total');
+    debugPrint('=== END ADD-ON CALCULATION DEBUG ===');
+    return total;
+  }
+
+  double _calculateSelectedAddOnsRawTotal() {
+    if (editableAddOns == null || editableAddOns!.isEmpty) {
+      return 0.0;
+    }
+
+    double total = 0.0;
+    debugPrint('=== RAW ADD-ON CALCULATION DEBUG ===');
+    for (final entry in editableAddOns!.entries) {
+      final addOnId = entry.key;
+      final addOnData = entry.value;
+      final storedTotalPrice = _safeToDouble(addOnData['totalPrice']);
+      final characterCount = addOnData['characterCount'] as int? ?? 1;
+      final perUnitPrice = _safeToDouble(addOnData['price']);
+      final name = addOnData['name'] as String?;
+      
+      debugPrint('Raw Add-on: $name (ID: $addOnId)');
+      debugPrint('  - Stored totalPrice: $storedTotalPrice');
+      debugPrint('  - Per-unit price: $perUnitPrice');
+      debugPrint('  - Character count: $characterCount');
+      
+      if (storedTotalPrice > 0) {
+        // Calculate raw total by removing the transaction fee from stored totalPrice
+        final rawTotal = storedTotalPrice / 1.0354;
+        total += rawTotal;
+        debugPrint('  - Raw total (totalPrice / 1.0354): ₹$rawTotal');
+      } else if (perUnitPrice > 0) {
+        // Fallback: calculate raw total from per-unit price * quantity
+        final rawTotal = perUnitPrice * characterCount;
+        total += rawTotal;
+        debugPrint('  - Raw total (per-unit * count): ₹$rawTotal');
+      }
+    }
+    debugPrint('Selected add-ons raw total (before fees): ₹$total');
+    debugPrint('=== END RAW ADD-ON CALCULATION DEBUG ===');
+    return total;
+  }
+
+  void _removeAddOn(String addOnKey) {
+    setState(() {
+      editableAddOns?.remove(addOnKey);
+    });
+    // Recalculate advance payment when add-ons change
+    _calculateAdvancePayment();
   }
 
   Widget _buildServiceImage() {
@@ -456,11 +794,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           color: AppTheme.primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(
-          Icons.celebration,
-          color: AppTheme.primaryColor,
-          size: 28,
-        ),
+        child: Icon(Icons.celebration, color: AppTheme.primaryColor, size: 28),
       );
     }
 
@@ -476,9 +810,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           color: AppTheme.backgroundColor,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       errorWidget: (context, url, error) => Container(
         width: 64,
@@ -487,11 +819,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           color: AppTheme.primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(
-          Icons.celebration,
-          color: AppTheme.primaryColor,
-          size: 28,
-        ),
+        child: Icon(Icons.celebration, color: AppTheme.primaryColor, size: 28),
       ),
     );
   }
@@ -500,7 +828,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -516,9 +844,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           // Service timing section (like Zomato's delivery timing)
           _buildServiceTimingSection(),
-          
+
           const SizedBox(height: 20),
-          
+
           // Delivery address section
           userAddresses.when(
             data: (addresses) {
@@ -530,13 +858,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               if (selectedAddressId == null && addresses.isNotEmpty) {
                 selectedAddressId = addresses.first.id;
               }
-              
+
               final selectedAddress = addresses.firstWhere(
                 (addr) => addr.id == selectedAddressId,
                 orElse: () => addresses.first,
               );
 
-              return _buildZomatoStyleAddressCard(selectedAddress, userAddresses);
+              return _buildZomatoStyleAddressCard(
+                selectedAddress,
+                userAddresses,
+              );
             },
             loading: () => _buildLoadingAddressCard(),
             error: (error, stack) => _buildAddAddressButton(),
@@ -559,11 +890,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 color: Colors.grey[100],
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.access_time,
-                color: Colors.grey[600],
-                size: 18,
-              ),
+              child: Icon(Icons.access_time, color: Colors.grey[600], size: 18),
             ),
             const SizedBox(width: 12),
             Text(
@@ -577,27 +904,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           ],
         ),
-        
-        
-      
       ],
     );
   }
 
-  Widget _buildZomatoStyleAddressCard(Address address, AsyncValue<List<Address>> userAddresses) {
+  Widget _buildZomatoStyleAddressCard(
+    Address address,
+    AsyncValue<List<Address>> userAddresses,
+  ) {
     final currentUser = ref.watch(currentUserProvider);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Delivery at Home section
         Row(
           children: [
-            Icon(
-              Icons.location_on,
-              color: Colors.grey[600],
-              size: 20,
-            ),
+            Icon(Icons.location_on, color: Colors.grey[600], size: 20),
             const SizedBox(width: 12),
             const Text(
               'Service at Home',
@@ -619,9 +942,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Address details
         Padding(
           padding: const EdgeInsets.only(left: 32),
@@ -636,9 +959,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Add instructions section (like Zomato's delivery instructions)
         GestureDetector(
           onTap: () {
@@ -659,17 +982,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Customer details section (like Zomato's contact info)
         Row(
           children: [
-            Icon(
-              Icons.call,
-              color: Colors.grey[600],
-              size: 20,
-            ),
+            Icon(Icons.call, color: Colors.grey[600], size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -700,7 +1019,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               onTap: () {
                 // TODO: Edit contact details
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Edit contact feature coming soon!')),
+                  const SnackBar(
+                    content: Text('Edit contact feature coming soon!'),
+                  ),
                 );
               },
               child: Icon(
@@ -763,7 +1084,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               TextField(
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Add any special instructions for the service provider...',
+                  hintText:
+                      'Add any special instructions for the service provider...',
                   hintStyle: TextStyle(
                     color: Colors.grey[500],
                     fontFamily: 'Okra',
@@ -777,10 +1099,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     borderSide: const BorderSide(color: AppTheme.primaryColor),
                   ),
                 ),
-                style: const TextStyle(
-                  fontFamily: 'Okra',
-                  fontSize: 14,
-                ),
+                style: const TextStyle(fontFamily: 'Okra', fontSize: 14),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -842,13 +1161,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        address.addressFor.toString().split('.').last.toUpperCase(),
+                        address.addressFor
+                            .toString()
+                            .split('.')
+                            .last
+                            .toUpperCase(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -973,11 +1299,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.add,
-              color: AppTheme.primaryColor,
-              size: 20,
-            ),
+            Icon(Icons.add, color: AppTheme.primaryColor, size: 20),
             const SizedBox(width: 8),
             Text(
               'Add Address',
@@ -1043,9 +1365,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                     ),
                   ),
-                  if (selectedAddOns.isNotEmpty) 
+                  if (selectedAddOns.isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor,
                         borderRadius: BorderRadius.circular(10),
@@ -1063,34 +1388,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Horizontal list of add-ons (show first 4) - Zomato style
               SizedBox(
-                height: MediaQuery.of(context).size.width * 0.45, // Increased height for better card proportions
+                height:
+                    MediaQuery.of(context).size.width *
+                    0.45, // Increased height for better card proportions
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.only(right: 4),
                   itemCount: addOns.take(4).length,
                   itemBuilder: (context, index) {
                     final addOn = addOns[index];
-                    final selectedQuantity = ref.watch(selectedAddOnsProvider.notifier).getItemQuantity(addOn.id);
-                    
+                    final selectedQuantity = ref
+                        .watch(selectedAddOnsProvider.notifier)
+                        .getItemQuantity(addOn.id);
+
                     return Container(
-                      width: MediaQuery.of(context).size.width * 0.42, // Slightly wider for better content fit
+                      width:
+                          MediaQuery.of(context).size.width *
+                          0.42, // Slightly wider for better content fit
                       margin: EdgeInsets.only(right: index < 3 ? 12 : 0),
                       child: _buildAddOnCard(addOn, selectedQuantity),
                     );
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Add-ons starting price indicator (Zomato style)
               if (addOns.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -1110,7 +1444,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                       ),
                       const Spacer(),
-                      if (selectedAddOns.isNotEmpty) 
+                      if (selectedAddOns.isNotEmpty)
                         Text(
                           '- ₹${_formatPrice(ref.read(selectedAddOnsProvider.notifier).getTotalAmount())}',
                           style: TextStyle(
@@ -1141,7 +1475,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (selectedAddOns.isNotEmpty) 
+                  if (selectedAddOns.isNotEmpty)
                     Text(
                       '₹${_formatPrice(ref.read(selectedAddOnsProvider.notifier).getTotalAmount())}',
                       style: TextStyle(
@@ -1153,7 +1487,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                 ],
               ),
-              
+
               // Selected add-ons list (if any)
               if (selectedAddOns.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -1162,14 +1496,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.check_circle, color: AppTheme.primaryColor, size: 16),
+                          Icon(
+                            Icons.check_circle,
+                            color: AppTheme.primaryColor,
+                            size: 16,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Selected Add-ons',
@@ -1183,7 +1523,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      ...selectedAddOns.map((selectedAddOn) => _buildSelectedAddOnItem(selectedAddOn)),
+                      ...selectedAddOns.map(
+                        (selectedAddOn) =>
+                            _buildSelectedAddOnItem(selectedAddOn),
+                      ),
                     ],
                   ),
                 ),
@@ -1213,10 +1556,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             offset: const Offset(0, 2),
           ),
         ],
-        border: selectedQuantity > 0 ? Border.all(
-          color: AppTheme.primaryColor,
-          width: 1.5,
-        ) : null,
+        border: selectedQuantity > 0
+            ? Border.all(color: AppTheme.primaryColor, width: 1.5)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1310,7 +1652,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ],
           ),
-          
+
           // Content section
           Expanded(
             child: Padding(
@@ -1330,9 +1672,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Price and add button section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1352,7 +1694,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 fontFamily: 'Okra',
                               ),
                             ),
-                            if (addOn.description != null && addOn.description!.isNotEmpty)
+                            if (addOn.description != null &&
+                                addOn.description!.isNotEmpty)
                               Text(
                                 'customisable',
                                 style: TextStyle(
@@ -1364,88 +1707,100 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           ],
                         ),
                       ),
-                      
+
                       // Add/Remove button (Zomato style)
-                      selectedQuantity > 0 
-                        ? Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                GestureDetector(
-                                  onTap: () => ref.read(selectedAddOnsProvider.notifier).removeAddOn(addOn.id),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    child: const Icon(
-                                      Icons.remove,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  child: Text(
-                                    '$selectedQuantity',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Okra',
-                                    ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () => ref.read(selectedAddOnsProvider.notifier).addAddOn(addOn),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : GestureDetector(
-                            onTap: () => ref.read(selectedAddOnsProvider.notifier).addAddOn(addOn),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      selectedQuantity > 0
+                          ? Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.primaryColor,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: AppTheme.primaryColor,
-                                  width: 1,
-                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'ADD',
-                                    style: TextStyle(
-                                      color: AppTheme.primaryColor,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Okra',
+                                  GestureDetector(
+                                    onTap: () => ref
+                                        .read(selectedAddOnsProvider.notifier)
+                                        .removeAddOn(addOn.id),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      child: const Icon(
+                                        Icons.remove,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    Icons.add,
-                                    color: AppTheme.primaryColor,
-                                    size: 14,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Text(
+                                      '$selectedQuantity',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Okra',
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => ref
+                                        .read(selectedAddOnsProvider.notifier)
+                                        .addAddOn(addOn),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
+                            )
+                          : GestureDetector(
+                              onTap: () => ref
+                                  .read(selectedAddOnsProvider.notifier)
+                                  .addAddOn(addOn),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: AppTheme.primaryColor,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'ADD',
+                                      style: TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Okra',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.add,
+                                      color: AppTheme.primaryColor,
+                                      size: 14,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
                     ],
                   ),
                 ],
@@ -1475,7 +1830,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: () => ref.read(selectedAddOnsProvider.notifier).removeAddOn(selectedAddOn.id),
+                onTap: () => ref
+                    .read(selectedAddOnsProvider.notifier)
+                    .removeAddOn(selectedAddOn.id),
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -1560,16 +1917,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 itemCount: addOns.length,
                 itemBuilder: (context, index) {
                   final addOn = addOns[index];
-                  final selectedQuantity = ref.watch(selectedAddOnsProvider.notifier).getItemQuantity(addOn.id);
-                  
+                  final selectedQuantity = ref
+                      .watch(selectedAddOnsProvider.notifier)
+                      .getItemQuantity(addOn.id);
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: selectedQuantity > 0 ? AppTheme.primaryColor.withOpacity(0.05) : Colors.white,
+                      color: selectedQuantity > 0
+                          ? AppTheme.primaryColor.withOpacity(0.05)
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selectedQuantity > 0 ? AppTheme.primaryColor : AppTheme.backgroundColor,
+                        color: selectedQuantity > 0
+                            ? AppTheme.primaryColor
+                            : AppTheme.backgroundColor,
                         width: selectedQuantity > 0 ? 2 : 1,
                       ),
                     ),
@@ -1582,7 +1945,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             color: AppTheme.primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: addOn.imageUrl != null && addOn.imageUrl!.isNotEmpty
+                          child:
+                              addOn.imageUrl != null &&
+                                  addOn.imageUrl!.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: CachedNetworkImage(
@@ -1613,7 +1978,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: selectedQuantity > 0 ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
+                                  color: selectedQuantity > 0
+                                      ? AppTheme.primaryColor
+                                      : AppTheme.textPrimaryColor,
                                   fontFamily: 'Okra',
                                 ),
                               ),
@@ -1647,14 +2014,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           Row(
                             children: [
                               GestureDetector(
-                                onTap: () => ref.read(selectedAddOnsProvider.notifier).removeAddOn(addOn.id),
+                                onTap: () => ref
+                                    .read(selectedAddOnsProvider.notifier)
+                                    .removeAddOn(addOn.id),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: Colors.red.withOpacity(0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.remove, size: 16, color: Colors.red),
+                                  child: const Icon(
+                                    Icons.remove,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1668,23 +2041,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               ),
                               const SizedBox(width: 12),
                               GestureDetector(
-                                onTap: () => ref.read(selectedAddOnsProvider.notifier).addAddOn(addOn),
+                                onTap: () => ref
+                                    .read(selectedAddOnsProvider.notifier)
+                                    .addAddOn(addOn),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    color: AppTheme.primaryColor.withOpacity(
+                                      0.1,
+                                    ),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.add, size: 16, color: AppTheme.primaryColor),
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: AppTheme.primaryColor,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ] else ...[
                           GestureDetector(
-                            onTap: () => ref.read(selectedAddOnsProvider.notifier).addAddOn(addOn),
+                            onTap: () => ref
+                                .read(selectedAddOnsProvider.notifier)
+                                .addAddOn(addOn),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryColor,
                                 borderRadius: BorderRadius.circular(20),
@@ -1725,9 +2111,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Expanded(
                       child: Consumer(
                         builder: (context, ref, child) {
-                          final selectedAddOns = ref.watch(selectedAddOnsProvider);
-                          final totalAmount = ref.read(selectedAddOnsProvider.notifier).getTotalAmount();
-                          
+                          final selectedAddOns = ref.watch(
+                            selectedAddOnsProvider,
+                          );
+                          final totalAmount = ref
+                              .read(selectedAddOnsProvider.notifier)
+                              .getTotalAmount();
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
@@ -1773,7 +2163,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                       ),
                       child: const Text(
                         'Done',
@@ -1827,11 +2220,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   color: Colors.purple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.tune,
-                  color: Colors.purple,
-                  size: 20,
-                ),
+                child: const Icon(Icons.tune, color: Colors.purple, size: 20),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -1853,10 +2242,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   bool _hasValidCustomizations(Map<String, dynamic> customization) {
-    return (customization['theme'] != null && customization['theme'] != 'Option') ||
-        (customization['venueType'] != null && customization['venueType'] != 'Option') ||
-        (customization['serviceEnvironment'] != null && customization['serviceEnvironment'] != 'Option') ||
-        (customization['addOns'] != null && customization['addOns'] is List && (customization['addOns'] as List).isNotEmpty) ||
+    return (customization['theme'] != null &&
+            customization['theme'] != 'Option') ||
+        (customization['venueType'] != null &&
+            customization['venueType'] != 'Option') ||
+        (customization['serviceEnvironment'] != null &&
+            customization['serviceEnvironment'] != 'Option') ||
+        (customization['addOns'] != null &&
+            customization['addOns'] is List &&
+            (customization['addOns'] as List).isNotEmpty) ||
         (customization['placeImage'] != null);
   }
 
@@ -1866,18 +2260,35 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (customization['theme'] != null && customization['theme'] != 'Option') {
       items.add(_buildCustomizationItem('Theme', customization['theme']));
     }
-    if (customization['venueType'] != null && customization['venueType'] != 'Option') {
-      items.add(_buildCustomizationItem('Venue Type', customization['venueType']));
+    if (customization['venueType'] != null &&
+        customization['venueType'] != 'Option') {
+      items.add(
+        _buildCustomizationItem('Venue Type', customization['venueType']),
+      );
     }
-    if (customization['serviceEnvironment'] != null && customization['serviceEnvironment'] != 'Option') {
-      items.add(_buildCustomizationItem('Environment', customization['serviceEnvironment']));
+    if (customization['serviceEnvironment'] != null &&
+        customization['serviceEnvironment'] != 'Option') {
+      items.add(
+        _buildCustomizationItem(
+          'Environment',
+          customization['serviceEnvironment'],
+        ),
+      );
     }
-    if (customization['addOns'] != null && customization['addOns'] is List && (customization['addOns'] as List).isNotEmpty) {
-      items.add(_buildCustomizationItem('Add-ons', (customization['addOns'] as List).join(', ')));
+    if (customization['addOns'] != null &&
+        customization['addOns'] is List &&
+        (customization['addOns'] as List).isNotEmpty) {
+      items.add(
+        _buildCustomizationItem(
+          'Add-ons',
+          (customization['addOns'] as List).join(', '),
+        ),
+      );
     }
-    
+
     // Add place image if provided
-    if (customization['placeImage'] != null && customization['placeImage'] is XFile) {
+    if (customization['placeImage'] != null &&
+        customization['placeImage'] is XFile) {
       items.add(_buildPlaceImageItem(customization['placeImage'] as XFile));
     }
 
@@ -1937,11 +2348,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.image,
-                color: AppTheme.primaryColor,
-                size: 16,
-              ),
+              const Icon(Icons.image, color: AppTheme.primaryColor, size: 16),
               const SizedBox(width: 8),
               const Text(
                 'Place Image',
@@ -1953,11 +2360,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
               const Spacer(),
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 16,
-              ),
+              const Icon(Icons.check_circle, color: Colors.green, size: 16),
             ],
           ),
           const SizedBox(height: 8),
@@ -1983,7 +2386,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
     );
   }
-
 
   Widget _buildCouponSection() {
     return Container(
@@ -2030,7 +2432,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const Spacer(),
               if (isCouponApplied)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -2074,16 +2479,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppTheme.backgroundColor),
+                      borderSide: const BorderSide(
+                        color: AppTheme.backgroundColor,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: isCouponApplied ? AppTheme.successColor : AppTheme.backgroundColor,
+                        color: isCouponApplied
+                            ? AppTheme.successColor
+                            : AppTheme.backgroundColor,
                       ),
                     ),
                     disabledBorder: OutlineInputBorder(
@@ -2093,11 +2505,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                     ),
                     filled: true,
-                    fillColor: isCouponApplied ? AppTheme.successColor.withOpacity(0.05) : AppTheme.backgroundColor,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    fillColor: isCouponApplied
+                        ? AppTheme.successColor.withOpacity(0.05)
+                        : AppTheme.backgroundColor,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     prefixIcon: Icon(
                       Icons.local_offer_outlined,
-                      color: isCouponApplied ? AppTheme.successColor : AppTheme.textSecondaryColor,
+                      color: isCouponApplied
+                          ? AppTheme.successColor
+                          : AppTheme.textSecondaryColor,
                       size: 20,
                     ),
                   ),
@@ -2105,7 +2524,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     fontFamily: 'Okra',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: isCouponApplied ? AppTheme.successColor : AppTheme.textPrimaryColor,
+                    color: isCouponApplied
+                        ? AppTheme.successColor
+                        : AppTheme.textPrimaryColor,
                   ),
                   initialValue: isCouponApplied ? couponCode : '',
                 ),
@@ -2114,9 +2535,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: isCouponApplied ? _removeCoupon : (isApplyingCoupon ? null : _applyCoupon),
+                  onPressed: isCouponApplied
+                      ? _removeCoupon
+                      : (isApplyingCoupon ? null : _applyCoupon),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isCouponApplied ? Colors.red.shade400 : AppTheme.primaryColor,
+                    backgroundColor: isCouponApplied
+                        ? Colors.red.shade400
+                        : AppTheme.primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -2129,7 +2554,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(
@@ -2151,11 +2578,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.successColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppTheme.successColor.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.celebration, color: AppTheme.successColor, size: 16),
+                  Icon(
+                    Icons.celebration,
+                    color: AppTheme.successColor,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -2179,12 +2612,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   List<Widget> _buildAvailableCoupons() {
     final servicePrice = _getServicePrice();
-    final serviceCouponsAsync = ref.watch(serviceCouponsProvider(
-      ServiceCouponParams(
-        serviceId: widget.service.id,
-        orderAmount: servicePrice,
+    final serviceCouponsAsync = ref.watch(
+      serviceCouponsProvider(
+        ServiceCouponParams(
+          serviceId: widget.service.id,
+          orderAmount: servicePrice,
+        ),
       ),
-    ));
+    );
 
     return serviceCouponsAsync.when(
       data: (coupons) {
@@ -2214,7 +2649,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -2251,9 +2689,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           );
         }).toList();
       },
-      loading: () => [
-        const CircularProgressIndicator(strokeWidth: 2),
-      ],
+      loading: () => [const CircularProgressIndicator(strokeWidth: 2)],
       error: (error, stack) => [
         Text(
           'Unable to load offers at the moment',
@@ -2287,7 +2723,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final servicePrice = _getServicePrice();
       final couponRepository = ref.read(couponRepositoryProvider);
-      
+
       final validatedCoupon = await couponRepository.validateCoupon(
         couponCode: couponCode.trim(),
         serviceId: widget.service.id,
@@ -2302,19 +2738,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           couponDiscount = validatedCoupon.calculateDiscount(servicePrice);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Coupon applied! You saved ₹${_formatPrice(couponDiscount)}'),
+              content: Text(
+                'Coupon applied! You saved ₹${_formatPrice(couponDiscount)}',
+              ),
               backgroundColor: AppTheme.successColor,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Invalid coupon code or not applicable for this service'),
+              content: const Text(
+                'Invalid coupon code or not applicable for this service',
+              ),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
@@ -2329,7 +2773,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             content: Text('Error validating coupon: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -2355,325 +2801,377 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildBillDetails() {
     final servicePrice = _getServicePrice();
-    final addOnsTotal = ref.read(selectedAddOnsProvider.notifier).getTotalAmount();
+    final addOnsTotal = _calculateSelectedAddOnsTotal();
+
+    // For display purposes, show service price with all fees included (no separate transaction fee)
+    final servicePriceWithFees = servicePrice + 28.00 + (servicePrice * 0.0354);
+    // Add-ons totalPrice already includes transaction fee from service detail screen
+    final addOnsPriceWithFees = addOnsTotal; // No additional fee calculation needed
+    final totalAmount =
+        servicePriceWithFees + addOnsPriceWithFees - couponDiscount;
+
+    // Use Canvas formula for accurate calculation
+    final canvasResult = _calculateCanvasFormula();
     
-    // Initialize all variables with default values
-    double subtotal = 0.0;
-    double serviceCharge = 0.0;
-    double handlingFee = 0.0;
-    double taxableAmount = 0.0;
-    double gst = 0.0;
-    double totalAmount = 0.0;
-    double payableAmount = 0.0;
-    double remainingAmount = 0.0;
-    double platformFee = 0.0;
-    double deliveryFee = 0.0;
+    // Use RPC data when available, fallback to Canvas formula
+    final payableAmount = advancePaymentData != null
+        ? _safeToDouble(advancePaymentData!['user_advance_payment'])
+        : canvasResult['user_advance_payment']!;
+    final remainingAmount = advancePaymentData != null
+        ? _safeToDouble(advancePaymentData!['remaining_payment'])
+        : canvasResult['remaining_payment']!;
+    final totalPriceUserSees = advancePaymentData != null
+        ? _safeToDouble(advancePaymentData!['total_price_user_sees'])
+        : canvasResult['total_price_user_sees']!;
     
-    if (widget.selectedTimeSlot != null) {
-      // Theater-specific pricing
-      subtotal = servicePrice + addOnsTotal;
-      serviceCharge = subtotal * 0.025; // 2.5% service charge
-      handlingFee = 25.0; // Fixed handling fee
-      taxableAmount = subtotal + serviceCharge + handlingFee;
-      gst = taxableAmount * 0.18; // 18% GST
-      totalAmount = taxableAmount + gst - couponDiscount;
-      payableAmount = totalAmount * 0.6; // 60% of total
-      remainingAmount = totalAmount - payableAmount;
-    } else {
-      // Original service listing calculations
-      subtotal = servicePrice + addOnsTotal;
-      platformFee = _calculatePlatformFee(subtotal);
-      gst = _calculateGST(subtotal);
-      deliveryFee = 0.0; // Free delivery
-      totalAmount = subtotal + platformFee + gst + deliveryFee - couponDiscount;
-      payableAmount = totalAmount * 0.6; // 60% of total
-      remainingAmount = totalAmount - payableAmount;
+    debugPrint('Canvas calculation - Advance: $payableAmount, Total: ${canvasResult['total_price_user_sees']}, Remaining: $remainingAmount');
+
+    debugPrint('=== BILL DETAILS CALCULATION ===');
+    debugPrint('Service price: $servicePrice');
+    debugPrint('Service with fees: $servicePriceWithFees');
+    debugPrint('Add-ons total: $addOnsTotal');
+    debugPrint('Add-ons with fees: $addOnsPriceWithFees');
+    debugPrint('Coupon discount: $couponDiscount');
+    debugPrint('Local total: $totalAmount (should be ${servicePriceWithFees + addOnsPriceWithFees})');
+    debugPrint('RPC total: ${advancePaymentData?['total_price_user_sees'] ?? 'N/A'}');
+    debugPrint('Canvas total: ${canvasResult['total_price_user_sees']}');
+    debugPrint('Bill Details - Total: $totalAmount, Payable: $payableAmount, RPC Data: ${advancePaymentData != null}');
+    if (advancePaymentData != null) {
+      debugPrint('RPC Data: $advancePaymentData');
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE2E7EB), // Figma stroke color
+          width: 1,
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 16,
         children: [
-          // Header with collapse/expand functionality
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                isBillDetailsExpanded = !isBillDetailsExpanded;
-              });
-            },
+          // Header with summary
+          Padding(
+            padding: const EdgeInsets.fromLTRB(17, 18, 17, 0),
             child: Row(
               children: [
+                // Icon container
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    border: Border.all(
+                      color: const Color(0xFFF0F0F0), // Light grey border
+                      width: 1,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
-                    Icons.receipt,
-                    color: Colors.green,
-                    size: 20,
+                    Icons.receipt_outlined, // Bill icon from Figma
+                    color: Colors.black,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
+                
+                // Bill Summary section
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Bill Details',
+                        'Bill Summary',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Okra',
-                          color: AppTheme.textPrimaryColor,
+                          color: Colors.black,
                         ),
                       ),
-                      if (!isBillDetailsExpanded) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              'To pay ',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppTheme.textSecondaryColor,
-                                fontFamily: 'Okra',
-                              ),
-                            ),
-                            Text(
-                              '₹${_formatPrice(payableAmount)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                                fontFamily: 'Okra',
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Incl.all taxes & charges',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Okra',
+                          color: Color(0x99000000), // 60% opacity black
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-                Icon(
-                  isBillDetailsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  color: AppTheme.textSecondaryColor,
+                
+                const SizedBox(width: 32),
+                
+                // Price section with crossed out original price
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      children: [
+                        // Crossed out original price
+                        if (servicePriceWithFees + addOnsPriceWithFees != totalAmount)
+                          Text(
+                            '₹${_formatPrice(servicePriceWithFees + addOnsPriceWithFees)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'Okra',
+                              color: Color(0x80000000), // 50% opacity black
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        // Final price
+                        Text(
+                          '₹${_formatPrice(totalAmount)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    // Savings text
+                    if (servicePriceWithFees + addOnsPriceWithFees != totalAmount)
+                      Text(
+                        '₹${_formatPrice((servicePriceWithFees + addOnsPriceWithFees) - totalAmount)} Saved',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'Okra',
+                          color: Color(0xFF569456), // Green color from Figma
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
           ),
           
-          // Expanded details
-          if (isBillDetailsExpanded) ...[
-            const SizedBox(height: 16),
-            _buildBillRow('Service total', servicePrice),
-            if (addOnsTotal > 0)
-              _buildBillRow('Add-ons', addOnsTotal),
-            if (widget.selectedTimeSlot != null) ...[
-              _buildBillRow('Service charge (2.5%)', serviceCharge),
-              _buildBillRow('Handling fee', handlingFee),
-              _buildBillRow('GST (18%)', gst),
-            ] else ...[
-              _buildBillRow('Platform fee', platformFee),
-              _buildBillRow('GST (18%)', gst),
-              _buildBillRow(
-                'Delivery fee',
-                deliveryFee,
-                isFree: true,
-                originalPrice: 49.0,
-              ),
-            ],
-            if (isCouponApplied && couponDiscount > 0)
-              _buildBillRow('Coupon discount', -couponDiscount, isDiscount: true),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Divider(color: AppTheme.backgroundColor, thickness: 1),
+          // Divider
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 17),
+            child: Divider(
+              color: Color(0xFFECEFEE), // Light grey divider
+              thickness: 2,
+              height: 2,
             ),
-            _buildBillRow('Total Amount', totalAmount, isTotal: true),
-            const SizedBox(height: 12),
-            
-            // Show booking details for theater bookings
-            if (widget.selectedTimeSlot != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+
+          // Bill breakdown rows
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            child: Column(
+              spacing: 16,
+              children: [
+                // Item Total row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Booking Details',
+                      'Item Total',
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimaryColor,
                         fontFamily: 'Okra',
+                        color: Color(0xA6000000), // 65% opacity black
                       ),
                     ),
-                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: AppTheme.textSecondaryColor),
-                        const SizedBox(width: 8),
+                        // Crossed out original price
                         Text(
-                          'Date: ${_getSelectedDate()}',
+                          '₹${_formatPrice(servicePriceWithFees)}',
                           style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondaryColor,
+                            fontSize: 14,
                             fontFamily: 'Okra',
+                            color: Color(0x80000000), // 50% opacity black
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Discounted price
+                        Text(
+                          '₹${_formatPrice(servicePriceWithFees)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                            color: Colors.black,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.access_time, size: 14, color: AppTheme.textSecondaryColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Time: ${_getSelectedTimeRange()}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondaryColor,
-                            fontFamily: 'Okra',
-                          ),
+                  ],
+                ),
+                
+                // Add-ons row
+                if (addOnsTotal > 0)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Add-ons',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Okra',
+                          color: Color(0xA6000000), // 65% opacity black
                         ),
-                      ],
-                    ),
-                    if (widget.selectedScreen != null || 
-                        (widget.selectedTimeSlot != null && widget.selectedTimeSlot!.screenName != null)) ...[
-                      const SizedBox(height: 4),
+                      ),
                       Row(
                         children: [
-                          const Icon(Icons.movie, size: 14, color: AppTheme.textSecondaryColor),
-                          const SizedBox(width: 8),
+                          // Crossed out original add-ons price
                           Text(
-                            'Screen: ${_getScreenName()}',
+                            '₹${_formatPrice(addOnsTotal * 1.2)}', // Assume 20% markup
                             style: const TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.textSecondaryColor,
+                              fontSize: 14,
                               fontFamily: 'Okra',
+                              color: Color(0x80000000), // 50% opacity black
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Final add-ons price
+                          Text(
+                            '₹${_formatPrice(addOnsPriceWithFees)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Okra',
+                              color: Colors.black,
                             ),
                           ),
                         ],
                       ),
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            
-            // Payment split information
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Pay now (60%)',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade700,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      Text(
-                        '₹${_formatPrice(payableAmount)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Pay after service (40%)',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade600,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                      Text(
-                        '₹${_formatPrice(remainingAmount)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue.shade700,
-                          fontFamily: 'Okra',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            
-            if (widget.selectedTimeSlot == null) // Only show savings for non-theater bookings
-              const SizedBox(height: 12),
-            if (widget.selectedTimeSlot == null) // Only show savings for non-theater bookings
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.successColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
-                ),
-                child: Row(
+                
+                // Convenience Fee row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.savings, color: AppTheme.successColor, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'You\'re saving ₹49 on delivery fee!',
+                    const Text(
+                      'Convenince Fee',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.successColor,
+                        fontSize: 14,
                         fontFamily: 'Okra',
+                        color: Color(0xA6000000), // 65% opacity black
                       ),
+                    ),
+                    Row(
+                      children: [
+                        // Crossed out convenience fee
+                        const Text(
+                          '₹28',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Okra',
+                            color: Color(0x80000000), // 50% opacity black
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Free convenience fee
+                        const Text(
+                          '₹0',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-          ],
+              ],
+            ),
+          ),
+          
+          // Divider before total
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 17),
+            child: Divider(
+              color: Color(0xFFECEFEE), // Light grey divider
+              thickness: 2,
+              height: 2,
+            ),
+          ),
+          
+          // To Pay - Advance row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(17, 0, 17, 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'To Pay - Advance',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: Color(0xFF212427), // Dark grey from Figma
+                  ),
+                ),
+                Text(
+                  '₹${_formatPrice(payableAmount)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Total Savings container
+          Container(
+            margin: const EdgeInsets.fromLTRB(17, 0, 17, 18),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0x260B4163), // 15% opacity blue background
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total Savings',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                    color: Color(0xFF011B2F), // Dark blue from Figma
+                  ),
+                ),
+                Text(
+                  '₹${_formatPrice((servicePriceWithFees + addOnsPriceWithFees + 28) - totalAmount)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: Color(0xFF011B2F), // Dark blue from Figma
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         ],
       ),
     );
   }
 
-  Widget _buildBillRow(String label, double amount, {
+  Widget _buildBillRow(
+    String label,
+    double amount, {
     bool isTotal = false,
     bool isFree = false,
     bool isDiscount = false,
@@ -2690,7 +3188,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               fontSize: isTotal ? 15 : 14,
               fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
               fontFamily: 'Okra',
-              color: isTotal ? AppTheme.textPrimaryColor : AppTheme.textSecondaryColor,
+              color: isTotal
+                  ? AppTheme.textPrimaryColor
+                  : AppTheme.textSecondaryColor,
             ),
           ),
           Row(
@@ -2707,7 +3207,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -2725,15 +3228,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(width: 8),
               ],
               Text(
-                isFree ? '₹0' : (isDiscount ? '-₹${_formatPrice(amount.abs())}' : '₹${_formatPrice(amount)}'),
+                isFree
+                    ? '₹0'
+                    : (isDiscount
+                          ? '-₹${_formatPrice(amount.abs())}'
+                          : '₹${_formatPrice(amount)}'),
                 style: TextStyle(
                   fontSize: isTotal ? 15 : 14,
                   fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
-                  color: isTotal 
-                      ? AppTheme.primaryColor 
-                      : isDiscount 
-                          ? AppTheme.successColor 
-                          : AppTheme.textPrimaryColor,
+                  color: isTotal
+                      ? AppTheme.primaryColor
+                      : isDiscount
+                      ? AppTheme.successColor
+                      : AppTheme.textPrimaryColor,
                   fontFamily: 'Okra',
                 ),
               ),
@@ -2744,18 +3251,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  double _calculatePlatformFee(double servicePrice) {
-    final fee = servicePrice * 0.02;
-    return fee < 10 ? 10 : fee;
-  }
-
-  double _calculateGST(double servicePrice) {
-    return servicePrice * 0.18;
-  }
-
   Widget _buildCheckoutButton() {
     final totalAmount = _getTotalAmount();
-    final payableAmount = totalAmount * 0.6; // 60% of total
+    // Use advance payment from RPC calculation, fallback to 60% of total
+    final payableAmount = advancePaymentData != null
+        ? _safeToDouble(advancePaymentData!['user_advance_payment'])
+        : totalAmount * 0.6;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2781,7 +3282,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2798,7 +3301,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Date: ${_getSelectedDate()}',
@@ -2809,7 +3316,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           ),
                         ),
                         const Spacer(),
-                        const Icon(Icons.access_time, size: 14, color: AppTheme.textSecondaryColor),
+                        const Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: AppTheme.textSecondaryColor,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Time: ${_getSelectedTimeRange()}',
@@ -2821,12 +3332,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                       ],
                     ),
-                    if (widget.selectedScreen != null || 
-                        (widget.selectedTimeSlot != null && widget.selectedTimeSlot!.screenName != null)) ...[
+                    if (widget.selectedScreen != null ||
+                        (widget.selectedTimeSlot != null &&
+                            widget.selectedTimeSlot!.screenName != null)) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.movie, size: 14, color: AppTheme.textSecondaryColor),
+                          const Icon(
+                            Icons.movie,
+                            size: 14,
+                            color: AppTheme.textSecondaryColor,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Screen: ${_getScreenName()}',
@@ -2843,7 +3359,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
             ],
-            
+
             // Payment note
             Container(
               padding: const EdgeInsets.all(12),
@@ -2859,9 +3375,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      widget.selectedTimeSlot != null 
-                        ? 'Pay 60% now, remaining 40% after service completion in cash or UPI'
-                        : 'Pay 60% now, remaining 40% after service completion in cash or UPI',
+                      _getPaymentInfoText(payableAmount, totalAmount),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blue.shade700,
@@ -2874,8 +3388,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             CustomButton(
               width: double.infinity,
-              text: isProcessing ? 'Processing...' : 'Pay ₹${_formatPrice(payableAmount)}',
-              onPressed: isProcessing ? () {} : _proceedToRazorpay,
+              text: isProcessing
+                  ? 'Processing...'
+                  : isLoadingAdvancePayment
+                  ? 'Calculating...'
+                  : 'Pay ₹${_formatPrice(payableAmount)}',
+              onPressed: (isProcessing || isLoadingAdvancePayment)
+                  ? () {}
+                  : _proceedToRazorpay,
             ),
           ],
         ),
@@ -2883,60 +3403,111 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  /// Calculate the total amount using theater-specific pricing if available
+  /// Calculate using Canvas formula
+  Map<String, double> _calculateCanvasFormula() {
+    final S = _getServicePrice(); // service discounted price
+    final A = _calculateSelectedAddOnsRawTotal(); // add-ons raw price (before fees)
+    final F = 28.0; // fixed tax
+    final p = 3.54; // percent tax
+    final c = 5.0; // commission percent
+    final g = 18.0; // commission GST percent
+    final adv = 40.0; // advance factor
+    
+    final serviceWithAll = S + F + S * (p / 100);
+    final addonsWithAll = A + A * (p / 100);
+    final commission = (S + A) * (c / 100);
+    final totalCommission = commission * (1 + g / 100);
+    final totalVendorPayout = (S + A) - totalCommission;
+    final totalPriceUserSees = serviceWithAll + addonsWithAll;
+    final userAdvancePayment = totalPriceUserSees - totalVendorPayout * (adv / 100);
+    
+    debugPrint('Canvas Formula Debug:');
+    debugPrint('S (service): $S');
+    debugPrint('A (add-ons raw): $A');
+    debugPrint('serviceWithAll: $serviceWithAll');
+    debugPrint('addonsWithAll: $addonsWithAll');
+    debugPrint('totalPriceUserSees: $totalPriceUserSees');
+    debugPrint('userAdvancePayment: $userAdvancePayment');
+    
+    return {
+      'total_price_user_sees': totalPriceUserSees,
+      'user_advance_payment': userAdvancePayment,
+      'remaining_payment': totalPriceUserSees - userAdvancePayment,
+    };
+  }
+
+  /// Calculate the total amount using the new pricing logic
   double _getTotalAmount() {
-    final servicePrice = _getServicePrice();
-    final addOnsTotal = ref.read(selectedAddOnsProvider.notifier).getTotalAmount();
-    
-    // If we have theater data, use theater-specific calculations
-    if (widget.selectedTimeSlot != null) {
-      // Theater-specific pricing (similar to TheaterCheckoutScreen)
-      final subtotal = servicePrice + addOnsTotal;
-      final serviceCharge = subtotal * 0.025; // 2.5% service charge
-      final handlingFee = 25.0; // Fixed handling fee
-      final taxableAmount = subtotal + serviceCharge + handlingFee;
-      final gst = taxableAmount * 0.18; // 18% GST
-      final totalAmount = taxableAmount + gst;
-      return totalAmount - couponDiscount;
+    final canvasResult = _calculateCanvasFormula();
+    return canvasResult['total_price_user_sees']! - couponDiscount;
+  }
+
+  /// Get payment info text for checkout button
+  String _getPaymentInfoText(double payableAmount, double totalAmount) {
+    if (advancePaymentData != null) {
+      final remainingAmount = _safeToDouble(advancePaymentData!['remaining_payment']);
+      return 'Pay ₹${_formatPrice(payableAmount)} now, remaining ₹${_formatPrice(remainingAmount)} after service completion';
+    } else {
+      final remainingAmount = totalAmount - payableAmount;
+      return 'Pay ₹${_formatPrice(payableAmount)} now, remaining ₹${_formatPrice(remainingAmount)} after service completion';
     }
-    
-    // Fallback to original service listing calculations
-    final subtotal = servicePrice + addOnsTotal;
-    final platformFee = _calculatePlatformFee(subtotal);
-    final gst = _calculateGST(subtotal);
-    final deliveryFee = 0.0;
-    return subtotal + platformFee + gst + deliveryFee - couponDiscount;
   }
 
   /// Get the service price from theater time slot if available, otherwise from service listing
   double _getServicePrice() {
     // If we have theater time slot data, use the slot price
     if (widget.selectedTimeSlot != null) {
-      return widget.selectedTimeSlot!.basePrice;
+      try {
+        return widget.selectedTimeSlot!.basePrice;
+      } catch (e) {
+        debugPrint('❌ Error accessing theater time slot basePrice: $e');
+        debugPrint('❌ Falling back to service listing price');
+      }
+    }
+
+    // Fallback to service listing prices with safe conversion
+    double? offerPrice;
+    double? originalPrice;
+    
+    try {
+      offerPrice = widget.service.offerPrice;
+    } catch (e) {
+      debugPrint('⚠️ Error accessing service offerPrice: $e');
+      offerPrice = null;
     }
     
-    // Fallback to service listing prices
-    return widget.service.offerPrice ?? widget.service.originalPrice ?? 0.0;
+    try {
+      originalPrice = widget.service.originalPrice;
+    } catch (e) {
+      debugPrint('⚠️ Error accessing service originalPrice: $e');
+      originalPrice = null;
+    }
+    
+    final price = offerPrice ?? originalPrice ?? 0.0;
+    debugPrint('💰 Service price calculated: $price (offer: $offerPrice, original: $originalPrice)');
+    return price;
   }
-  
+
   /// Get the selected date for display
   String _getSelectedDate() {
     // Try widget.selectedDate first
     String? dateToUse = widget.selectedDate;
-    
+
     // If not available, try customization data
-    if ((dateToUse == null || dateToUse.isEmpty) && widget.customization != null && widget.customization!['date'] != null) {
+    if ((dateToUse == null || dateToUse.isEmpty) &&
+        widget.customization != null &&
+        widget.customization!['date'] != null) {
       final customDate = widget.customization!['date'] as String;
       if (customDate != 'Select Date') {
         dateToUse = customDate;
       }
     }
-    
+
     if (dateToUse != null && dateToUse.isNotEmpty) {
       // Parse and format the date nicely
       try {
         DateTime date;
-        
+
         // Handle different date formats
         if (dateToUse.contains('-')) {
           // ISO format or yyyy-MM-dd format
@@ -2956,31 +3527,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         } else {
           throw FormatException('Unknown date format');
         }
-        
+
         final day = date.day.toString().padLeft(2, '0');
         final month = date.month.toString().padLeft(2, '0');
-        return '$day/${month}/${date.year}';
+        return '$day/$month/${date.year}';
       } catch (e) {
         debugPrint('❌ Error parsing date "$dateToUse": $e');
         // Return the original string if parsing fails
         return dateToUse;
       }
     }
-    
+
     // Fallback to tomorrow's date for service booking
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final day = tomorrow.day.toString().padLeft(2, '0');
     final month = tomorrow.month.toString().padLeft(2, '0');
-    return '$day/${month}/${tomorrow.year}';
+    return '$day/$month/${tomorrow.year}';
   }
-  
+
   /// Get the selected time range for display
   String _getSelectedTimeRange() {
     // Check theater time slot first
     if (widget.selectedTimeSlot != null) {
       return '${widget.selectedTimeSlot!.startTime} - ${widget.selectedTimeSlot!.endTime}';
     }
-    
+
     // Check customization data for regular services
     if (widget.customization != null && widget.customization!['time'] != null) {
       final selectedTime = widget.customization!['time'] as String;
@@ -2988,28 +3559,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return selectedTime;
       }
     }
-    
+
     // For regular services, show a more appropriate default time
     return 'Morning (9:00 AM - 12:00 PM)';
   }
-  
+
   /// Get the screen name for display
   String _getScreenName() {
     if (widget.selectedScreen != null) {
       return widget.selectedScreen!.screenName;
-    } else if (widget.selectedTimeSlot != null && widget.selectedTimeSlot!.screenName != null) {
+    } else if (widget.selectedTimeSlot != null &&
+        widget.selectedTimeSlot!.screenName != null) {
       return widget.selectedTimeSlot!.screenName!;
     }
-    
+
     // Fallback to generic screen
     return 'Screen';
   }
 
   String _formatPrice(double price) {
-    return price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!$))'),
-      (Match m) => '${m[1]},',
-    );
+    return price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!$))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
   void _showAddressSelector(AsyncValue<List<Address>> userAddresses) {
@@ -3112,7 +3686,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: addresses.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final address = addresses[index];
                       final isSelected = selectedAddressId == address.id;
@@ -3127,18 +3702,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.primaryColor.withOpacity(0.05) : AppTheme.backgroundColor,
+                            color: isSelected
+                                ? AppTheme.primaryColor.withOpacity(0.05)
+                                : AppTheme.backgroundColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? AppTheme.primaryColor : AppTheme.backgroundColor,
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.backgroundColor,
                               width: isSelected ? 2 : 1,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                                color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondaryColor,
+                                isSelected
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_unchecked,
+                                color: isSelected
+                                    ? AppTheme.primaryColor
+                                    : AppTheme.textSecondaryColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -3149,13 +3732,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                     Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: AppTheme.primaryColor.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color: AppTheme.primaryColor
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
-                                            address.addressFor.toString().split('.').last.toUpperCase(),
+                                            address.addressFor
+                                                .toString()
+                                                .split('.')
+                                                .last
+                                                .toUpperCase(),
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w600,
@@ -3172,7 +3765,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w500,
                                         fontFamily: 'Okra',
-                                        color: isSelected ? AppTheme.textPrimaryColor : AppTheme.textSecondaryColor,
+                                        color: isSelected
+                                            ? AppTheme.textPrimaryColor
+                                            : AppTheme.textSecondaryColor,
                                       ),
                                     ),
                                     if (address.area != null) ...[
@@ -3206,11 +3801,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   padding: EdgeInsets.all(40),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red,
-                      ),
+                      Icon(Icons.error_outline, size: 48, color: Colors.red),
                       SizedBox(height: 16),
                       Text(
                         'Error loading addresses',
@@ -3235,7 +3826,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void _proceedToRazorpay() async {
     debugPrint('🚀 [CHECKOUT] Starting booking process');
     debugPrint('🚀 [CHECKOUT] Selected address ID: $selectedAddressId');
-    
+
     if (selectedAddressId == null) {
       debugPrint('❌ [CHECKOUT] No address selected');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3270,65 +3861,199 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // Verify the selected address exists
       final userAddresses = await ref.read(addressesProvider.future);
       debugPrint('✅ [CHECKOUT] User has ${userAddresses.length} addresses');
-      final addressExists = userAddresses.any((addr) => addr.id == selectedAddressId);
+      final addressExists = userAddresses.any(
+        (addr) => addr.id == selectedAddressId,
+      );
       if (!addressExists) {
         debugPrint('❌ [CHECKOUT] Selected address not found in user addresses');
         throw Exception('Selected address not found');
       }
       debugPrint('✅ [CHECKOUT] Address verification passed');
 
+      // Get customer details based on booking type
+      String customerName;
+      String customerPhone;
+
+      if (bookingForSelf) {
+        // Get user profile data for self booking
+        final userProfile = ref.read(currentUserProfileProvider).asData?.value;
+        customerName = userProfile?.fullName ?? '';
+        customerPhone = userProfile?.phoneNumber ?? '';
+
+        debugPrint('📝 [CHECKOUT] Self booking - using profile data');
+        debugPrint('📝 [CHECKOUT] Profile Name: $customerName');
+        debugPrint('📝 [CHECKOUT] Profile Phone: $customerPhone');
+
+        // Validate self booking requirements
+        if (customerName.isEmpty) {
+          debugPrint('❌ [CHECKOUT] User profile missing name');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Please complete your profile with your name',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+          setState(() {
+            isProcessing = false;
+          });
+          return;
+        }
+
+        if (customerPhone.isEmpty) {
+          debugPrint('❌ [CHECKOUT] User profile missing phone number');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Please add your phone number to your profile',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+          setState(() {
+            isProcessing = false;
+          });
+          return;
+        }
+      } else {
+        // Validate form for someone else booking
+        debugPrint('📝 [CHECKOUT] Someone else booking - validating form');
+        if (!_bookingFormKey.currentState!.validate()) {
+          debugPrint('❌ [CHECKOUT] Booking form validation failed');
+          setState(() {
+            isProcessing = false;
+          });
+          return;
+        }
+
+        customerName = _customerNameController.text.trim();
+        customerPhone = _customerPhoneController.text.trim();
+        debugPrint('📝 [CHECKOUT] Form Name: $customerName');
+        debugPrint('📝 [CHECKOUT] Form Phone: $customerPhone');
+      }
+
+      debugPrint('✅ [CHECKOUT] Booking form validation passed');
+      debugPrint('✅ [CHECKOUT] Customer Name: $customerName');
+      debugPrint('✅ [CHECKOUT] Customer Phone: $customerPhone');
+      debugPrint('✅ [CHECKOUT] Booking for self: $bookingForSelf');
+
       debugPrint('🏪 [CHECKOUT] Getting order creation notifier');
       // Get order creation notifier
       final orderCreationNotifier = ref.read(orderCreationProvider.notifier);
-      
+
       debugPrint('💰 [CHECKOUT] Calculating total amount');
       // Calculate total amount
       final totalAmount = _getTotalAmount();
       debugPrint('✅ [CHECKOUT] Total amount calculated: $totalAmount');
-      
+
       debugPrint('🖼️ [CHECKOUT] Checking for place image data');
       // Don't upload place image yet - store it for after payment
       String? placeImageUrl; // Will remain null until after payment
       if (widget.customization?['placeImage'] != null) {
-        debugPrint('📸 [CHECKOUT] Place image found, will upload after payment');
+        debugPrint(
+          '📸 [CHECKOUT] Place image found, will upload after payment',
+        );
       } else {
         debugPrint('ℹ️ [CHECKOUT] No place image to upload');
       }
-      
+
       debugPrint('📅 [CHECKOUT] Determining booking date and time');
       // Determine booking date and time based on theater data if available
       DateTime bookingDate;
       String? selectedDateStr;
       String? selectedTimeSlotStr;
-      
+
       if (widget.selectedTimeSlot != null && widget.selectedDate != null) {
         debugPrint('🎭 [CHECKOUT] Theater booking detected');
         // Use theater-specific date
         bookingDate = DateTime.parse(widget.selectedDate!);
         selectedDateStr = widget.selectedDate;
-        selectedTimeSlotStr = '${widget.selectedTimeSlot!.startTime} - ${widget.selectedTimeSlot!.endTime}';
-        debugPrint('✅ [CHECKOUT] Theater date: $selectedDateStr, time: $selectedTimeSlotStr');
+        selectedTimeSlotStr =
+            '${widget.selectedTimeSlot!.startTime} - ${widget.selectedTimeSlot!.endTime}';
+        debugPrint(
+          '✅ [CHECKOUT] Theater date: $selectedDateStr, time: $selectedTimeSlotStr',
+        );
       } else {
         debugPrint('🛠️ [CHECKOUT] Regular service booking');
-        // Use default date (tomorrow)
-        bookingDate = DateTime.now().add(const Duration(days: 1));
-        selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
-        selectedTimeSlotStr = 'TBD';
-        debugPrint('✅ [CHECKOUT] Default date: $selectedDateStr, time: $selectedTimeSlotStr');
+        
+        // Extract date from customization data first
+        if (widget.customization != null && widget.customization!['date'] != null) {
+          final customDate = widget.customization!['date'] as String;
+          if (customDate != 'Select Date' && customDate.isNotEmpty) {
+            try {
+              // Parse date from dd/MM/yyyy format
+              final parts = customDate.split('/');
+              if (parts.length == 3) {
+                bookingDate = DateTime(
+                  int.parse(parts[2]), // year
+                  int.parse(parts[1]), // month
+                  int.parse(parts[0]), // day
+                );
+                selectedDateStr = customDate;
+                debugPrint('✅ [CHECKOUT] Using selected date from customization: $selectedDateStr');
+              } else {
+                throw FormatException('Invalid date format');
+              }
+            } catch (e) {
+              debugPrint('❌ [CHECKOUT] Error parsing selected date: $e');
+              // Fallback to tomorrow
+              bookingDate = DateTime.now().add(const Duration(days: 1));
+              selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+            }
+          } else {
+            // Fallback to tomorrow if no valid date selected
+            bookingDate = DateTime.now().add(const Duration(days: 1));
+            selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+          }
+        } else {
+          // Fallback to tomorrow if no customization data
+          bookingDate = DateTime.now().add(const Duration(days: 1));
+          selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+        }
+        
+        // Extract time from customization data
+        if (widget.customization != null && widget.customization!['time'] != null) {
+          final selectedTime = widget.customization!['time'] as String;
+          if (selectedTime != 'Select Time' && selectedTime.isNotEmpty) {
+            selectedTimeSlotStr = selectedTime;
+            debugPrint('✅ [CHECKOUT] Using selected time from customization: $selectedTimeSlotStr');
+          } else {
+            selectedTimeSlotStr = 'TBD';
+          }
+        } else {
+          selectedTimeSlotStr = 'TBD';
+        }
+        
+        debugPrint(
+          '✅ [CHECKOUT] Regular service date: $selectedDateStr, time: $selectedTimeSlotStr',
+        );
       }
-      
+
       debugPrint('🚀 [CHECKOUT] Starting order creation process');
-      
+
       // Determine if this is a theater booking or regular service booking
       if (widget.selectedTimeSlot != null) {
         debugPrint('❌ [CHECKOUT] Theater bookings should use different flow');
         // This is a theater booking - should go to private_theater_bookings table
         // For now, we'll still use the order creation but add a comment for future implementation
         // TODO: Implement theater booking creation for private_theater_bookings table
-        throw Exception('Theater bookings should be handled through theater booking flow, not service orders');
+        throw Exception(
+          'Theater bookings should be handled through theater booking flow, not service orders',
+        );
       }
-      
-      debugPrint('📊 [CHECKOUT] Preparing order data for regular service booking');
+
+      debugPrint(
+        '📊 [CHECKOUT] Preparing order data for regular service booking',
+      );
       debugPrint('📊 [CHECKOUT] Service ID: ${widget.service.id}');
       debugPrint('📊 [CHECKOUT] Service Name: ${widget.service.name}');
       debugPrint('📊 [CHECKOUT] Vendor ID: ${widget.service.vendorId}');
@@ -3336,26 +4061,57 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       debugPrint('📊 [CHECKOUT] Total Amount: $totalAmount');
       debugPrint('📊 [CHECKOUT] Place Image URL: $placeImageUrl');
       
+      // Calculate payment amounts based on UI logic
+      final payableAmount = advancePaymentData != null
+          ? _safeToDouble(advancePaymentData!['user_advance_payment'])
+          : totalAmount * 0.6; // 60% if no RPC data
+      final remainingAmount = advancePaymentData != null
+          ? _safeToDouble(advancePaymentData!['remaining_payment'])
+          : totalAmount * 0.4; // 40% if no RPC data
+          
+      debugPrint('📊 [CHECKOUT] Payable Amount (advance): $payableAmount');
+      debugPrint('📊 [CHECKOUT] Remaining Amount: $remainingAmount');
+
+      // Extract customer details from customization data
+      final customization = widget.customization ?? <String, dynamic>{};
+      final customerAge = customization['customerAge'] as int?;
+      final occasion = customization['occasion'] as String?;
+      final orderCustomerName = customization['customerName'] as String? ?? 
+          currentUser.userMetadata?['full_name'] ??
+          currentUser.email ??
+          'Guest User';
+
+      debugPrint('👤 [CHECKOUT] Customer details from customization:');
+      debugPrint('👤 [CHECKOUT]   Name: $orderCustomerName');
+      debugPrint('👤 [CHECKOUT]   Age: $customerAge');
+      debugPrint('👤 [CHECKOUT]   Occasion: $occasion');
+
       // This is a regular decoration service booking - goes to orders table
       debugPrint('🏗️ [CHECKOUT] Calling orderCreationNotifier.createOrder()');
       final order = await orderCreationNotifier.createOrder(
         userId: currentUser.id,
         vendorId: widget.service.vendorId ?? '',
-        customerName: currentUser.userMetadata?['full_name'] ?? currentUser.email ?? 'Guest User',
+        customerName: orderCustomerName,
         serviceListingId: widget.service.id,
         serviceTitle: widget.service.name,
         bookingDate: bookingDate,
         totalAmount: totalAmount,
+        advanceAmount: payableAmount,
+        remainingAmount: remainingAmount,
         customerPhone: currentUser.userMetadata?['phone'] ?? currentUser.phone,
         customerEmail: currentUser.email,
         serviceDescription: widget.service.description,
-        bookingTime: null, // Regular services don't have specific time slots
+        bookingTime: selectedTimeSlotStr, // Pass the selected time slot
         specialRequirements: null,
         addressId: selectedAddressId,
         placeImageUrl: placeImageUrl,
+        age: customerAge,
+        occasion: occasion,
       );
-      
-      debugPrint('✅ [CHECKOUT] Order created successfully! Order ID: ${order.id}');
+
+      debugPrint(
+        '✅ [CHECKOUT] Order created successfully! Order ID: ${order.id}',
+      );
 
       if (mounted) {
         setState(() {
@@ -3367,36 +4123,44 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             content: Text('Order created successfully! Order ID: ${order.id}'),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
-        
+
         // Navigate to payment screen for processing
-        context.push(PaymentScreen.routeName, extra: {
-          'service': widget.service,
-          'customization': widget.customization,
-          'placeImage': widget.customization?['placeImage'], // Pass place image data for later upload
-          'selectedAddressId': selectedAddressId,
-          'totalAmount': totalAmount,
-          'advanceAmount': order.advanceAmount,
-          'remainingAmount': order.remainingAmount,
-          'specialRequirements': null,
-          'couponCode': isCouponApplied ? couponCode : null,
-          'couponDiscount': couponDiscount,
-          'orderId': order.id,
-          'selectedDate': selectedDateStr,
-          'selectedTimeSlot': selectedTimeSlotStr,
-          // Add theater-specific data if available
-          'selectedScreen': widget.selectedScreen,
-          'selectedTimeSlotData': widget.selectedTimeSlot,
-        });
+        context.push(
+          PaymentScreen.routeName,
+          extra: {
+            'service': widget.service,
+            'customization': widget.customization,
+            'placeImage': widget
+                .customization?['placeImage'], // Pass place image data for later upload
+            'selectedAddressId': selectedAddressId,
+            'totalAmount': totalAmount,
+            'advanceAmount': order.advanceAmount,
+            'remainingAmount': order.remainingAmount,
+            'specialRequirements': null,
+            'couponCode': isCouponApplied ? couponCode : null,
+            'couponDiscount': couponDiscount,
+            'orderId': order.id,
+            'selectedDate': selectedDateStr,
+            'selectedTimeSlot': selectedTimeSlotStr,
+            // Add theater-specific data if available
+            'selectedScreen': widget.selectedScreen,
+            'selectedTimeSlotData': widget.selectedTimeSlot,
+            // Pass the edited addons data
+            'selectedAddOns': editableAddOns,
+          },
+        );
       }
     } catch (e) {
       debugPrint('❌ [CHECKOUT] ERROR: Failed to create order');
       debugPrint('❌ [CHECKOUT] Error type: ${e.runtimeType}');
       debugPrint('❌ [CHECKOUT] Error message: $e');
       debugPrint('❌ [CHECKOUT] Full error details: ${e.toString()}');
-      
+
       if (mounted) {
         setState(() {
           isProcessing = false;
@@ -3407,7 +4171,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             content: Text('Failed to create order: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -3459,22 +4225,40 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildServiceDetailItem('Service Type', widget.selectedTimeSlot != null ? 'Private Theater Booking' : 'Decoration Service'),
+          _buildServiceDetailItem(
+            'Service Type',
+            widget.selectedTimeSlot != null
+                ? 'Private Theater Booking'
+                : 'Decoration Service',
+          ),
           const SizedBox(height: 12),
           _buildServiceDetailItem('Scheduled Date', _getSelectedDate()),
           const SizedBox(height: 12),
           _buildServiceDetailItem('Scheduled Time', _getSelectedTimeRange()),
           const SizedBox(height: 12),
-          _buildServiceDetailItem('Service Location', widget.selectedTimeSlot != null ? 'Theater Venue' : 'Customer Address'),
-          if (widget.selectedTimeSlot != null && _getScreenName() != 'Screen') ...[
+          _buildServiceDetailItem(
+            'Service Location',
+            widget.selectedTimeSlot != null
+                ? 'Theater Venue'
+                : 'Customer Address',
+          ),
+          if (widget.selectedTimeSlot != null &&
+              _getScreenName() != 'Screen') ...[
             const SizedBox(height: 12),
             _buildServiceDetailItem('Screen/Hall', _getScreenName()),
           ],
           const SizedBox(height: 12),
-          _buildServiceDetailItem('Payment Mode', 'Pay 60% now, 40% after service'),
-          if (widget.customization != null && _hasValidCustomizations(widget.customization!)) ...[
+          _buildServiceDetailItem(
+            'Payment Mode',
+            'Pay 60% now, 40% after service',
+          ),
+          if (widget.customization != null &&
+              _hasValidCustomizations(widget.customization!)) ...[
             const SizedBox(height: 12),
-            _buildServiceDetailItem('Customizations', 'Applied as per your preferences'),
+            _buildServiceDetailItem(
+              'Customizations',
+              'Applied as per your preferences',
+            ),
           ],
         ],
       ),
@@ -3561,5 +4345,110 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ],
       ),
     );
+  }
+
+  void _loadUserProfileData() {
+    final userProfile = ref.read(currentUserProfileProvider).asData?.value;
+    if (userProfile != null) {
+      _customerNameController.text = userProfile.fullName ?? '';
+      _customerPhoneController.text = userProfile.phoneNumber ?? '';
+    }
+  }
+
+  /// Fetch vendor GST status from vendor_private_details table
+  Future<void> _loadVendorGstStatus() async {
+    if (widget.service.vendorId == null) return;
+
+    setState(() {
+      isLoadingVendorGst = true;
+    });
+
+    try {
+      // Fetch vendor GST details from vendor_private_details table
+      final response = await Supabase.instance.client
+          .from('vendor_private_details')
+          .select('gst_number')
+          .eq('vendor_id', widget.service.vendorId!)
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() {
+          // Vendor has GST if gst_number is not null and not empty
+          vendorHasGst =
+              response != null &&
+              response['gst_number'] != null &&
+              response['gst_number'].toString().trim().isNotEmpty;
+          isLoadingVendorGst = false;
+        });
+      }
+    } catch (e) {
+      // If there's an error or no GST data found, assume no GST
+      if (mounted) {
+        setState(() {
+          vendorHasGst = false;
+          isLoadingVendorGst = false;
+        });
+      }
+      debugPrint('Error loading vendor GST status: $e');
+    }
+  }
+
+  void _clearCustomerData() {
+    _customerNameController.clear();
+    _customerPhoneController.clear();
+  }
+
+  /// Calculate advance payment using Supabase RPC function
+  Future<void> _calculateAdvancePayment() async {
+    if (widget.service.vendorId == null) return;
+
+    setState(() {
+      isLoadingAdvancePayment = true;
+    });
+
+    try {
+      final servicePrice = _getServicePrice();
+      final addOnsTotal = _calculateSelectedAddOnsRawTotal(); // Use raw total for RPC
+
+      debugPrint(
+        'Calling RPC with: vendor_id=${widget.service.vendorId}, service_price=$servicePrice, addons_raw_total=$addOnsTotal',
+      );
+
+      // Call the Supabase RPC function
+      final response = await Supabase.instance.client.rpc(
+        'calculate_advance_payment',
+        params: {
+          'p_vendor_id': widget.service.vendorId!,
+          'p_service_discounted_price': servicePrice,
+          'p_addons_discounted_price': addOnsTotal,
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          advancePaymentData = response as Map<String, dynamic>;
+          isLoadingAdvancePayment = false;
+        });
+        debugPrint('RPC Response: $response');
+        debugPrint(
+          'User advance payment: ${(response as Map<String, dynamic>)['user_advance_payment']}',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          advancePaymentData = null;
+          isLoadingAdvancePayment = false;
+        });
+      }
+      debugPrint('Error calculating advance payment: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _customerNameController.dispose();
+    _customerPhoneController.dispose();
+    super.dispose();
   }
 }

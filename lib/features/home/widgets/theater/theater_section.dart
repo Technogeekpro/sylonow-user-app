@@ -69,7 +69,8 @@ class _TheaterSectionState extends State<TheaterSection>
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GestureDetector(
         onTap: () {
-          context.push('/theater/date-selection');
+          // Navigate to outside theaters screen with back button
+          context.push('/outside-theaters');
         },
         child: ClipRRect(
           borderRadius: const BorderRadius.only(

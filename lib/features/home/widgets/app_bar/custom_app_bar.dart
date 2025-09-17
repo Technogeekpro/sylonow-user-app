@@ -1,6 +1,6 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +8,8 @@ import 'package:lottie/lottie.dart';
 import 'package:sylonow_user/core/widgets/gredient_elevated_button.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
+
+import 'celebration_date_container.dart';
 
 /// Custom app bar overlay with location and search sections
 class CustomAppBarOverlay extends ConsumerWidget {
@@ -140,6 +142,7 @@ class LocationContent extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Transform.rotate(
                           angle: 1,
@@ -150,20 +153,18 @@ class LocationContent extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            selectedAddress?.area ??
-                                'Accurate location detected',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Okra',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          selectedAddress?.area ?? 'Accurate location detected',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Okra',
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(width: 8),
                         if (isLocationEnabled && selectedAddress != null)
                           const Icon(
                             Icons.keyboard_arrow_down,
@@ -190,32 +191,14 @@ class LocationContent extends ConsumerWidget {
           ),
 
           const Row(
-            children: [WalletButton(), SizedBox(width: 8), WishlistButton()],
+            children: [
+              CelebrationDateContainer(),
+              SizedBox(width: 8),
+              WishlistButton(),
+            ],
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Wallet button widget
-class WalletButton extends StatelessWidget {
-  const WalletButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50),
-          side: BorderSide(color: Colors.white, width: 0.5),
-        ),
-      ),
-      onPressed: () {
-        context.push('/wallet');
-      },
-      icon: const Icon(Icons.wallet, color: Colors.white, size: 20),
     );
   }
 }
@@ -357,17 +340,20 @@ class AdvertisementSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double appBarHeight = 130;
+    double appBarHeight = 130;
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return GestureDetector(
       onTap: () {
-        context.push('/offers');
+        context.push('/discounted-services');
       },
       child: Container(
-        height: 270 + appBarHeight,
+        height: MediaQuery.of(context).size.height * 0.35 + appBarHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
           image: const DecorationImage(
             image: AssetImage('assets/images/splash_screen.png'),
             fit: BoxFit.cover,
@@ -410,7 +396,7 @@ class AdvertisementSection extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Get 50% OFF\non Your First Service Booking!',
+                'Get Upto 50% OFF\non Services!',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -422,13 +408,13 @@ class AdvertisementSection extends StatelessWidget {
               const SizedBox(height: 16),
 
               const Spacer(),
-             GradientElevatedButton(
-                  text: 'Book Now & Save',
-                  icon: Icon(Icons.arrow_forward),
-                  onPressed: () {
-                    context.push('/offers');
-                  },
-                ),
+              GradientElevatedButton(
+                text: 'Book Now & Save',
+                icon: Icon(Icons.arrow_forward),
+                onPressed: () {
+                  context.push('/discounted-services');
+                },
+              ),
             ],
           ),
         ),

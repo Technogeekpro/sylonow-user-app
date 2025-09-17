@@ -1,26 +1,28 @@
 import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dotted_border/dotted_border.dart';
 // removed unused dart:ui import
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/custom_shimmer.dart';
-import '../../../core/services/image_upload_service.dart';
-import '../../../core/providers/welcome_providers.dart';
-import '../../reviews/screens/reviews_screen.dart';
-import '../../home/models/service_listing_model.dart';
-import '../../home/providers/home_providers.dart';
-import '../../wishlist/providers/wishlist_providers.dart';
-import '../../profile/providers/profile_providers.dart';
-import 'package:dotted_border/dotted_border.dart';
+import 'package:lottie/lottie.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../core/providers/welcome_providers.dart';
+import '../../../core/services/image_upload_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/price_calculator.dart';
+import '../../../core/widgets/custom_shimmer.dart';
 import '../../booking/screens/checkout_screen.dart';
+import '../../home/models/service_listing_model.dart';
 import '../../home/models/vendor_model.dart';
+import '../../home/providers/home_providers.dart';
+import '../../profile/providers/profile_providers.dart';
+import '../../reviews/screens/reviews_screen.dart';
+import '../../wishlist/providers/wishlist_providers.dart';
 // Removed unused vendor model import
 
 // Provider to fetch individual service details
@@ -106,6 +108,88 @@ final relatedServicesProvider =
       }
     });
 
+// Model for service addons
+class ServiceAddon {
+  final String id;
+  final String name;
+  final String? description;
+  final double price;
+  final double? originalPrice;
+  final String? imageUrl;
+  final bool isCustomizable;
+  final String? customizationInputType;
+  final double discountPrice;
+
+  const ServiceAddon({
+    required this.id,
+    required this.name,
+    this.description,
+    required this.price,
+    this.originalPrice,
+    this.imageUrl,
+    this.isCustomizable = false,
+    this.customizationInputType,
+    required this.discountPrice,
+  });
+
+  factory ServiceAddon.fromJson(Map<String, dynamic> json) {
+    final originalPrice = json['original_price'] != null
+        ? (json['original_price'] as num).toDouble()
+        : null;
+    final discountPrice =
+        (json['discount_price'] as num?)?.toDouble() ?? originalPrice ?? 1.0;
+
+    // Try image_url first (from repository), then images array (from direct DB)
+    String? imageUrl;
+    if (json['image_url'] != null) {
+      imageUrl = json['image_url'] as String?;
+    } else if (json['images'] != null && (json['images'] as List).isNotEmpty) {
+      imageUrl = (json['images'] as List)[0] as String?;
+    }
+
+    return ServiceAddon(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      price: discountPrice > 0 ? discountPrice : originalPrice ?? 0.0,
+      originalPrice: originalPrice,
+      imageUrl: imageUrl,
+      isCustomizable: json['is_customizable'] as bool? ?? false,
+      customizationInputType: json['customization_input_type'] as String?,
+      discountPrice: discountPrice,
+    );
+  }
+}
+
+// Provider to fetch service addons
+final serviceAddonsProvider = FutureProvider.family<List<ServiceAddon>, String>(
+  (ref, vendorId) async {
+    try {
+      debugPrint('🔄 Fetching service addons for vendor ID: $vendorId');
+
+      final repository = ref.watch(homeRepositoryProvider);
+      final response = await repository.getServiceAddons(vendorId);
+
+      final addons = response
+          .map((json) => ServiceAddon.fromJson(json))
+          .toList();
+
+      debugPrint('✅ Service addons loaded: ${addons.length} items');
+      for (var addon in addons.take(3)) {
+        debugPrint('  - ${addon.name} (₹${addon.price})');
+      }
+
+      return addons;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error fetching service addons:');
+      debugPrint('  - Vendor ID: $vendorId');
+      debugPrint('  - Error: $e');
+      debugPrint('  - StackTrace: $stackTrace');
+      return []; // Return empty list instead of throwing error
+    }
+  },
+);
+
 class ServiceDetailScreen extends ConsumerStatefulWidget {
   final String serviceId;
   final String? serviceName;
@@ -130,6 +214,9 @@ class ServiceDetailScreen extends ConsumerStatefulWidget {
 class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
+
+  // Track added addons with their custom text and character count
+  final Map<String, Map<String, dynamic>> _addedAddons = {};
 
   // Placeholder for when no images are available
   final String _placeholderImage =
@@ -220,7 +307,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                   reviewCount,
                   promotionalTag,
                 ),
-                _buildDescription(serviceDescription),
+                Container(height: 10, color: Colors.grey[200]),
+                _buildAddonsSection(service),
                 _buildRelatedServices(service),
                 const SizedBox(height: 100), // Space for bottom button
               ],
@@ -487,37 +575,18 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title section
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      serviceName,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPriceSection(originalPrice, offerPrice),
-                    if (promotionalTag != null) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          promotionalTag,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  serviceName,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontFamily: 'Okra',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
+                  ),
                 ),
               ),
               Consumer(
@@ -585,15 +654,30 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+
+          // Price and discount tag section
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildPriceSectionHorizontal(originalPrice, offerPrice),
+              const SizedBox(width: 12),
+              if (offerPrice != null &&
+                  originalPrice != null &&
+                  offerPrice < originalPrice)
+                _buildDiscountTag(originalPrice, offerPrice, promotionalTag),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Rating section
           Row(
             children: [
-              Icon(Icons.star, color: Colors.orange, size: 20),
+              Icon(Icons.star, color: Colors.orange, size: 18),
               const SizedBox(width: 4),
               Text(
                 rating,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Okra',
                 ),
@@ -607,26 +691,140 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                   fontFamily: 'Okra',
                 ),
               ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  _navigateToReviews();
-                },
-                child: Text(
-                  'See reviews',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildPriceSectionHorizontal(
+    double? originalPrice,
+    double? offerPrice,
+  ) {
+    if (offerPrice != null &&
+        originalPrice != null &&
+        offerPrice < originalPrice) {
+      // Calculate tax-inclusive prices
+      final taxInclusiveOfferPrice =
+          PriceCalculator.calculateTotalPriceWithTaxes(offerPrice);
+      final taxInclusiveOriginalPrice =
+          PriceCalculator.calculateTotalPriceWithTaxes(originalPrice);
+
+      // Show discounted price horizontally with tax-inclusive amounts
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                PriceCalculator.formatPriceAsInt(taxInclusiveOfferPrice),
+                style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                  color: AppTheme.primaryColor,
+                  fontFamily: 'Okra',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                PriceCalculator.formatPriceAsInt(taxInclusiveOriginalPrice),
+                style: const TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  color: Colors.grey,
+                  fontFamily: 'Okra',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'All taxes included',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.green,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Okra',
+            ),
+          ),
+        ],
+      );
+    } else if (originalPrice != null) {
+      // Calculate tax-inclusive price for regular pricing
+      final taxInclusivePrice = PriceCalculator.calculateTotalPriceWithTaxes(
+        originalPrice,
+      );
+
+      // Show regular price with tax-inclusive amount
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            PriceCalculator.formatPriceAsInt(taxInclusivePrice),
+            style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+              color: AppTheme.primaryColor,
+              fontFamily: 'Okra',
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'All taxes included',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.green,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Okra',
+            ),
+          ),
+        ],
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildDiscountTag(
+    double? originalPrice,
+    double? offerPrice,
+    String? promotionalTag,
+  ) {
+    if (offerPrice != null &&
+        originalPrice != null &&
+        offerPrice < originalPrice) {
+      // Calculate savings based on tax-inclusive prices
+      final taxInclusiveOriginalPrice =
+          PriceCalculator.calculateTotalPriceWithTaxes(originalPrice);
+      final taxInclusiveOfferPrice =
+          PriceCalculator.calculateTotalPriceWithTaxes(offerPrice);
+      final savings = (taxInclusiveOriginalPrice - taxInclusiveOfferPrice)
+          .round();
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'Save ₹${_formatNumberWithCommas(savings)}',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFamily: 'Okra',
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildPriceSection(double? originalPrice, double? offerPrice) {
@@ -640,7 +838,9 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           Row(
             children: [
               Text(
-                '₹${_formatNumberWithCommas(offerPrice.round())}',
+                PriceCalculator.formatPriceAsInt(
+                  PriceCalculator.calculateTotalPriceWithTaxes(offerPrice),
+                ),
                 style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                   color: AppTheme.primaryColor,
                   fontFamily: 'Okra',
@@ -648,7 +848,9 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '₹${_formatNumberWithCommas(originalPrice.round())}',
+                PriceCalculator.formatPriceAsInt(
+                  PriceCalculator.calculateTotalPriceWithTaxes(originalPrice),
+                ),
                 style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   decoration: TextDecoration.lineThrough,
                   color: Colors.grey,
@@ -665,7 +867,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              '${((originalPrice - offerPrice) / originalPrice * 100).round()}% OFF',
+              'Save ₹${_formatNumberWithCommas((PriceCalculator.calculateTotalPriceWithTaxes(originalPrice) - PriceCalculator.calculateTotalPriceWithTaxes(offerPrice)).round())}',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -679,7 +881,9 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     } else if (originalPrice != null) {
       // Show regular price
       return Text(
-        '₹${_formatNumberWithCommas(originalPrice.round())}',
+        PriceCalculator.formatPriceAsInt(
+          PriceCalculator.calculateTotalPriceWithTaxes(originalPrice),
+        ),
         style: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
@@ -720,6 +924,631 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddonsSection(ServiceListingModel service) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final serviceAddonsAsync = ref.watch(
+          serviceAddonsProvider(service.vendorId!),
+        );
+
+        return serviceAddonsAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator(color: Colors.pink)),
+          ),
+          error: (error, stack) {
+            debugPrint('Addons error: $error');
+            return const SizedBox.shrink(); // Hide section on error
+          },
+          data: (addons) {
+            if (addons.isEmpty) {
+              return const SizedBox.shrink(); // Hide section if no addons
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Special Touch-ups',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 280,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: addons.length,
+                      itemBuilder: (context, index) {
+                        final addon = addons[index];
+                        return Container(
+                          width: 158,
+                          margin: EdgeInsets.only(
+                            right: index < addons.length - 1 ? 16 : 0,
+                          ),
+                          child: _buildAddonCard(addon),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAddonCard(ServiceAddon addon) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image Section
+          Container(
+            height: 157,
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: addon.imageUrl != null && addon.imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: addon.imageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.pink,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: Icon(Icons.image, color: Colors.grey, size: 40),
+                      ),
+                    ),
+            ),
+          ),
+          // Content Section
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    addon.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                      color: Color(0xFF1F2937),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  // Description
+                  if (addon.description != null &&
+                      addon.description!.isNotEmpty)
+                    Text(
+                      addon.description!,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'Okra',
+                        color: Color(0xFF1F2937),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const Spacer(),
+                  // Price and Add Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (addon.originalPrice != null &&
+                              addon.originalPrice! > addon.price)
+                            FutureBuilder<double>(
+                              future: PriceCalculator.calculateCheckoutTotalWithTaxesRPC(
+                                addon.originalPrice!,
+                                vendorHasGst: false, // Add-ons don't have GST
+                              ),
+                              builder: (context, snapshot) {
+                                final price = snapshot.data ?? 
+                                    PriceCalculator.calculateCheckoutTotalWithTaxes(
+                                      addon.originalPrice!, vendorHasGst: false);
+                                return Text(
+                                  PriceCalculator.formatPriceAsInt(price),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Okra',
+                                    color: Color(0xFF858585),
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                );
+                              },
+                            ),
+                          FutureBuilder<double>(
+                            future: PriceCalculator.calculateCheckoutTotalWithTaxesRPC(
+                              addon.price,
+                              vendorHasGst: false, // Add-ons don't have GST
+                            ),
+                            builder: (context, snapshot) {
+                              final price = snapshot.data ?? 
+                                  PriceCalculator.calculateCheckoutTotalWithTaxes(
+                                    addon.price, vendorHasGst: false);
+                              return Text(
+                                PriceCalculator.formatPriceAsInt(price),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Okra',
+                                  color: Color(0xFF171717),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      _buildAddonButton(addon),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddonButton(ServiceAddon addon) {
+    final bool isAdded = _addedAddons.containsKey(addon.id);
+
+    if (isAdded) {
+      final addonData = _addedAddons[addon.id]!;
+      final int characterCount = addonData['characterCount'] as int;
+
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2156D5),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: InkWell(
+          onTap: () {
+            // Handle edit addon functionality
+            _handleAddonEdit(addon);
+          },
+          borderRadius: BorderRadius.circular(5),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit, size: 14, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  '$characterCount',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFF2156D5)),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: InkWell(
+          onTap: () {
+            // Handle add addon functionality
+            _handleAddonAdd(addon);
+          },
+          borderRadius: BorderRadius.circular(5),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Add',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Okra',
+                color: Color(0xFF2156D5),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleAddonAdd(ServiceAddon addon) {
+    debugPrint('Adding addon: ${addon.name} (₹${addon.price})');
+
+    // Only show customization dialog for customizable addons
+    if (addon.isCustomizable) {
+      _showCustomizationDialog(addon, isEdit: false);
+    } else {
+      // For non-customizable addons, add directly without popup
+      _addNonCustomizableAddon(addon);
+    }
+  }
+
+  void _handleAddonEdit(ServiceAddon addon) {
+    debugPrint('Editing addon: ${addon.name}');
+
+    // Show customization dialog with existing data for editing
+    _showCustomizationDialog(addon, isEdit: true);
+  }
+
+  void _addNonCustomizableAddon(ServiceAddon addon) {
+    debugPrint('Adding non-customizable addon: ${addon.name}');
+
+    // Calculate total price including transaction fee (same as what user sees in UI)
+    final totalPriceWithFees = addon.price + (addon.price * 0.0354);
+
+    // Store addon data with default values
+    setState(() {
+      _addedAddons[addon.id] = {
+        'name': addon.name,
+        'price': addon.price,
+        'customText': '',
+        'characterCount': 1, // Default count for non-customizable
+        'totalPrice': totalPriceWithFees, // Include transaction fee like UI shows
+        'isCustomizable': addon.isCustomizable,
+        'addon': addon, // Keep the addon object for reference if needed
+      };
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${addon.name} added for ₹${addon.price.toStringAsFixed(2)}',
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _addRegularAddon(ServiceAddon addon) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${addon.name} added to your selection'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showCustomizationDialog(ServiceAddon addon, {bool isEdit = false}) {
+    final TextEditingController controller = TextEditingController();
+    double calculatedPrice = 0.0; // Start with 0 until user enters text
+
+    // If editing, pre-fill with existing data
+    if (isEdit && _addedAddons.containsKey(addon.id)) {
+      final existingData = _addedAddons[addon.id]!;
+      controller.text = existingData['customText'] as String;
+      calculatedPrice =
+          ((existingData['characterCount'] as int) * addon.discountPrice) +
+          ((existingData['characterCount'] as int) * addon.discountPrice) *
+              0.0354;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                constraints: const BoxConstraints(
+                  maxHeight: 600,
+                  maxWidth: 400,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title
+                    Text(
+                      isEdit ? 'Edit ${addon.name}' : 'Customize ${addon.name}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Addon Image
+                            AspectRatio(
+                              aspectRatio: 1,
+                              child: Container(
+                                height: 120,
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child:
+                                      addon.imageUrl != null &&
+                                          addon.imageUrl!.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: addon.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                                color: Colors.grey[200],
+                                                child: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: Colors.pink,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                                color: Colors.grey[200],
+                                                child: const Center(
+                                                  child: Icon(
+                                                    Icons.image_not_supported,
+                                                    color: Colors.grey,
+                                                    size: 40,
+                                                  ),
+                                                ),
+                                              ),
+                                        )
+                                      : Container(
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.image,
+                                              color: Colors.grey,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                            if (addon.description != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Text(
+                                  addon.description!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Okra',
+                                  ),
+                                ),
+                              ),
+                            Text(
+                              'Enter name to customize:',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: controller,
+                              keyboardType: TextInputType.text,
+                              onChanged: (value) {
+                                setState(() {
+                                  // Always calculate based on character count with taxes (no convenience fee)
+                                  final characterCount = value.length;
+                                  final basePrice = characterCount * addon.discountPrice;
+                                  // Add transaction fee (3.54%) but no convenience fee for add-ons
+                                  calculatedPrice = basePrice + (basePrice * 0.0354);
+                                });
+                              },
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2156D5),
+                                  ),
+                                ),
+                                hintText: 'Enter name (e.g., "Sa")',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Price (${controller.text.length} characters):',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Okra',
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${calculatedPrice.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF2156D5),
+                                      fontFamily: 'Okra',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (controller.text.trim().isNotEmpty) {
+                              Navigator.of(context).pop();
+                              _addCustomizedAddon(
+                                addon,
+                                controller.text.trim(),
+                                calculatedPrice,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2156D5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            isEdit ? 'Update' : 'Add to Cart',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Okra',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _addCustomizedAddon(
+    ServiceAddon addon,
+    String customValue,
+    double totalPrice,
+  ) {
+    final bool isEdit = _addedAddons.containsKey(addon.id);
+
+    debugPrint(
+      '${isEdit ? 'Updating' : 'Adding'} customized addon: ${addon.name}',
+    );
+    debugPrint('Custom value: $customValue');
+    debugPrint('Total price: ₹$totalPrice');
+
+    // Store/Update addon data
+    setState(() {
+      _addedAddons[addon.id] = {
+        'name': addon.name,
+        'price': addon.price,
+        'customText': customValue,
+        'characterCount': customValue.length,
+        'totalPrice': totalPrice,
+        'isCustomizable': addon.isCustomizable,
+        'addon': addon, // Keep the addon object for reference if needed
+      };
+    });
+
+    String message =
+        '${addon.name} ("$customValue" - ${customValue.length} chars) ${isEdit ? 'updated' : 'added'} for ₹${totalPrice.toStringAsFixed(2)}';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -846,118 +1675,141 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: 120,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: relatedServices.length,
-                      itemBuilder: (context, index) {
-                        final service = relatedServices[index];
-                        final price = service.offerPrice != null
-                            ? '₹${service.offerPrice!.round()}'
-                            : service.originalPrice != null
-                            ? '₹${service.originalPrice!.round()}'
-                            : 'Price on request';
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.70,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                    itemCount: relatedServices.length > 4
+                        ? 4
+                        : relatedServices.length,
+                    itemBuilder: (context, index) {
+                      final service = relatedServices[index];
+                      final price = service.offerPrice != null
+                          ? PriceCalculator.formatPriceAsInt(
+                              PriceCalculator.calculateTotalPriceWithTaxes(
+                                service.offerPrice!,
+                              ),
+                            )
+                          : service.originalPrice != null
+                          ? PriceCalculator.formatPriceAsInt(
+                              PriceCalculator.calculateTotalPriceWithTaxes(
+                                service.originalPrice!,
+                              ),
+                            )
+                          : 'Price on request';
 
-                        return GestureDetector(
-                          onTap: () {
-                            // Navigate to related service detail
-                            context.push(
-                              '/service/${service.id}',
-                              extra: {
-                                'serviceName': service.name,
-                                'price': price,
-                                'rating': (service.rating ?? 0.0)
-                                    .toStringAsFixed(1),
-                                'reviewCount': service.reviewsCount ?? 0,
-                              },
-                            );
-                          },
-                          child: Container(
-                            width: 280,
-                            margin: const EdgeInsets.only(right: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                ClipRRect(
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to related service detail
+                          context.push(
+                            '/service/${service.id}',
+                            extra: {
+                              'serviceName': service.name,
+                              'price': price,
+                              'rating': (service.rating ?? 0.0).toStringAsFixed(
+                                1,
+                              ),
+                              'reviewCount': service.reviewsCount ?? 0,
+                            },
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: ClipRRect(
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(12),
-                                    bottomLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
                                   ),
                                   child: SizedBox(
-                                    width: 100,
-                                    height: 120,
+                                    width: double.infinity,
                                     child: _buildRelatedServiceImage(service),
                                   ),
                                 ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          service.name,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Okra',
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        service.name,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Okra',
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          price,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.primaryColor,
-                                            fontFamily: 'Okra',
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.star,
-                                              color: Colors.orange,
-                                              size: 16,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            price,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primaryColor,
+                                              fontFamily: 'Okra',
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${(service.rating ?? 0.0).toStringAsFixed(1)} (${service.reviewsCount ?? 0})',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                                fontFamily: 'Okra',
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.star,
+                                                color: Colors.orange,
+                                                size: 14,
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                              const SizedBox(width: 2),
+                                              Text(
+                                                '${(service.rating ?? 0.0).toStringAsFixed(1)} (${service.reviewsCount ?? 0})',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                  fontFamily: 'Okra',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1067,9 +1919,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               future: _fetchVendor(service.vendorId),
               builder: (context, snapshot) {
                 final isOnline = snapshot.data?.isOnline ?? false;
-                final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                final isLoading =
+                    snapshot.connectionState == ConnectionState.waiting;
                 final vendor = snapshot.data;
-                
+
                 // If vendor data is still loading
                 if (isLoading) {
                   return ElevatedButton(
@@ -1107,7 +1960,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                   );
                 }
-                
+
                 // If vendor is null (not found/accessible) or offline, show disabled button
                 if (vendor == null) {
                   return ElevatedButton(
@@ -1131,7 +1984,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                   );
                 }
-                
+
                 if (!isOnline) {
                   return ElevatedButton(
                     onPressed: null,
@@ -1154,11 +2007,14 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                   );
                 }
-                
+
                 // Vendor is online, show active booking button
                 return ElevatedButton(
                   onPressed: () {
-                    _showBookingBottomSheet(service, serviceName);
+                    context.push(
+                      '/service/${service.id}/booking',
+                      extra: {'service': service, 'addedAddons': _addedAddons},
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
@@ -1191,19 +2047,25 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       debugPrint('🔍 ServiceDetailScreen: Vendor ID is null or empty');
       return null;
     }
-    
+
     try {
       debugPrint('🔍 ServiceDetailScreen: Fetching vendor with ID: $vendorId');
       final repo = ref.read(homeRepositoryProvider);
       final vendor = await repo.getVendorById(vendorId);
-      
+
       if (vendor == null) {
-        debugPrint('🔍 ServiceDetailScreen: Vendor not found or not accessible (ID: $vendorId)');
-        debugPrint('🔍 ServiceDetailScreen: This could be due to RLS policies or vendor being inactive');
+        debugPrint(
+          '🔍 ServiceDetailScreen: Vendor not found or not accessible (ID: $vendorId)',
+        );
+        debugPrint(
+          '🔍 ServiceDetailScreen: This could be due to RLS policies or vendor being inactive',
+        );
       } else {
-        debugPrint('🔍 ServiceDetailScreen: Successfully fetched vendor: ${vendor.businessName}');
+        debugPrint(
+          '🔍 ServiceDetailScreen: Successfully fetched vendor: ${vendor.businessName}',
+        );
       }
-      
+
       return vendor;
     } catch (e, stackTrace) {
       debugPrint('❌ ServiceDetailScreen: Error fetching vendor $vendorId: $e');
@@ -1221,7 +2083,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       isDismissible: true,
-      builder: (context) => CustomizationBottomSheet(service: service),
+      builder: (context) =>
+          CustomizationBottomSheet(service: service, addedAddons: _addedAddons),
     );
   }
 
@@ -1260,20 +2123,25 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 
       if (service != null) {
         if (service.offerPrice != null) {
-          priceText =
-              '₹${_formatNumberWithCommas(service.offerPrice!.round())}';
+          final taxInclusiveOfferPrice =
+              PriceCalculator.calculateTotalPriceWithTaxes(service.offerPrice!);
+          priceText = PriceCalculator.formatPriceAsInt(taxInclusiveOfferPrice);
           if (service.originalPrice != null &&
               service.originalPrice! > service.offerPrice!) {
-            final discountPercent =
-                ((service.originalPrice! - service.offerPrice!) /
-                        service.originalPrice! *
-                        100)
-                    .round();
-            priceText += ' ($discountPercent% OFF)';
+            final taxInclusiveOriginalPrice =
+                PriceCalculator.calculateTotalPriceWithTaxes(
+                  service.originalPrice!,
+                );
+            final savings = (taxInclusiveOriginalPrice - taxInclusiveOfferPrice)
+                .round();
+            priceText += ' (Save ₹${_formatNumberWithCommas(savings)})';
           }
         } else if (service.originalPrice != null) {
-          priceText =
-              '₹${_formatNumberWithCommas(service.originalPrice!.round())}';
+          final taxInclusivePrice =
+              PriceCalculator.calculateTotalPriceWithTaxes(
+                service.originalPrice!,
+              );
+          priceText = PriceCalculator.formatPriceAsInt(taxInclusivePrice);
         }
       }
 
@@ -1324,8 +2192,13 @@ Download Sylonow app: https://sylonow.com
 // Customization Bottom Sheet Widget
 class CustomizationBottomSheet extends ConsumerStatefulWidget {
   final ServiceListingModel service;
+  final Map<String, Map<String, dynamic>> addedAddons;
 
-  const CustomizationBottomSheet({super.key, required this.service});
+  const CustomizationBottomSheet({
+    super.key,
+    required this.service,
+    this.addedAddons = const {},
+  });
 
   @override
   ConsumerState<CustomizationBottomSheet> createState() =>
@@ -1363,12 +2236,14 @@ class _CustomizationBottomSheetState
   void initState() {
     super.initState();
     _initializeOptionsFromService();
-    _loadUserProfileAndSetDate().then((_) {
-      return _loadWelcomePreferences();
-    }).then((_) {
-      // Ensure selected values are valid after loading preferences
-      _validateSelectedValues();
-    });
+    _loadUserProfileAndSetDate()
+        .then((_) {
+          return _loadWelcomePreferences();
+        })
+        .then((_) {
+          // Ensure selected values are valid after loading preferences
+          _validateSelectedValues();
+        });
     _loadVendorAndBuildTimeSlots();
   }
 
@@ -1434,7 +2309,7 @@ class _CustomizationBottomSheetState
       debugPrint('🕒 Service vendor ID: $vendorId');
       debugPrint('🕒 Service ID: ${widget.service.id}');
       debugPrint('🕒 Service name: ${widget.service.name}');
-      
+
       if (vendorId == null) {
         debugPrint('❌ Vendor ID is null for service ${widget.service.id}');
         setState(() {
@@ -1446,23 +2321,29 @@ class _CustomizationBottomSheetState
       debugPrint('🕒 Calling repo.getVendorById($vendorId)');
       final vendor = await repo.getVendorById(vendorId);
       debugPrint('🕒 Repository returned vendor: $vendor');
-      
+
       _vendor = vendor;
       _isVendorOnline = vendor?.isOnline ?? false;
       _vendorStartTime = vendor?.startTime; // expected HH:mm or HH:mm:ss
       _vendorCloseTime = vendor?.closeTime; // expected HH:mm or HH:mm:ss
-      
+
       debugPrint('🕒 ===== VENDOR DEBUG INFO =====');
       debugPrint('🕒 Vendor ID: $vendorId');
       debugPrint('🕒 Vendor from DB: $vendor');
       debugPrint('🕒 Raw isOnline value: ${vendor?.isOnline}');
       debugPrint('🕒 Parsed _isVendorOnline: $_isVendorOnline');
-      debugPrint('🕒 Business hours: ${_vendorStartTime ?? 'null'} to ${_vendorCloseTime ?? 'null'}');
-      debugPrint('🕒 Advance booking hours: ${vendor?.advanceBookingHours ?? 'null'}');
+      debugPrint(
+        '🕒 Business hours: ${_vendorStartTime ?? 'null'} to ${_vendorCloseTime ?? 'null'}',
+      );
+      debugPrint(
+        '🕒 Advance booking hours: ${vendor?.advanceBookingHours ?? 'null'}',
+      );
       debugPrint('🕒 ===============================');
 
       // Determine advance booking hours: try from service.bookingNotice (parse hours), else vendor setting, else default 2
-      _advanceBookingHours = _parseAdvanceBookingFromService(widget.service.bookingNotice) ?? (vendor?.advanceBookingHours ?? 2);
+      _advanceBookingHours =
+          _parseAdvanceBookingFromService(widget.service.bookingNotice) ??
+          (vendor?.advanceBookingHours ?? 2);
 
       // Force state update and rebuild time slots
       setState(() {});
@@ -1478,7 +2359,10 @@ class _CustomizationBottomSheetState
 
   int? _parseAdvanceBookingFromService(String? bookingNotice) {
     if (bookingNotice == null) return null;
-    final match = RegExp(r'(\d+)\s*hour', caseSensitive: false).firstMatch(bookingNotice);
+    final match = RegExp(
+      r'(\d+)\s*hour',
+      caseSensitive: false,
+    ).firstMatch(bookingNotice);
     if (match != null) {
       return int.tryParse(match.group(1)!);
     }
@@ -1488,9 +2372,11 @@ class _CustomizationBottomSheetState
   void _rebuildTimeSlotsForSelectedDate() {
     debugPrint('🕒 _rebuildTimeSlotsForSelectedDate called');
     debugPrint('🕒 Vendor online: $_isVendorOnline');
-    debugPrint('🕒 Start time: $_vendorStartTime, Close time: $_vendorCloseTime');
+    debugPrint(
+      '🕒 Start time: $_vendorStartTime, Close time: $_vendorCloseTime',
+    );
     debugPrint('🕒 Selected date: $selectedDate');
-    
+
     // If vendor is offline, do not show time slots
     if (!_isVendorOnline) {
       debugPrint('🕒 Vendor is offline, clearing time slots');
@@ -1539,7 +2425,11 @@ class _CustomizationBottomSheetState
     final minStart = now.add(Duration(hours: _advanceBookingHours));
     if (minStart.isAfter(DateTime(date.year, date.month, date.day, 23, 59))) {
       // If viewing today and minStart pushes booking to future day, shift to next day business hours
-      final nextDay = DateTime(date.year, date.month, date.day).add(const Duration(days: 1));
+      final nextDay = DateTime(
+        date.year,
+        date.month,
+        date.day,
+      ).add(const Duration(days: 1));
       startDateTime = _combineDateWithHm(nextDay, _vendorStartTime!);
       endDateTime = _combineDateWithHm(nextDay, _vendorCloseTime!);
       if (startDateTime == null || endDateTime == null) {
@@ -1572,9 +2462,11 @@ class _CustomizationBottomSheetState
     final slots = <String>[];
     final formatter = DateFormat('hh:mm a');
     DateTime cursor = DateTime(sdt.year, sdt.month, sdt.day, sdt.hour, 0);
-    debugPrint('🕒 Generating time slots from ${formatter.format(sdt)} to ${formatter.format(edt)}');
+    debugPrint(
+      '🕒 Generating time slots from ${formatter.format(sdt)} to ${formatter.format(edt)}',
+    );
     debugPrint('🕒 Current time: ${formatter.format(now)}');
-    
+
     while (cursor.isBefore(edt)) {
       // Only future times if date is today
       if (cursor.isAfter(now)) {
@@ -1612,10 +2504,12 @@ class _CustomizationBottomSheetState
     try {
       // Load user profile to get celebration date
       final userProfile = await ref.read(currentUserProfileProvider.future);
-      
+
       if (userProfile?.celebrationDate != null && mounted) {
         final celebrationDate = userProfile!.celebrationDate!;
-        final formattedCelebrationDate = DateFormat('dd/MM/yyyy').format(celebrationDate);
+        final formattedCelebrationDate = DateFormat(
+          'dd/MM/yyyy',
+        ).format(celebrationDate);
         final availableDates = _getNextSevenDays();
 
         // Auto-select celebration date if it exists in available dates
@@ -1629,22 +2523,29 @@ class _CustomizationBottomSheetState
             '🎉 User celebration date $formattedCelebrationDate not in available dates, keeping default',
           );
         }
-        
+
         // Auto-select celebration time if available
         if (userProfile.celebrationTime != null) {
           final celebrationTime = userProfile.celebrationTime!;
           // Parse celebration time string (assuming format like "14:30" or "02:30 PM")
           try {
             DateTime timeOfDay;
-            if (celebrationTime.contains('AM') || celebrationTime.contains('PM')) {
+            if (celebrationTime.contains('AM') ||
+                celebrationTime.contains('PM')) {
               // Handle 12-hour format
               timeOfDay = DateFormat('hh:mm a').parse(celebrationTime);
             } else {
               // Handle 24-hour format
               final timeParts = celebrationTime.split(':');
-              timeOfDay = DateTime(2000, 1, 1, int.parse(timeParts[0]), int.parse(timeParts[1]));
+              timeOfDay = DateTime(
+                2000,
+                1,
+                1,
+                int.parse(timeParts[0]),
+                int.parse(timeParts[1]),
+              );
             }
-            
+
             // Find matching time slot based on celebration time
             final celebrationHour = timeOfDay.hour;
             String? matchingTimeSlot;
@@ -1667,7 +2568,9 @@ class _CustomizationBottomSheetState
               setState(() {
                 selectedTime = matchingTimeSlot!;
               });
-              debugPrint('🎉 Auto-selected user celebration time: $selectedTime');
+              debugPrint(
+                '🎉 Auto-selected user celebration time: $selectedTime',
+              );
             }
           } catch (e) {
             debugPrint('Error parsing celebration time: $e');
@@ -2222,7 +3125,7 @@ class _CustomizationBottomSheetState
 
     final isTimeSlotDropdown = hint == 'Select Time';
     final isEmpty = items.isEmpty;
-    
+
     // Show helpful message when time slots are not available
     String displayHint = hint;
     if (isTimeSlotDropdown && isEmpty) {
@@ -2233,7 +3136,7 @@ class _CustomizationBottomSheetState
       debugPrint('🕒 _vendorCloseTime: $_vendorCloseTime');
       debugPrint('🕒 timeSlots.length: ${timeSlots.length}');
       debugPrint('🕒 ==========================');
-      
+
       // Check if vendor data is still loading
       if (_vendor == null) {
         displayHint = 'Loading vendor information...';
@@ -2249,7 +3152,11 @@ class _CustomizationBottomSheetState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: isEmpty && isTimeSlotDropdown ? Colors.red[300]! : Colors.grey[300]!),
+        border: Border.all(
+          color: isEmpty && isTimeSlotDropdown
+              ? Colors.red[300]!
+              : Colors.grey[300]!,
+        ),
         borderRadius: BorderRadius.circular(8),
         color: isEmpty && isTimeSlotDropdown ? Colors.red[50] : Colors.white,
       ),
@@ -2274,7 +3181,10 @@ class _CustomizationBottomSheetState
                   .map(
                     (item) => DropdownMenuItem(
                       value: item,
-                      child: Text(item, style: const TextStyle(fontFamily: 'Okra')),
+                      child: Text(
+                        item,
+                        style: const TextStyle(fontFamily: 'Okra'),
+                      ),
                     ),
                   )
                   .toList(),
@@ -2548,7 +3458,8 @@ class _CustomizationBottomSheetState
     debugPrint('  - Venue: $selectedVenueType');
     debugPrint('  - Environment: $selectedEnvironment');
     debugPrint('  - Date & Time: $selectedDate at $selectedTime');
-    debugPrint('  - Add-ons: $selectedAddOns');
+    debugPrint('  - Simple Add-ons: $selectedAddOns');
+    debugPrint('  - Complex Add-ons: ${widget.addedAddons.keys.toList()}');
     debugPrint(
       '  - Comments: ${commentsController.text.isNotEmpty ? "Added" : "None"}',
     );
@@ -2560,16 +3471,54 @@ class _CustomizationBottomSheetState
       // Close bottom sheet first
       Navigator.of(context).pop();
 
+      // Combine both types of add-ons for checkout
+      final combinedAddOns = <String, Map<String, dynamic>>{};
+
+      // Add complex customizable add-ons from main screen
+      combinedAddOns.addAll(widget.addedAddons);
+
+      // Add simple add-ons from customization bottom sheet
+      for (int i = 0; i < selectedAddOns.length; i++) {
+        final addonName = selectedAddOns[i];
+        final addonId =
+            'simple_addon_$i'; // Generate unique ID for simple add-ons
+
+        // Find the add-on details from service data
+        final addonDetails = availableAddOns.firstWhere(
+          (addon) => addon['name'] == addonName,
+          orElse: () => <String, dynamic>{},
+        );
+
+        final addonPrice =
+            double.tryParse(addonDetails['price']?.toString() ?? '0') ?? 0.0;
+
+        combinedAddOns[addonId] = {
+          'name': addonName,
+          'price': addonPrice,
+          'totalPrice': addonPrice,
+          'characterCount': 1, // Default for simple add-ons
+          'customText': '', // No customization for simple add-ons
+          'isCustomizable': false,
+        };
+      }
+
+      debugPrint(
+        '  - Combined Add-ons for checkout: ${combinedAddOns.keys.toList()}',
+      );
+      debugPrint('  - Total add-ons count: ${combinedAddOns.length}');
+
       // Navigate to checkout with enhanced data including separate date and time parameters
       context.push(
         CheckoutScreen.routeName,
         extra: {
-          'service': widget.service, 
+          'service': widget.service,
           'customization': customizationData,
           'selectedDate': selectedDate,
-          'selectedTimeSlot': null, // Theater time slots not used for regular services
+          'selectedTimeSlot':
+              null, // Theater time slots not used for regular services
           'selectedScreen': null,
           'selectedAddressId': null,
+          'selectedAddOns': combinedAddOns.isNotEmpty ? combinedAddOns : null,
         },
       );
     } catch (e) {

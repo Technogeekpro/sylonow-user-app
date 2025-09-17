@@ -5,6 +5,18 @@ import 'package:sylonow_user/features/home/models/vendor_model.dart';
 part 'service_listing_model.freezed.dart';
 part 'service_listing_model.g.dart';
 
+/// Helper function to safely convert nullable numeric values to double
+double? _safeNullableDoubleFromJson(dynamic value) {
+  if (value == null) return null;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) {
+    final parsed = double.tryParse(value);
+    return parsed;
+  }
+  return null;
+}
+
 @freezed
 class ServiceListingModel with _$ServiceListingModel {
   const factory ServiceListingModel({
@@ -19,8 +31,9 @@ class ServiceListingModel with _$ServiceListingModel {
     VendorModel? vendor,
     @JsonKey(name: 'promotional_tag') String? promotionalTag,
     List<String>? inclusions,
-    @JsonKey(name: 'original_price') double? originalPrice,
-    @JsonKey(name: 'offer_price') double? offerPrice,
+    List<String>? exclusions,
+    @JsonKey(name: 'original_price', fromJson: _safeNullableDoubleFromJson) double? originalPrice,
+    @JsonKey(name: 'offer_price', fromJson: _safeNullableDoubleFromJson) double? offerPrice,
     @JsonKey(name: 'is_featured') bool? isFeatured,
     @JsonKey(name: 'created_at') DateTime? createdAt,
     @JsonKey(name: 'is_active') bool? isActive,
@@ -37,9 +50,12 @@ class ServiceListingModel with _$ServiceListingModel {
     @JsonKey(name: 'service_environment') List<String>? serviceEnvironment,
     @JsonKey(name: 'video_url') String? videoUrl,
     @JsonKey(name: 'decoration_type') String? decorationType, // 'inside', 'outside', or 'both'
+    // Banner fields
+    @JsonKey(name: 'provides_banner') bool? providesBanner,
+    @JsonKey(name: 'banner_text') String? bannerText,
     // Location fields
-    double? latitude,
-    double? longitude,
+    @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
+    @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
     // Calculated fields (not from database)
     @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
     @JsonKey(includeFromJson: false, includeToJson: false) double? adjustedOfferPrice,
@@ -123,6 +139,7 @@ extension ServiceListingModelExtensions on ServiceListingModel {
     VendorModel? vendor,
     String? promotionalTag,
     List<String>? inclusions,
+    List<String>? exclusions,
     double? originalPrice,
     double? offerPrice,
     bool? isFeatured,
@@ -140,6 +157,8 @@ extension ServiceListingModelExtensions on ServiceListingModel {
     List<String>? serviceEnvironment,
     String? videoUrl,
     String? decorationType,
+    bool? providesBanner,
+    String? bannerText,
     double? latitude,
     double? longitude,
     double? distanceKm,
@@ -159,6 +178,7 @@ extension ServiceListingModelExtensions on ServiceListingModel {
       vendor: vendor ?? this.vendor,
       promotionalTag: promotionalTag ?? this.promotionalTag,
       inclusions: inclusions ?? this.inclusions,
+      exclusions: exclusions ?? this.exclusions,
       originalPrice: originalPrice ?? this.originalPrice,
       offerPrice: offerPrice ?? this.offerPrice,
       isFeatured: isFeatured ?? this.isFeatured,
@@ -176,6 +196,8 @@ extension ServiceListingModelExtensions on ServiceListingModel {
       serviceEnvironment: serviceEnvironment ?? this.serviceEnvironment,
       videoUrl: videoUrl ?? this.videoUrl,
       decorationType: decorationType ?? this.decorationType,
+      providesBanner: providesBanner ?? this.providesBanner,
+      bannerText: bannerText ?? this.bannerText,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       distanceKm: distanceKm ?? this.distanceKm,

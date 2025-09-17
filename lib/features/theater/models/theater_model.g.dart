@@ -28,6 +28,7 @@ _$TheaterModelImpl _$$TheaterModelImplFromJson(Map<String, dynamic> json) =>
       rating: (json['rating'] as num?)?.toDouble(),
       totalReviews: (json['total_reviews'] as num?)?.toInt(),
       isActive: json['is_active'] as bool?,
+      isVerified: json['is_verified'] as bool?,
       ownerId: json['owner_id'] as String?,
       createdAt: json['created_at'] == null
           ? null
@@ -56,6 +57,7 @@ Map<String, dynamic> _$$TheaterModelImplToJson(_$TheaterModelImpl instance) =>
       'rating': instance.rating,
       'total_reviews': instance.totalReviews,
       'is_active': instance.isActive,
+      'is_verified': instance.isVerified,
       'owner_id': instance.ownerId,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),

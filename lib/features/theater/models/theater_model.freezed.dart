@@ -41,6 +41,8 @@ mixin _$TheaterModel {
   int? get totalReviews => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool? get isActive => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_verified')
+  bool? get isVerified => throw _privateConstructorUsedError;
   @JsonKey(name: 'owner_id')
   String? get ownerId => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -78,6 +80,7 @@ abstract class $TheaterModelCopyWith<$Res> {
       double? rating,
       @JsonKey(name: 'total_reviews') int? totalReviews,
       @JsonKey(name: 'is_active') bool? isActive,
+      @JsonKey(name: 'is_verified') bool? isVerified,
       @JsonKey(name: 'owner_id') String? ownerId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -113,6 +116,7 @@ class _$TheaterModelCopyWithImpl<$Res, $Val extends TheaterModel>
     Object? rating = freezed,
     Object? totalReviews = freezed,
     Object? isActive = freezed,
+    Object? isVerified = freezed,
     Object? ownerId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -186,6 +190,10 @@ class _$TheaterModelCopyWithImpl<$Res, $Val extends TheaterModel>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      isVerified: freezed == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
       ownerId: freezed == ownerId
           ? _value.ownerId
           : ownerId // ignore: cast_nullable_to_non_nullable
@@ -228,6 +236,7 @@ abstract class _$$TheaterModelImplCopyWith<$Res>
       double? rating,
       @JsonKey(name: 'total_reviews') int? totalReviews,
       @JsonKey(name: 'is_active') bool? isActive,
+      @JsonKey(name: 'is_verified') bool? isVerified,
       @JsonKey(name: 'owner_id') String? ownerId,
       @JsonKey(name: 'created_at') DateTime? createdAt,
       @JsonKey(name: 'updated_at') DateTime? updatedAt});
@@ -261,6 +270,7 @@ class __$$TheaterModelImplCopyWithImpl<$Res>
     Object? rating = freezed,
     Object? totalReviews = freezed,
     Object? isActive = freezed,
+    Object? isVerified = freezed,
     Object? ownerId = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
@@ -334,6 +344,10 @@ class __$$TheaterModelImplCopyWithImpl<$Res>
           ? _value.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      isVerified: freezed == isVerified
+          ? _value.isVerified
+          : isVerified // ignore: cast_nullable_to_non_nullable
+              as bool?,
       ownerId: freezed == ownerId
           ? _value.ownerId
           : ownerId // ignore: cast_nullable_to_non_nullable
@@ -371,6 +385,7 @@ class _$TheaterModelImpl implements _TheaterModel {
       this.rating,
       @JsonKey(name: 'total_reviews') this.totalReviews,
       @JsonKey(name: 'is_active') this.isActive,
+      @JsonKey(name: 'is_verified') this.isVerified,
       @JsonKey(name: 'owner_id') this.ownerId,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt})
@@ -435,6 +450,9 @@ class _$TheaterModelImpl implements _TheaterModel {
   @JsonKey(name: 'is_active')
   final bool? isActive;
   @override
+  @JsonKey(name: 'is_verified')
+  final bool? isVerified;
+  @override
   @JsonKey(name: 'owner_id')
   final String? ownerId;
   @override
@@ -446,7 +464,7 @@ class _$TheaterModelImpl implements _TheaterModel {
 
   @override
   String toString() {
-    return 'TheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, screens: $screens, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'TheaterModel(id: $id, name: $name, description: $description, address: $address, city: $city, state: $state, pinCode: $pinCode, latitude: $latitude, longitude: $longitude, capacity: $capacity, screens: $screens, amenities: $amenities, images: $images, hourlyRate: $hourlyRate, rating: $rating, totalReviews: $totalReviews, isActive: $isActive, isVerified: $isVerified, ownerId: $ownerId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -479,6 +497,8 @@ class _$TheaterModelImpl implements _TheaterModel {
                 other.totalReviews == totalReviews) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
+            (identical(other.isVerified, isVerified) ||
+                other.isVerified == isVerified) &&
             (identical(other.ownerId, ownerId) || other.ownerId == ownerId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -507,6 +527,7 @@ class _$TheaterModelImpl implements _TheaterModel {
         rating,
         totalReviews,
         isActive,
+        isVerified,
         ownerId,
         createdAt,
         updatedAt
@@ -545,6 +566,7 @@ abstract class _TheaterModel implements TheaterModel {
           final double? rating,
           @JsonKey(name: 'total_reviews') final int? totalReviews,
           @JsonKey(name: 'is_active') final bool? isActive,
+          @JsonKey(name: 'is_verified') final bool? isVerified,
           @JsonKey(name: 'owner_id') final String? ownerId,
           @JsonKey(name: 'created_at') final DateTime? createdAt,
           @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
@@ -591,6 +613,9 @@ abstract class _TheaterModel implements TheaterModel {
   @override
   @JsonKey(name: 'is_active')
   bool? get isActive;
+  @override
+  @JsonKey(name: 'is_verified')
+  bool? get isVerified;
   @override
   @JsonKey(name: 'owner_id')
   String? get ownerId;

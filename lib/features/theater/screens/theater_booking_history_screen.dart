@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/theater_booking_model.dart';
 import '../providers/theater_providers.dart';
@@ -257,6 +259,19 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
   Widget _buildBookingCard(TheaterBookingModel booking) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showBookingDetails(booking),
+          borderRadius: BorderRadius.circular(12),
+          child: _buildTicketCard(booking),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTicketCard(TheaterBookingModel booking) {
+    return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -264,57 +279,22 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showBookingDetails(booking),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
+      child: Column(
+        children: [
+          // Main ticket content
+          Container(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header with theater name and status
                 Row(
                   children: [
-                    // Theater image
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey[100],
-                      ),
-                      child: booking.theaterImages?.isNotEmpty == true
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: CachedNetworkImage(
-                                imageUrl: booking.theaterImages!.first,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppTheme.primaryColor,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => const Icon(
-                                  Icons.movie_outlined,
-                                  color: Colors.grey,
-                                  size: 24,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.movie_outlined,
-                              color: Colors.grey,
-                              size: 24,
-                            ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,85 +302,339 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                           Text(
                             booking.theaterName ?? 'Theater',
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                               fontFamily: 'Okra',
                               color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            DateFormat('MMM dd, yyyy').format(booking.bookingDate),
+                            'BOOKING ID: ${booking.id.substring(0, 8).toUpperCase()}',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               fontFamily: 'Okra',
                               color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${booking.startTime} - ${booking.endTime}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontFamily: 'Okra',
-                              color: Colors.grey[600],
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(booking.bookingStatus).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _getStatusColor(booking.bookingStatus),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        booking.bookingStatus.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Okra',
+                          color: _getStatusColor(booking.bookingStatus),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Ticket details row
+                Row(
+                  children: [
+                    // Left side - Theater image and details
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Theater image
+                          Container(
+                            width: double.infinity,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey[100],
+                            ),
+                            child: booking.theaterImages?.isNotEmpty == true
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CachedNetworkImage(
+                                      imageUrl: booking.theaterImages!.first,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppTheme.primaryColor,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => const Icon(
+                                        Icons.movie_outlined,
+                                        color: Colors.grey,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.movie_outlined,
+                                    color: Colors.grey,
+                                    size: 32,
+                                  ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Date and time
+                          _buildTicketDetail('DATE', DateFormat('MMM dd, yyyy').format(booking.bookingDate)),
+                          const SizedBox(height: 8),
+                          _buildTicketDetail('TIME', '${booking.startTime} - ${booking.endTime}'),
+                          const SizedBox(height: 8),
+                          _buildTicketDetail('GUESTS', '${booking.numberOfPeople} People'),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // Right side - QR Code and price
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        // QR Code
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: QrImageView(
+                              data: booking.id,
+                              version: QrVersions.auto,
+                              size: 72,
+                              foregroundColor: Colors.black87,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Price
                         Text(
                           '₹${_formatAmount(booking.totalAmount)}',
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             fontFamily: 'Okra',
-                            color: Colors.black87,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(booking.bookingStatus).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            booking.bookingStatus.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Okra',
-                              color: _getStatusColor(booking.bookingStatus),
-                            ),
+
+                        Text(
+                          'Total',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Okra',
+                            color: Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
+
                 if (booking.addons?.isNotEmpty == true) ...[
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Add-ons: ${booking.addons!.length} items',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'Okra',
-                      color: Colors.grey[600],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${booking.addons!.length} Add-ons included',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Okra',
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ],
             ),
           ),
+
+          // Dotted line separator
+          _buildDottedLine(),
+
+          // Navigation section
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Theater Location',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Okra',
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        booking.theaterAddress ?? 'Address not available',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Okra',
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _navigateToTheater(booking),
+                  icon: const Icon(Icons.directions, size: 18),
+                  label: const Text(
+                    'Navigate',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTicketDetail(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Okra',
+            color: Colors.grey[600],
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Okra',
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDottedLine() {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: List.generate(
+          50,
+          (index) => Expanded(
+            child: Container(
+              height: 1,
+              color: index.isEven ? Colors.grey[300] : Colors.transparent,
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  void _navigateToTheater(TheaterBookingModel booking) async {
+    try {
+      // For now, navigate using the theater address
+      // In a real app, you'd use the latitude/longitude from the database
+      if (booking.theaterAddress != null && booking.theaterAddress!.isNotEmpty) {
+        final query = Uri.encodeComponent(booking.theaterAddress!);
+        final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$query';
+        final appleMapsUrl = 'http://maps.apple.com/?q=$query';
+
+        // Try to launch Google Maps first
+        if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+          await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
+        } else if (await canLaunchUrl(Uri.parse(appleMapsUrl))) {
+          await launchUrl(Uri.parse(appleMapsUrl), mode: LaunchMode.externalApplication);
+        } else {
+          _showSnackBar('No maps app available', Colors.orange);
+        }
+      } else {
+        _showSnackBar('Theater address not available', Colors.orange);
+      }
+    } catch (e) {
+      _showSnackBar('Unable to open maps', Colors.red);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(fontFamily: 'Okra'),
+          ),
+          backgroundColor: color,
+        ),
+      );
+    }
   }
 
   Color _getStatusColor(String status) {
@@ -489,6 +723,44 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // QR Code Section
+                      Center(
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: QrImageView(
+                              data: booking.id,
+                              version: QrVersions.auto,
+                              size: 168,
+                              foregroundColor: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Center(
+                        child: Text(
+                          'Show this QR code at the theater',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Okra',
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
                       _buildDetailSection('Theater', booking.theaterName ?? 'N/A'),
                       _buildDetailSection('Date', DateFormat('MMM dd, yyyy').format(booking.bookingDate)),
                       _buildDetailSection('Time', '${booking.startTime} - ${booking.endTime}'),
@@ -505,6 +777,36 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                       _buildDetailSection('Payment Status', booking.paymentStatus.toUpperCase()),
                       if (booking.specialRequests != null)
                         _buildDetailSection('Special Requests', booking.specialRequests!),
+
+                      // Theater Address and Navigation
+                      if (booking.theaterAddress != null && booking.theaterAddress!.isNotEmpty) ...[
+                        _buildDetailSection('Theater Address', booking.theaterAddress!),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _navigateToTheater(booking),
+                            icon: const Icon(Icons.directions, size: 20),
+                            label: const Text(
+                              'Navigate to Theater',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       
                       if (booking.addons?.isNotEmpty == true) ...[
                         const SizedBox(height: 20),
@@ -521,7 +823,6 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                         ...booking.addons!.map((addon) => _buildAddonItem(addon)),
                       ],
                       
-                      const SizedBox(height: 20),
                       if (booking.bookingStatus == 'confirmed')
                         SizedBox(
                           width: double.infinity,

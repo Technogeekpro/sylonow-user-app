@@ -1,10 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/features/home/providers/cached_home_providers.dart';
 import 'package:sylonow_user/features/home/models/category_model.dart';
+import 'package:sylonow_user/features/home/providers/cached_home_providers.dart';
 
 class OptimizedExploreCategoriesSection extends ConsumerWidget {
   const OptimizedExploreCategoriesSection({super.key});
@@ -240,20 +240,20 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
                   ),
                 ),
 
-                // Category color indicator
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: categoryColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1),
-                    ),
-                  ),
-                ),
+                //   // Category color indicator
+                //   Positioned(
+                //     top: 8,
+                //     right: 8,
+                //     child: Container(
+                //       width: 8,
+                //       height: 8,
+                //       decoration: BoxDecoration(
+                //         color: categoryColor,
+                //         shape: BoxShape.circle,
+                //         border: Border.all(color: Colors.white, width: 1),
+                //       ),
+                //     ),
+                //   ),
               ],
             ),
           ),
@@ -266,7 +266,7 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
     if (category.imageUrl != null) {
       return CachedNetworkImage(
         imageUrl: category.imageUrl!,
-        fit: BoxFit.cover,
+        fit: BoxFit.fill,
         memCacheWidth: 320, // Optimize memory usage for small images
         memCacheHeight: 220,
         placeholder: (context, url) => _ShimmerPlaceholder(),

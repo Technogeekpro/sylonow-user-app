@@ -17,13 +17,32 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
+  bool _acceptTerms = false;
 
   void _continueWithPhone() {
+    if (!_acceptTerms) {
+      _showTermsError();
+      return;
+    }
     // Navigate to phone input screen
     context.push(PhoneInputScreen.routeName);
   }
 
+  void _showTermsError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please accept the Terms and Privacy Policy to continue'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   Future<void> _continueWithGoogle() async {
+    if (!_acceptTerms) {
+      _showTermsError();
+      return;
+    }
+    
     setState(() {
       _isLoading = true;
     });
@@ -40,8 +59,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         });
 
         if (response != null && response.user != null) {
-          // Successfully signed in, navigate to home
-          context.go(AppConstants.homeRoute);
+          // Check if onboarding is completed
+          final isOnboardingCompleted = await authService.isOnboardingCompleted();
+          
+          if (isOnboardingCompleted) {
+            // Onboarding completed, go to home
+            context.go(AppConstants.homeRoute);
+          } else {
+            // Onboarding not completed, go to welcome screen
+            context.go(AppConstants.welcomeRoute);
+          }
         } else {
           // User canceled the sign-in
           ScaffoldMessenger.of(
@@ -68,10 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [const Color(0xFF1683C9), const Color(0xFF0C4366)],
-            begin: Alignment.topLeft,
-          ),
+          color: AppTheme.primaryColor,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -102,10 +126,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       height: 56,
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _continueWithPhone,
+                        onPressed: _acceptTerms ? _continueWithPhone : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
+                          disabledBackgroundColor: Colors.grey[600],
+                          disabledForegroundColor: Colors.white.withOpacity(0.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(56),
                           ),
@@ -135,7 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(height: 1, color: Colors.grey[300]),
+                          child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -149,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         Expanded(
-                          child: Container(height: 1, color: Colors.grey[300]),
+                          child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
                         ),
                       ],
                     ),
@@ -161,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       height: 56,
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _continueWithGoogle,
+                        onPressed: _isLoading || !_acceptTerms ? null : _continueWithGoogle,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black87,
@@ -198,18 +224,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                    // Terms and Privacy
-                    Text(
-                      'By continuing, you agree to our Terms of Service\nand Privacy Policy',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontFamily: 'Okra',
-                      ),
+                    // Terms and Privacy Checkbox
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _acceptTerms,
+                          onChanged: (value) {
+                            setState(() {
+                              _acceptTerms = value ?? false;
+                            });
+                          },
+                          activeColor: Colors.white,
+                          checkColor: AppTheme.primaryColor,
+                          side: const BorderSide(color: Colors.white, width: 2),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              'I agree to the Terms of Service and Privacy Policy',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontFamily: 'Okra',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
 import '../providers/onboarding_providers.dart';
 
 class DateScreen extends ConsumerStatefulWidget {
@@ -20,28 +22,88 @@ class _DateScreenState extends ConsumerState<DateScreen> {
   bool _isLoading = false;
 
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime tempSelectedDate = _selectedDate ?? today;
+    
+    // Ensure tempSelectedDate is not before today
+    if (tempSelectedDate.isBefore(today)) {
+      tempSelectedDate = today;
+    }
+    
+    await showModalBottomSheet(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppTheme.primaryColor,
-            ),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          height: 300,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Select Date',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Okra',
+                      color: Colors.black,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = tempSelectedDate;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Cupertino Date Picker
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: tempSelectedDate,
+                  minimumDate: today,
+                  maximumDate: today.add(const Duration(days: 365 * 2)),
+                  onDateTimeChanged: (DateTime newDate) {
+                    tempSelectedDate = newDate;
+                  },
+                ),
+              ),
+            ],
           ),
-          child: child!,
         );
       },
     );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
   Future<void> _continue() async {
@@ -64,8 +126,12 @@ class _DateScreenState extends ConsumerState<DateScreen> {
       await ref.read(onboardingControllerProvider.notifier)
           .updateCelebrationDate(dateString);
       
+      // Complete onboarding after saving the date
+      await ref.read(onboardingControllerProvider.notifier).completeOnboarding();
+      
       if (mounted) {
-        context.go('/onboarding/auth');
+        // Navigate to home screen with no back navigation
+        context.go(AppConstants.homeRoute);
       }
     } catch (e) {
       if (mounted) {
@@ -91,8 +157,12 @@ class _DateScreenState extends ConsumerState<DateScreen> {
     });
 
     try {
+      // Complete onboarding even when skipping date selection
+      await ref.read(onboardingControllerProvider.notifier).completeOnboarding();
+      
       if (mounted) {
-        context.go('/onboarding/auth');
+        // Navigate to home screen with no back navigation
+        context.go(AppConstants.homeRoute);
       }
     } finally {
       if (mounted) {
@@ -103,148 +173,202 @@ class _DateScreenState extends ConsumerState<DateScreen> {
     }
   }
 
+  Widget _buildProgressIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24, bottom: 32),
+      child: Row(
+        children: [
+          // Step 1 - Completed
+          Expanded(
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3A5F),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Step 2 - Completed
+          Expanded(
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3A5F),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Step 3 - Active
+          Expanded(
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3A5F),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
-                    // Title
-                    Text(
-                      'When is your celebration?',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Okra',
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Subtitle
-                    Text(
-                      'We\'ll help you get everything ready on time.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.normal,
-                        fontFamily: 'Okra',
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    // Date Picker
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 16),
-                            Icon(
-                              Icons.calendar_today,
-                              color: Colors.grey[600],
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedDate != null
-                                    ? _dateFormatter.format(_selectedDate!)
-                                    : 'Select Date',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: 'Okra',
-                                  color: _selectedDate != null
-                                      ? Colors.black
-                                      : Colors.grey[400],
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 16),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Buttons
-              Column(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - 
+                        MediaQuery.of(context).viewInsets.bottom - 
+                        MediaQuery.of(context).viewPadding.top - 48,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _continue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _selectedDate != null 
-                            ? AppTheme.primaryColor
-                            : Colors.grey[400],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
+                  // Progress Indicator
+                  _buildProgressIndicator(),
+                  
+                  // Main Content
+                  Expanded(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        
+                        // Illustration
+                        Container(
+                          height: 200,
+                          padding: const EdgeInsets.all(20),
+                          child: Image.asset(
+                            'assets/images/date_picker.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              'Continue →',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Okra',
-                              ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Title
+                        Text(
+                          'When is your celebration?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                            color: Colors.black,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Subtitle
+                        Text(
+                          'We\'ll help you get everything ready on time.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Okra',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Date Input Field
+                        GestureDetector(
+                          onTap: _selectDate,
+                          child: Container(
+                            width: double.infinity,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 16),
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.grey[600],
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _selectedDate != null
+                                        ? _dateFormatter.format(_selectedDate!)
+                                        : 'dd/mm/yyyy',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Okra',
+                                      color: _selectedDate != null
+                                          ? Colors.black
+                                          : Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        const Spacer(),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _isLoading ? null : _skip,
-                    child: Text(
-                      'Skip for now',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: 'Okra',
-                        color: Colors.grey[600],
+                  
+                  // Continue Button
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _continue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedDate != null 
+                              ? const Color(0xFF1E3A5F)
+                              : Colors.grey[300],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Okra',
+                                ),
+                              ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
         ),
       ),

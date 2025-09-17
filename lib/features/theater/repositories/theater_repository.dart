@@ -570,18 +570,19 @@ class TheaterRepository {
           .select('''
             id,
             theater_id,
-            slot_date,
+            screen_id,
             start_time,
             end_time,
             base_price,
-            price_per_hour,
+            discounted_price,
+            is_available,
+            is_available,
+            is_active,
             price_multiplier,
-            max_duration_hours,
             created_at,
             updated_at
           ''')
           .eq('theater_id', theaterId)
-          .eq('slot_date', date)
           .eq('is_active', true)
           .order('start_time');
 
@@ -665,26 +666,20 @@ class TheaterRepository {
     return result;
   }
 
-  /// Calculate slot price based on base price and multipliers
+  /// Calculate slot price using base price and discounted price
   double _calculateSlotPrice(Map<String, dynamic> timeSlot) {
     try {
       print('🎬 Calculating price for slot: $timeSlot');
-      
-      // Handle both string and numeric values from database
-      final basePriceRaw = timeSlot['base_price'];
-      final pricePerHourRaw = timeSlot['price_per_hour'];
-      final multiplierRaw = timeSlot['price_multiplier'];
-      final durationRaw = timeSlot['max_duration_hours'];
-      
-      final basePrice = _parseNumeric(basePriceRaw, 1500.0);
-      final pricePerHour = _parseNumeric(pricePerHourRaw, 500.0);
-      final multiplier = _parseNumeric(multiplierRaw, 1.0);
-      final duration = _parseNumeric(durationRaw, 3.0).toInt();
-      
-      final calculatedPrice = (basePrice + (pricePerHour * duration)) * multiplier;
-      print('🎬 Price calculation: base=$basePrice, hourly=$pricePerHour, duration=$duration, multiplier=$multiplier = $calculatedPrice');
-      
-      return calculatedPrice;
+
+      final basePrice = _parseNumeric(timeSlot['base_price'], 1500.0);
+      final discountedPrice = _parseNumeric(timeSlot['discounted_price'], 0.0);
+
+      // Use discounted price if available, otherwise use base price
+      final finalPrice = discountedPrice > 0 ? discountedPrice : basePrice;
+
+      print('🎬 Price calculation: base=$basePrice, discounted=$discountedPrice, final=$finalPrice');
+
+      return finalPrice;
     } catch (e) {
       print('🎬 Error calculating price: $e');
       return 2500.0; // fallback price
@@ -777,12 +772,8 @@ class TheaterRepository {
             start_time,
             end_time,
             base_price,
-            price_per_hour,
-            weekday_multiplier,
-            weekend_multiplier,
-            holiday_multiplier,
-            max_duration_hours,
-            min_duration_hours,
+            discounted_price,
+            is_available,
             is_available,
             is_active,
             created_at,
@@ -845,12 +836,7 @@ class TheaterRepository {
           'start_time': slotData['start_time'],
           'end_time': slotData['end_time'],
           'base_price': slotPrice,
-          'price_per_hour': _parseNumeric(slotData['price_per_hour'], 500.0),
-          'weekday_multiplier': _parseNumeric(slotData['weekday_multiplier'], 1.0),
-          'weekend_multiplier': _parseNumeric(slotData['weekend_multiplier'], 1.2),
-          'holiday_multiplier': _parseNumeric(slotData['holiday_multiplier'], 1.5),
-          'max_duration_hours': slotData['max_duration_hours'] ?? 3,
-          'min_duration_hours': slotData['min_duration_hours'] ?? 2,
+          'discounted_price': _parseNumeric(slotData['discounted_price'], 0.0),
           'is_available': true,
           'is_active': true,
           'created_at': slotData['created_at'],
@@ -1129,12 +1115,8 @@ class TheaterRepository {
             is_available,
             is_active,
             base_price,
-            price_per_hour,
-            weekday_multiplier,
-            weekend_multiplier,
-            holiday_multiplier,
-            max_duration_hours,
-            min_duration_hours
+            discounted_price,
+            is_available
           ''')
           .eq('screen_id', screenId)
           .eq('is_active', true)

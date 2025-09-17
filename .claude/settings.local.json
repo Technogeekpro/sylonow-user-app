@@ -37,7 +37,22 @@
       "mcp__supabase__get_project",
       "Bash(npm install:*)",
       "mcp__dart__connect_dart_tooling_daemon",
-      "mcp__dart__hot_reload"
+      "mcp__dart__hot_reload",
+      "mcp__dart__get_selected_widget",
+      "Bash(flutter run:*)",
+      "Bash(ping:*)",
+      "Bash(nslookup:*)",
+      "mcp__dart__get_runtime_errors",
+      "Bash(flutter build:*)",
+      "mcp__ide__executeCode",
+      "Bash(dart:*)",
+      "Bash(flutter:*)",
+      "Bash(r)",
+      "mcp__dart__get_widget_tree",
+      "Bash(grep:*)",
+      "mcp__dart__analyze_files",
+      "mcp__dart__add_roots",
+      "mcp__dart__dart_format"
     ],
     "deny": []
   },

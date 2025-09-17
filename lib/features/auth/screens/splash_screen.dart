@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -6,7 +7,6 @@ import 'package:lottie/lottie.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_providers.dart';
-import '../../onboarding/providers/onboarding_providers.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -53,46 +53,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
     
     try {
-      // First check if onboarding is completed
-      final isOnboardingComplete = await ref.read(isOnboardingCompletedProvider.future);
+      final authService = ref.read(authServiceProvider);
       
-      if (!isOnboardingComplete) {
-        // User hasn't completed onboarding, go to welcome screen
-        _nextRoute = AppConstants.welcomeRoute;
-        _authCheckCompleted = true;
-        _navigateIfReady();
-        return;
-      }
-
+      
       // Check if user is authenticated
       final isAuthenticated = await ref.read(isAuthenticatedProvider.future);
+      debugPrint('Splash: isAuthenticated result: $isAuthenticated');
       
       if (isAuthenticated) {
-        // Check if profile is complete
-        final authService = ref.read(authServiceProvider);
-        final isProfileComplete = await authService.isProfileComplete();
+        // User is authenticated, check if onboarding is completed
+        final isOnboardingCompleted = await authService.isOnboardingCompleted();
+        debugPrint('Splash: isOnboardingCompleted: $isOnboardingCompleted');
         
-        if (isProfileComplete) {
-          // Profile is complete, go to main screen
+        if (isOnboardingCompleted) {
+          // Onboarding completed, go to home screen
           _nextRoute = AppConstants.homeRoute;
         } else {
-          // Profile is incomplete, go to profile completion screen
-          _nextRoute = '/profile-completion';
+          // Onboarding not completed, go to name screen to start onboarding
+          _nextRoute = '/onboarding/name';
         }
       } else {
-        // User is not logged in, go to login screen
-        _nextRoute = AppConstants.loginRoute;
-      }
-    } catch (e) {
-      // Error checking auth, default to login screen or welcome if onboarding not done
-      try {
-        final isOnboardingComplete = await ref.read(isOnboardingCompletedProvider.future);
-        _nextRoute = isOnboardingComplete ? AppConstants.loginRoute : AppConstants.welcomeRoute;
-      } catch (_) {
+        // User is not logged in, show welcome screen first
         _nextRoute = AppConstants.welcomeRoute;
       }
+    } catch (e) {
+      // Error checking auth, default to welcome screen
+      debugPrint('Splash: Error in auth check: $e');
+      _nextRoute = AppConstants.welcomeRoute;
     }
     
+    debugPrint('Splash: Final route decision: $_nextRoute');
     _authCheckCompleted = true;
     _navigateIfReady();
   }
@@ -120,7 +110,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           children: [
             Expanded(
               child: Lottie.asset(
-                'assets/animations/splash.json',
+                'assets/animations/splash2.json',
                 controller: _animationController,
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height,

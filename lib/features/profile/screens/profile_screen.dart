@@ -1,15 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../features/auth/providers/auth_providers.dart';
-import '../providers/profile_providers.dart';
-import '../models/user_profile_model.dart';
-import '../../booking/providers/booking_providers.dart';
-import '../../address/providers/address_providers.dart';
 import '../../auth/services/logout_service.dart';
 import '../../auth/services/logout_test_service.dart';
+import '../models/user_profile_model.dart';
+import '../providers/profile_providers.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -86,16 +85,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  profile?.email ?? currentUser?.email ?? 'No email',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontFamily: 'Okra',
-                  ),
-                ),
+                profile?.email != null
+                    ? Text(
+                        profile?.email ?? currentUser?.email ?? 'No email',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontFamily: 'Okra',
+                        ),
+                      )
+                    : const SizedBox.shrink(),
                 if (profile?.phoneNumber != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     profile!.phoneNumber!,
                     style: TextStyle(
@@ -284,6 +285,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       title: 'Utility',
       items: [
+        {
+          'icon': Icons.wallet_outlined,
+          'title': 'Wallet',
+          'subtitle': 'View balance and transaction history',
+          'route': '/wallet',
+        },
         {
           'icon': Icons.notifications_outlined,
           'title': 'Notifications',

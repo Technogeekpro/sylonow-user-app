@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../auth/providers/auth_providers.dart';
 import '../models/onboarding_data_model.dart';
 import '../services/onboarding_service.dart';
 
@@ -6,7 +9,8 @@ part 'onboarding_providers.g.dart';
 
 @riverpod
 OnboardingService onboardingService(OnboardingServiceRef ref) {
-  return OnboardingService();
+  final authService = ref.watch(authServiceProvider);
+  return OnboardingService(authService);
 }
 
 @riverpod
@@ -42,6 +46,19 @@ class OnboardingController extends _$OnboardingController {
     ref.invalidate(onboardingDataProvider);
   }
 
+  Future<void> updateOccasionWithId(
+    String occasionId,
+    String occasionName,
+  ) async {
+    final service = ref.read(onboardingServiceProvider);
+    await service.updateOccasionWithId(occasionId, occasionName);
+    state = state.copyWith(
+      selectedOccasion: occasionName,
+      selectedOccasionId: occasionId,
+    );
+    ref.invalidate(onboardingDataProvider);
+  }
+
   Future<void> updateCelebrationDate(String date) async {
     final service = ref.read(onboardingServiceProvider);
     await service.updateCelebrationDate(date);
@@ -49,8 +66,40 @@ class OnboardingController extends _$OnboardingController {
     ref.invalidate(onboardingDataProvider);
   }
 
+  Future<void> updateCelebrationTime(String time) async {
+    final service = ref.read(onboardingServiceProvider);
+    await service.updateCelebrationTime(time);
+    state = state.copyWith(celebrationTime: time);
+    ref.invalidate(onboardingDataProvider);
+  }
+
   Future<void> completeOnboarding() async {
     final service = ref.read(onboardingServiceProvider);
+    final authService = ref.read(authServiceProvider);
+
+    // Get current user's phone if available
+    final currentUser = authService.getCurrentUser();
+    String? userPhone;
+    if (currentUser?.phone != null) {
+      userPhone = currentUser!.phone!;
+    }
+
+    // Save complete onboarding data to database one final time
+    debugPrint(
+      'CompleteOnboarding: state.selectedOccasionId = ${state.selectedOccasionId}',
+    );
+    debugPrint(
+      'CompleteOnboarding: state.selectedOccasion = ${state.selectedOccasion}',
+    );
+    await authService.saveOnboardingData(
+      userName: state.userName,
+      selectedOccasion: state.selectedOccasion,
+      selectedOccasionId: state.selectedOccasionId,
+      celebrationDate: state.celebrationDate,
+      celebrationTime: state.celebrationTime,
+      phoneNumber: userPhone,
+    );
+
     await service.completeOnboarding();
     state = state.copyWith(isCompleted: true);
     ref.invalidate(isOnboardingCompletedProvider);
@@ -61,5 +110,14 @@ class OnboardingController extends _$OnboardingController {
     final service = ref.read(onboardingServiceProvider);
     final data = await service.getOnboardingData();
     state = data;
+  }
+
+  /// Debug method to reset onboarding for testing
+  Future<void> resetForDebug() async {
+    final service = ref.read(onboardingServiceProvider);
+    await service.resetOnboardingForDebug();
+    state = const OnboardingDataModel();
+    ref.invalidate(isOnboardingCompletedProvider);
+    ref.invalidate(onboardingDataProvider);
   }
 }

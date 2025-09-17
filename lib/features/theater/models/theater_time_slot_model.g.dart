@@ -11,17 +11,17 @@ _$TheaterTimeSlotModelImpl _$$TheaterTimeSlotModelImplFromJson(
     _$TheaterTimeSlotModelImpl(
       id: json['id'] as String,
       theaterId: json['theater_id'] as String,
-      slotName: json['slot_name'] as String,
+      screenId: json['screen_id'] as String?,
       startTime: json['start_time'] as String,
       endTime: json['end_time'] as String,
-      basePrice: (json['base_price'] as num).toDouble(),
-      pricePerHour: (json['price_per_hour'] as num).toDouble(),
-      weekdayMultiplier: (json['weekday_multiplier'] as num).toDouble(),
-      weekendMultiplier: (json['weekend_multiplier'] as num).toDouble(),
-      holidayMultiplier: (json['holiday_multiplier'] as num).toDouble(),
-      maxDurationHours: (json['max_duration_hours'] as num).toInt(),
-      minDurationHours: (json['min_duration_hours'] as num).toInt(),
-      isActive: json['is_active'] as bool,
+      basePrice: json['base_price'] == null
+          ? 0.0
+          : _safeDoubleFromJson(json['base_price']),
+      discountedPrice: json['discounted_price'] == null
+          ? 0.0
+          : _safeDoubleFromJson(json['discounted_price']),
+      isAvailable: json['is_available'] as bool? ?? true,
+      isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
@@ -35,16 +35,12 @@ Map<String, dynamic> _$$TheaterTimeSlotModelImplToJson(
     <String, dynamic>{
       'id': instance.id,
       'theater_id': instance.theaterId,
-      'slot_name': instance.slotName,
+      'screen_id': instance.screenId,
       'start_time': instance.startTime,
       'end_time': instance.endTime,
       'base_price': instance.basePrice,
-      'price_per_hour': instance.pricePerHour,
-      'weekday_multiplier': instance.weekdayMultiplier,
-      'weekend_multiplier': instance.weekendMultiplier,
-      'holiday_multiplier': instance.holidayMultiplier,
-      'max_duration_hours': instance.maxDurationHours,
-      'min_duration_hours': instance.minDurationHours,
+      'discounted_price': instance.discountedPrice,
+      'is_available': instance.isAvailable,
       'is_active': instance.isActive,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
@@ -61,7 +57,9 @@ _$TheaterSlotBookingModelImpl _$$TheaterSlotBookingModelImplFromJson(
       endTime: json['end_time'] as String,
       status: json['status'] as String,
       bookingId: json['booking_id'] as String?,
-      slotPrice: (json['slot_price'] as num).toDouble(),
+      slotPrice: json['slot_price'] == null
+          ? 0.0
+          : _safeDoubleFromJson(json['slot_price']),
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
