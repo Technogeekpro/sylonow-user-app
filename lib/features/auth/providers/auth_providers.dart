@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/auth_controller.dart';
 import '../services/auth_service.dart';
+import '../services/account_deletion_service.dart';
 
 // Supabase Client Provider
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -12,6 +13,12 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
 final authServiceProvider = Provider<AuthService>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   return AuthService(supabase);
+});
+
+// Account Deletion Service Provider
+final accountDeletionServiceProvider = Provider<AccountDeletionService>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return AccountDeletionService(supabase);
 });
 
 // Auth Controller Provider

@@ -303,6 +303,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'subtitle': 'Get help and contact support',
           'route': '/profile/support',
         },
+        {
+          'icon': Icons.delete_forever_outlined,
+          'title': 'Delete Account',
+          'subtitle': 'Permanently delete your account and data',
+          'onTap': () => _showDeleteAccountDialog(context, ref),
+          'isDestructive': true,
+        },
       ],
     );
   }
@@ -373,6 +380,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onTap:
                         item['onTap'] as VoidCallback? ??
                         () => context.push(item['route'] as String),
+                    isDestructive: item['isDestructive'] as bool? ?? false,
                   ),
                   if (index < items.length - 1)
                     Divider(height: 1, color: Colors.grey[200], indent: 60),
@@ -390,7 +398,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    bool isDestructive = false,
   }) {
+    final Color iconColor = isDestructive ? Colors.red[600]! : AppTheme.primaryColor;
+    final Color titleColor = isDestructive ? Colors.red[600]! : Colors.black87;
+    final Color arrowColor = isDestructive ? Colors.red[600]! : AppTheme.primaryColor;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -402,10 +415,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: isDestructive
+                      ? Colors.red[50]
+                      : AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppTheme.primaryColor, size: 24),
+                child: Icon(icon, color: iconColor, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -414,11 +429,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Okra',
-                        color: Colors.black87,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -436,7 +451,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: AppTheme.primaryColor,
+                color: arrowColor,
               ),
             ],
           ),
@@ -1004,6 +1019,367 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           )
           .toList(),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red[600], size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'Delete Account',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Okra',
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This action cannot be undone. All your data will be permanently deleted, including:',
+                style: TextStyle(
+                  fontFamily: 'Okra',
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildDeletionInfo(),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.red[600], size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'We will send an OTP to your email for verification before deleting your account.',
+                        style: TextStyle(
+                          fontFamily: 'Okra',
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[600], fontFamily: 'Okra'),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _initiateAccountDeletion(context, ref);
+              },
+              child: Text(
+                'Continue',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDeletionInfo() {
+    const items = [
+      '• Profile information and settings',
+      '• Booking history and preferences',
+      '• Wallet balance and transactions',
+      '• Saved addresses and payment methods',
+      '• All account-related data',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontFamily: 'Okra',
+                  fontSize: 13,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  void _initiateAccountDeletion(BuildContext context, WidgetRef ref) async {
+    final accountDeletionService = ref.read(accountDeletionServiceProvider);
+    final currentUserEmail = accountDeletionService.getCurrentUserEmail();
+
+    if (currentUserEmail == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: No user email found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext loadingContext) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+
+    try {
+      // Send OTP to user's email
+      await accountDeletionService.sendDeletionOTP(currentUserEmail);
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      // Show OTP verification dialog
+      if (context.mounted) {
+        _showOTPVerificationDialog(context, ref, currentUserEmail);
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending OTP: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showOTPVerificationDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String email,
+  ) {
+    final TextEditingController otpController = TextEditingController();
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Verify Your Email',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Okra',
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We have sent a verification code to:',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    enabled: !isVerifying,
+                    decoration: InputDecoration(
+                      labelText: 'Enter OTP',
+                      hintText: '123456',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      counterText: '',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber, color: Colors.orange[600], size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Your account will be permanently deleted after verification.',
+                            style: TextStyle(
+                              fontFamily: 'Okra',
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontFamily: 'Okra',
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: isVerifying ? null : () async {
+                    final otp = otpController.text.trim();
+                    if (otp.length != 6) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a valid 6-digit OTP'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      isVerifying = true;
+                    });
+
+                    try {
+                      final accountDeletionService = ref.read(accountDeletionServiceProvider);
+                      await accountDeletionService.verifyOTPAndDeleteAccount(
+                        email: email,
+                        otp: otp,
+                      );
+
+                      // Close dialog
+                      if (context.mounted) {
+                        Navigator.pop(dialogContext);
+                      }
+
+                      // Navigate to splash screen
+                      if (context.mounted) {
+                        context.go('/');
+                      }
+
+                      // Show success message
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Account deleted successfully'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      setState(() {
+                        isVerifying = false;
+                      });
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: ${e.toString()}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: isVerifying
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: Colors.red[600],
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
