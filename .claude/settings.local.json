@@ -52,7 +52,8 @@
       "Bash(grep:*)",
       "mcp__dart__analyze_files",
       "mcp__dart__add_roots",
-      "mcp__dart__dart_format"
+      "mcp__dart__dart_format",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter \"git rm --cached --ignore-unmatch supabase/functions/.env.temp\" --prune-empty --tag-name-filter cat -- --all)"
     ],
     "deny": []
   },
