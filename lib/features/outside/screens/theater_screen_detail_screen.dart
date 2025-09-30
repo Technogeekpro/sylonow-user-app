@@ -38,6 +38,8 @@ class _TheaterScreenDetailScreenState
   ScreenPackageModel? _selectedPackage;
   final ScrollController _scrollController = ScrollController();
   bool _showAppBarTitle = false;
+  List<AddonModel> _selectedAddons = [];
+  double _totalAddonPrice = 0.0;
 
   @override
   void initState() {
@@ -950,7 +952,7 @@ class _TheaterScreenDetailScreenState
                     ),
                   ),
                   Text(
-                    '₹${_selectedTimeSlot!.effectivePrice.round()}',
+                    '₹${(_selectedTimeSlot!.effectivePrice + _totalAddonPrice).round()}',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -958,6 +960,15 @@ class _TheaterScreenDetailScreenState
                       fontFamily: 'Okra',
                     ),
                   ),
+                  if (_totalAddonPrice > 0)
+                    Text(
+                      'Base: ₹${_selectedTimeSlot!.effectivePrice.round()} + Add-ons: ₹${_totalAddonPrice.round()}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                        fontFamily: 'Okra',
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1013,21 +1024,26 @@ class _TheaterScreenDetailScreenState
       return;
     }
 
-    // Navigate to occasions selection screen
+    // Navigate to extra special screen
     context.push(
-      '/outside/${widget.screen.id}/occasions',
+      '/outside/${widget.screen.id}/extra-special',
       extra: {
         'screen': widget.screen,
         'selectedPackage': _selectedPackage,
         'selectedDate': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'timeSlot': _selectedTimeSlot,
         'screenId': widget.screen.id,
+        'selectedAddons': _selectedAddons,
+        'totalAddonPrice': _totalAddonPrice.isFinite ? _totalAddonPrice : 0.0,
       },
     );
   }
 
   Widget _buildAddonsSection() {
-    final addons = ref.watch(addonsByTheaterProvider(widget.screen.theaterId));
+    final addons = ref.watch(addonsByCategoryProvider(AddonCategoryParams(
+      theaterId: widget.screen.theaterId,
+      category: 'add_on',
+    )));
 
     return addons.when(
       data: (addonsList) {
@@ -1097,15 +1113,32 @@ class _TheaterScreenDetailScreenState
   }
 
   Widget _buildAddonCard(AddonModel addon) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final isSelected = _selectedAddons.contains(addon);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            _selectedAddons.remove(addon);
+            _totalAddonPrice -= addon.price;
+          } else {
+            _selectedAddons.add(addon);
+            _totalAddonPrice += addon.price;
+          }
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Image Section
           Container(
             height: 157,
@@ -1198,7 +1231,7 @@ class _TheaterScreenDetailScreenState
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: AppTheme.primaryColor,
@@ -1206,9 +1239,9 @@ class _TheaterScreenDetailScreenState
                           ),
                         ),
                         child: Text(
-                          'Add',
+                          isSelected ? 'Added' : 'Add',
                           style: TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: isSelected ? Colors.white : AppTheme.primaryColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Okra',
@@ -1222,6 +1255,7 @@ class _TheaterScreenDetailScreenState
             ),
           ),
         ],
+      ),
       ),
     );
   }

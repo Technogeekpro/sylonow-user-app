@@ -53,10 +53,16 @@ import '../../features/theater/screens/theater_booking_history_screen.dart';
 import '../../features/outside/screens/outside_screen.dart';
 import '../../features/outside/screens/theater_screen_detail_screen.dart';
 import '../../features/outside/models/theater_screen_model.dart';
+import '../../features/outside/models/screen_package_model.dart';
+import '../../features/outside/models/time_slot_model.dart';
+import '../../features/outside/models/addon_model.dart';
 import '../../features/outside/screens/outside_occasions_screen.dart';
 import '../../features/outside/screens/outside_special_services_screen.dart';
 import '../../features/outside/screens/outside_addons_screen.dart';
 import '../../features/outside/screens/outside_checkout_screen.dart';
+import '../../features/outside/screens/extra_special_screen.dart';
+import '../../features/outside/screens/special_services_screen.dart';
+import '../../features/outside/screens/checkout_screen.dart' as outside_checkout;
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -544,9 +550,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      // Outside special services selection route
+      // Outside special services selection route (OLD - replaced by new flow)
       GoRoute(
-        path: '/outside/:screenId/special-services',
+        path: '/outside/:screenId/old-special-services',
         builder: (context, state) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;
@@ -574,9 +580,170 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      // Outside checkout route
+      // New flow routes for outside theater booking
+      // Extra special route
+      GoRoute(
+        path: '/outside/:screenId/extra-special',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+
+          // Handle serialized data for widget selection mode
+          TheaterScreen screen;
+          final screenData = extra['screen'];
+          if (screenData is TheaterScreen) {
+            screen = screenData;
+          } else if (screenData is Map<String, dynamic>) {
+            screen = TheaterScreen.fromJson(screenData);
+          } else {
+            throw Exception('Invalid screen data type: ${screenData.runtimeType}');
+          }
+
+          ScreenPackageModel? selectedPackage;
+          final packageData = extra['selectedPackage'];
+          if (packageData is ScreenPackageModel?) {
+            selectedPackage = packageData;
+          } else if (packageData is Map<String, dynamic>?) {
+            selectedPackage = packageData != null ? ScreenPackageModel.fromJson(packageData) : null;
+          }
+
+          TimeSlotModel timeSlot;
+          final timeSlotData = extra['timeSlot'];
+          if (timeSlotData is TimeSlotModel) {
+            timeSlot = timeSlotData;
+          } else if (timeSlotData is Map<String, dynamic>) {
+            timeSlot = TimeSlotModel.fromJson(timeSlotData);
+          } else {
+            throw Exception('Invalid timeSlot data type: ${timeSlotData.runtimeType}');
+          }
+
+          return ExtraSpecialScreen(
+            screen: screen,
+            selectedPackage: selectedPackage,
+            selectedDate: extra['selectedDate'] as String,
+            timeSlot: timeSlot,
+            screenId: screenId,
+            selectedAddons: (extra['selectedAddons'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalAddonPrice: (extra['totalAddonPrice'] as num?)?.toDouble() ?? 0.0,
+          );
+        },
+      ),
+      // Special services route
+      GoRoute(
+        path: '/outside/:screenId/special-services',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+
+          // Handle serialized data for widget selection mode
+          TheaterScreen screen;
+          final screenData = extra['screen'];
+          if (screenData is TheaterScreen) {
+            screen = screenData;
+          } else if (screenData is Map<String, dynamic>) {
+            screen = TheaterScreen.fromJson(screenData);
+          } else {
+            throw Exception('Invalid screen data type: ${screenData.runtimeType}');
+          }
+
+          ScreenPackageModel? selectedPackage;
+          final packageData = extra['selectedPackage'];
+          if (packageData is ScreenPackageModel?) {
+            selectedPackage = packageData;
+          } else if (packageData is Map<String, dynamic>?) {
+            selectedPackage = packageData != null ? ScreenPackageModel.fromJson(packageData) : null;
+          }
+
+          TimeSlotModel timeSlot;
+          final timeSlotData = extra['timeSlot'];
+          if (timeSlotData is TimeSlotModel) {
+            timeSlot = timeSlotData;
+          } else if (timeSlotData is Map<String, dynamic>) {
+            timeSlot = TimeSlotModel.fromJson(timeSlotData);
+          } else {
+            throw Exception('Invalid timeSlot data type: ${timeSlotData.runtimeType}');
+          }
+
+          return SpecialServicesScreen(
+            screen: screen,
+            selectedPackage: selectedPackage,
+            selectedDate: extra['selectedDate'] as String,
+            timeSlot: timeSlot,
+            screenId: screenId,
+            selectedAddons: (extra['selectedAddons'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalAddonPrice: (extra['totalAddonPrice'] as num?)?.toDouble() ?? 0.0,
+            selectedExtraSpecials: (extra['selectedExtraSpecials'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalExtraSpecialPrice: (extra['totalExtraSpecialPrice'] as num?)?.toDouble() ?? 0.0,
+          );
+        },
+      ),
+      // New checkout route
       GoRoute(
         path: '/outside/:screenId/checkout',
+        builder: (context, state) {
+          final screenId = state.pathParameters['screenId']!;
+          final extra = state.extra as Map<String, dynamic>;
+
+          // Handle serialized data for widget selection mode
+          TheaterScreen screen;
+          final screenData = extra['screen'];
+          if (screenData is TheaterScreen) {
+            screen = screenData;
+          } else if (screenData is Map<String, dynamic>) {
+            screen = TheaterScreen.fromJson(screenData);
+          } else {
+            throw Exception('Invalid screen data type: ${screenData.runtimeType}');
+          }
+
+          ScreenPackageModel? selectedPackage;
+          final packageData = extra['selectedPackage'];
+          if (packageData is ScreenPackageModel?) {
+            selectedPackage = packageData;
+          } else if (packageData is Map<String, dynamic>?) {
+            selectedPackage = packageData != null ? ScreenPackageModel.fromJson(packageData) : null;
+          }
+
+          TimeSlotModel timeSlot;
+          final timeSlotData = extra['timeSlot'];
+          if (timeSlotData is TimeSlotModel) {
+            timeSlot = timeSlotData;
+          } else if (timeSlotData is Map<String, dynamic>) {
+            timeSlot = TimeSlotModel.fromJson(timeSlotData);
+          } else {
+            throw Exception('Invalid timeSlot data type: ${timeSlotData.runtimeType}');
+          }
+
+          return outside_checkout.CheckoutScreen(
+            screen: screen,
+            selectedPackage: selectedPackage,
+            selectedDate: extra['selectedDate'] as String,
+            timeSlot: timeSlot,
+            screenId: screenId,
+            selectedAddons: (extra['selectedAddons'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalAddonPrice: (extra['totalAddonPrice'] as num?)?.toDouble() ?? 0.0,
+            selectedExtraSpecials: (extra['selectedExtraSpecials'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalExtraSpecialPrice: (extra['totalExtraSpecialPrice'] as num?)?.toDouble() ?? 0.0,
+            selectedSpecialServices: (extra['selectedSpecialServices'] as List? ?? [])
+                .map((e) => e is AddonModel ? e : AddonModel.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            totalSpecialServicesPrice: (extra['totalSpecialServicesPrice'] as num?)?.toDouble() ?? 0.0,
+          );
+        },
+      ),
+
+      // Old outside checkout route (keeping for compatibility)
+      GoRoute(
+        path: '/outside/:screenId/old-checkout',
         builder: (context, state) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;

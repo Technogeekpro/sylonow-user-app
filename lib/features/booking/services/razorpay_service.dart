@@ -1,20 +1,24 @@
 import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:crypto/crypto.dart';
+
 import '../models/payment_model.dart';
-import '../repositories/payment_repository.dart';
 import '../repositories/order_repository.dart';
+import '../repositories/payment_repository.dart';
 
 class RazorpayService {
   late Razorpay _razorpay;
   final PaymentRepository _paymentRepository;
   final OrderRepository _orderRepository;
-  
+
   // Razorpay API credentials (should be moved to environment variables)
-  static const String _keyId = 'rzp_test_YOUR_KEY_ID'; // Replace with actual key
-  static const String _keySecret = 'YOUR_KEY_SECRET'; // Replace with actual secret
-  
+  static const String _keyId =
+      'rzp_test_W7nvo22WaKOB1y'; // Replace with actual key
+  static const String _keySecret =
+      'YlbT7KG7hAr4lTgWYP3i7aOY'; // Replace with actual secret
+
   // Callback functions
   Function(PaymentSuccessResponse)? _onPaymentSuccess;
   Function(PaymentFailureResponse)? _onPaymentError;
@@ -44,20 +48,22 @@ class RazorpayService {
   }) async {
     try {
       // Create payment transaction record first
-      final paymentTransaction = await _paymentRepository.createPaymentTransaction(
-        bookingId: bookingId,
-        userId: userId,
-        vendorId: vendorId,
-        paymentMethod: 'razorpay',
-        amount: amount,
-        metadata: metadata,
-      );
+      final paymentTransaction = await _paymentRepository
+          .createPaymentTransaction(
+            bookingId: bookingId,
+            userId: userId,
+            vendorId: vendorId,
+            paymentMethod: 'razorpay',
+            amount: amount,
+            metadata: metadata,
+          );
 
       // Create Razorpay order
       final orderId = await _createRazorpayOrder(
         amount: amount,
         currency: 'INR',
-        receipt: 'booking_${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
+        receipt:
+            'booking_${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
         notes: {
           'booking_id': bookingId,
           'user_id': userId,
@@ -108,8 +114,8 @@ class RazorpayService {
           'ondismiss': () => {
             'action': 'payment_cancelled',
             'payment_transaction_id': paymentTransaction.id,
-          }
-        }
+          },
+        },
       };
 
       // Set up callbacks for this specific payment
@@ -121,7 +127,9 @@ class RazorpayService {
       return RazorpayPaymentResult.processing(paymentTransaction.id, orderId);
     } catch (e) {
       debugPrint('Error processing Razorpay payment: $e');
-      return RazorpayPaymentResult.error('Failed to process payment: ${e.toString()}');
+      return RazorpayPaymentResult.error(
+        'Failed to process payment: ${e.toString()}',
+      );
     }
   }
 
@@ -135,15 +143,15 @@ class RazorpayService {
     try {
       // Note: In production, this should be done on your backend server
       // for security reasons. This is a simplified implementation.
-      
+
       // For demo purposes, we'll generate a mock order ID
       // In real implementation, make HTTP request to your backend
-      
+
       final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
-      
+
       // Simulate API call delay
       await Future.delayed(const Duration(seconds: 1));
-      
+
       return orderId;
     } catch (e) {
       debugPrint('Error creating Razorpay order: $e');
@@ -153,9 +161,12 @@ class RazorpayService {
 
   /// Set up payment callbacks for specific payment transaction
   void _setupPaymentCallbacks(String paymentTransactionId) {
-    _onPaymentSuccess = (response) => _handleSpecificPaymentSuccess(response, paymentTransactionId);
-    _onPaymentError = (response) => _handleSpecificPaymentError(response, paymentTransactionId);
-    _onExternalWallet = (response) => _handleSpecificExternalWallet(response, paymentTransactionId);
+    _onPaymentSuccess = (response) =>
+        _handleSpecificPaymentSuccess(response, paymentTransactionId);
+    _onPaymentError = (response) =>
+        _handleSpecificPaymentError(response, paymentTransactionId);
+    _onExternalWallet = (response) =>
+        _handleSpecificExternalWallet(response, paymentTransactionId);
   }
 
   /// Handle payment success
@@ -241,7 +252,9 @@ class RazorpayService {
         failureReason: '${response.code}: ${response.message}',
       );
 
-      debugPrint('Razorpay payment failed: ${response.code} - ${response.message}');
+      debugPrint(
+        'Razorpay payment failed: ${response.code} - ${response.message}',
+      );
     } catch (e) {
       debugPrint('Error handling payment failure: $e');
     }
@@ -256,10 +269,13 @@ class RazorpayService {
       await _paymentRepository.updatePaymentStatus(
         paymentId: paymentTransactionId,
         status: 'processing',
-        failureReason: 'Payment redirected to external wallet: ${response.walletName}',
+        failureReason:
+            'Payment redirected to external wallet: ${response.walletName}',
       );
 
-      debugPrint('Payment redirected to external wallet: ${response.walletName}');
+      debugPrint(
+        'Payment redirected to external wallet: ${response.walletName}',
+      );
     } catch (e) {
       debugPrint('Error handling external wallet: $e');
     }
@@ -275,7 +291,7 @@ class RazorpayService {
       final data = '$orderId|$paymentId';
       final key = utf8.encode(_keySecret);
       final bytes = utf8.encode(data);
-      
+
       final hmacSha256 = Hmac(sha256, key);
       final digest = hmacSha256.convert(bytes);
       final generatedSignature = digest.toString();
@@ -306,9 +322,9 @@ class RazorpayService {
     try {
       // Note: In production, refund should be processed through your backend
       // This is a simplified implementation
-      
+
       final refundId = 'rfnd_${DateTime.now().millisecondsSinceEpoch}';
-      
+
       await _paymentRepository.processRefund(
         paymentId: paymentId,
         refundAmount: amount,
@@ -343,7 +359,10 @@ class RazorpayPaymentResult {
     this.orderId,
   });
 
-  factory RazorpayPaymentResult.processing(String paymentTransactionId, String orderId) {
+  factory RazorpayPaymentResult.processing(
+    String paymentTransactionId,
+    String orderId,
+  ) {
     return RazorpayPaymentResult._(
       isSuccess: true,
       message: 'Payment processing initiated',
@@ -353,10 +372,7 @@ class RazorpayPaymentResult {
   }
 
   factory RazorpayPaymentResult.error(String message) {
-    return RazorpayPaymentResult._(
-      isSuccess: false,
-      message: message,
-    );
+    return RazorpayPaymentResult._(isSuccess: false, message: message);
   }
 }
 
@@ -380,9 +396,6 @@ class RefundResult {
   }
 
   factory RefundResult.error(String message) {
-    return RefundResult._(
-      isSuccess: false,
-      message: message,
-    );
+    return RefundResult._(isSuccess: false, message: message);
   }
-} 
+}

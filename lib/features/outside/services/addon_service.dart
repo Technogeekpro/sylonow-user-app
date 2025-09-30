@@ -130,4 +130,24 @@ class AddonService {
       return [];
     }
   }
+
+  /// Get addons by theater and category
+  Future<List<AddonModel>> getAddonsByTheaterAndCategory(String theaterId, String category) async {
+    try {
+      final response = await _supabase
+          .from('add_ons')
+          .select('*')
+          .eq('theater_id', theaterId)
+          .eq('category', category)
+          .eq('is_active', true)
+          .order('price', ascending: true);
+
+      return response.map((addonData) {
+        return AddonModel.fromJson(addonData);
+      }).toList();
+    } catch (e) {
+      print('Error fetching addons by theater and category: $e');
+      return [];
+    }
+  }
 }

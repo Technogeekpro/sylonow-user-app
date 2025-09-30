@@ -1,14 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:sylonow_user/features/theater/models/selected_add_on_model.dart';
+import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/occasion_model.dart';
+import 'package:sylonow_user/features/theater/models/selected_add_on_model.dart';
+import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
 
 // Get Supabase client instance
 final supabase = Supabase.instance.client;
@@ -52,7 +52,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
 
   bool _looksLikeUuid(String? value) {
     if (value == null) return false;
-    final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$');
+    final uuidRegex = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+    );
     return uuidRegex.hasMatch(value);
   }
 
@@ -71,10 +73,12 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       }
       return time; // Return as-is if format is unclear
     }
-    
+
     final normalized1 = normalizeTime(time1);
     final normalized2 = normalizeTime(time2);
-    debugPrint('🧾 Time comparison: "$time1" -> "$normalized1" vs "$time2" -> "$normalized2"');
+    debugPrint(
+      '🧾 Time comparison: "$time1" -> "$normalized1" vs "$time2" -> "$normalized2"',
+    );
     return normalized1 == normalized2;
   }
 
@@ -90,37 +94,38 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       debugPrint('📺 Using selected screen data: $screenData');
       return screenData;
     }
-    
+
     // Use resolved screen data if we fetched by screenId
     if (_resolvedScreenData != null) {
       debugPrint('📺 Using resolved screen data: $_resolvedScreenData');
       return _resolvedScreenData!;
     }
-    
+
     // Try to extract screen info from the selected time slot
     final dynamic selectedSlot = widget.selectionData['selectedTimeSlot'];
     if (selectedSlot is Map<String, dynamic>) {
       final screenInfo = <String, dynamic>{};
-      
+
       // Extract capacity information
       if (selectedSlot['screen_capacity'] != null) {
         screenInfo['capacity'] = selectedSlot['screen_capacity'];
       } else if (selectedSlot['capacity'] != null) {
         screenInfo['capacity'] = selectedSlot['capacity'];
       }
-      
+
       // Extract allowed capacity
       if (selectedSlot['allowed_capacity'] != null) {
         screenInfo['allowed_capacity'] = selectedSlot['allowed_capacity'];
       } else if (selectedSlot['total_capacity'] != null) {
         screenInfo['allowed_capacity'] = selectedSlot['total_capacity'];
       }
-      
+
       // Extract extra charges per person
       if (selectedSlot['charges_extra_per_person'] != null) {
-        screenInfo['charges_extra_per_person'] = selectedSlot['charges_extra_per_person'];
+        screenInfo['charges_extra_per_person'] =
+            selectedSlot['charges_extra_per_person'];
       }
-      
+
       // Extract hourly rate
       if (selectedSlot['hourly_rate'] != null) {
         screenInfo['hourly_rate'] = selectedSlot['hourly_rate'];
@@ -129,9 +134,11 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       } else if (selectedSlot['final_price'] != null) {
         screenInfo['hourly_rate'] = selectedSlot['final_price'];
       }
-      
+
       if (screenInfo.isNotEmpty) {
-        debugPrint('📺 Using screen data extracted from time slot: $screenInfo');
+        debugPrint(
+          '📺 Using screen data extracted from time slot: $screenInfo',
+        );
         return screenInfo;
       }
     }
@@ -145,7 +152,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       'allowed_capacity': 2, // Default base capacity
       'charges_extra_per_person': 0.0, // Default no extra charge
     };
-    debugPrint('📺 Using fallback screen data: $fallbackData (theater capacity: $theaterCapacity)');
+    debugPrint(
+      '📺 Using fallback screen data: $fallbackData (theater capacity: $theaterCapacity)',
+    );
     return fallbackData;
   }
 
@@ -179,13 +188,13 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
   double get _extraChargePerPerson {
     final charges = _screenInfo['charges_extra_per_person'];
     double result = 0.0;
-    
+
     if (charges is num) {
       result = charges.toDouble();
     } else if (charges is String) {
       result = double.tryParse(charges) ?? 0.0;
     }
-    
+
     // debugPrint(
     //   '💰 Extra charge per person: ₹$result (base capacity: $_baseAllowedCapacity, max: $_maxAllowedPeople)',
     // );
@@ -197,7 +206,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     super.initState();
     _peopleCountNotifier = ValueNotifier(_numberOfPeople);
     _razorpay = Razorpay();
-    
+
     // Set up event handlers using function references (recommended by Razorpay docs)
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -221,13 +230,17 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
               _resolvedScreenData = {
                 'id': s.id,
                 'screen_name': s.screenName,
-                'capacity': (s.capacity <= 0) ? (s.allowedCapacity + 10) : s.capacity, // Use allowed_capacity + buffer if capacity is 0
+                'capacity': (s.capacity <= 0)
+                    ? (s.allowedCapacity + 10)
+                    : s.capacity, // Use allowed_capacity + buffer if capacity is 0
                 'allowed_capacity': s.allowedCapacity,
                 'charges_extra_per_person': s.chargesExtraPerPerson,
                 'hourly_rate': s.hourlyRate,
               };
             });
-            debugPrint('🧾 Resolved screen data for screenId $maybeScreenId: $_resolvedScreenData');
+            debugPrint(
+              '🧾 Resolved screen data for screenId $maybeScreenId: $_resolvedScreenData',
+            );
           }
         });
       }
@@ -241,11 +254,10 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       for (var addOn in addOns) {
         if (addOn is Map<String, dynamic>) {
           final id = addOn['id'] ?? addOn['name'] ?? 'unknown';
-          final quantity = (addOn['quantity'] is int) ? addOn['quantity'] as int : 1;
-          _selectedAddOns[id.toString()] = {
-            ...addOn,
-            'quantity': quantity,
-          };
+          final quantity = (addOn['quantity'] is int)
+              ? addOn['quantity'] as int
+              : 1;
+          _selectedAddOns[id.toString()] = {...addOn, 'quantity': quantity};
         } else if (addOn is SelectedAddOnModel) {
           final id = addOn.id;
           _selectedAddOns[id] = {
@@ -262,11 +274,14 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
 
     // Initialize special services
     if (widget.selectionData['selectedSpecialServices'] != null) {
-      final List<dynamic> services = widget.selectionData['selectedSpecialServices'];
+      final List<dynamic> services =
+          widget.selectionData['selectedSpecialServices'];
       for (var service in services) {
         if (service is Map<String, dynamic>) {
           final id = service['id'] ?? service['name'] ?? 'unknown';
-          final quantity = (service['quantity'] is int) ? service['quantity'] as int : 1;
+          final quantity = (service['quantity'] is int)
+              ? service['quantity'] as int
+              : 1;
           _selectedSpecialServices[id.toString()] = {
             ...service,
             'quantity': quantity,
@@ -298,11 +313,13 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
   double get _slotPrice {
     // Get real slot price from the selected time slot
     final dynamic selectedSlot = widget.selectionData['selectedTimeSlot'];
-    
+
     // Debug logging to understand the data structure
-    debugPrint('🧾 _slotPrice - selectedSlot type: ${selectedSlot.runtimeType}');
+    debugPrint(
+      '🧾 _slotPrice - selectedSlot type: ${selectedSlot.runtimeType}',
+    );
     debugPrint('🧾 _slotPrice - selectedSlot value: $selectedSlot');
-    
+
     // Try to extract price from the selected slot object
     if (selectedSlot is Map<String, dynamic>) {
       // Check for base_price field (new screen-based system)
@@ -315,7 +332,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           if (parsedPrice != null) return parsedPrice;
         }
       }
-      
+
       // Check for final_price field (direct query system)
       if (selectedSlot['final_price'] != null) {
         final price = selectedSlot['final_price'];
@@ -326,7 +343,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           if (parsedPrice != null) return parsedPrice;
         }
       }
-      
+
       // Check for slot_price field (legacy system)
       if (selectedSlot['slot_price'] != null) {
         final price = selectedSlot['slot_price'];
@@ -337,7 +354,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           if (parsedPrice != null) return parsedPrice;
         }
       }
-      
+
       // Check for price_per_hour field
       if (selectedSlot['price_per_hour'] != null) {
         final price = selectedSlot['price_per_hour'];
@@ -348,7 +365,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           if (parsedPrice != null) return parsedPrice;
         }
       }
-      
+
       // Check for original_hourly_price field
       if (selectedSlot['original_hourly_price'] != null) {
         final price = selectedSlot['original_hourly_price'];
@@ -360,7 +377,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         }
       }
     }
-    
+
     // Fallback to slotPrice in selectionData
     if (widget.selectionData['slotPrice'] != null) {
       final price = widget.selectionData['slotPrice'];
@@ -371,11 +388,15 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         if (parsedPrice != null) return parsedPrice;
       }
     }
-    
+
     // Log warning if no price found
-    debugPrint('🧾 WARNING: No valid price found in selectedTimeSlot data, using default 1500.0');
-    debugPrint('🧾 Available keys in selectionData: ${widget.selectionData.keys.toList()}');
-    
+    debugPrint(
+      '🧾 WARNING: No valid price found in selectedTimeSlot data, using default 1500.0',
+    );
+    debugPrint(
+      '🧾 Available keys in selectionData: ${widget.selectionData.keys.toList()}',
+    );
+
     // Default fallback - use a reasonable default instead of hardcoded value
     return 1500.0;
   }
@@ -387,7 +408,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     for (var addOn in _selectedAddOns.values) {
       double price = 0.0;
       int quantity = 1;
-      
+
       // Extract price from the add-on data
       if (addOn['price'] != null) {
         final priceValue = addOn['price'];
@@ -397,7 +418,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           price = double.tryParse(priceValue) ?? 0.0;
         }
       }
-      
+
       // Extract quantity from the add-on data
       if (addOn['quantity'] != null) {
         final qtyValue = addOn['quantity'];
@@ -407,7 +428,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           quantity = int.tryParse(qtyValue) ?? 1;
         }
       }
-      
+
       total += price * quantity;
     }
 
@@ -415,7 +436,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     for (var service in _selectedSpecialServices.values) {
       double price = 0.0;
       int quantity = 1;
-      
+
       // Extract price from the service data
       if (service['price'] != null) {
         final priceValue = service['price'];
@@ -425,7 +446,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           price = double.tryParse(priceValue) ?? 0.0;
         }
       }
-      
+
       // Extract quantity from the service data
       if (service['quantity'] != null) {
         final qtyValue = service['quantity'];
@@ -435,7 +456,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           quantity = int.tryParse(qtyValue) ?? 1;
         }
       }
-      
+
       total += price * quantity;
     }
 
@@ -515,14 +536,15 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     try {
       final dynamic selectedOccasion = widget.selectionData['selectedOccasion'];
       String? occasionName;
-      
+
       if (selectedOccasion is OccasionModel) {
         occasionName = selectedOccasion.name;
       } else if (selectedOccasion is Map<String, dynamic>) {
-        occasionName = selectedOccasion['name']?.toString() ?? 
-                      selectedOccasion['title']?.toString() ?? 
-                      selectedOccasion['occasion']?.toString() ??
-                      selectedOccasion['label']?.toString();
+        occasionName =
+            selectedOccasion['name']?.toString() ??
+            selectedOccasion['title']?.toString() ??
+            selectedOccasion['occasion']?.toString() ??
+            selectedOccasion['label']?.toString();
       } else if (selectedOccasion is String) {
         occasionName = selectedOccasion;
       }
@@ -530,7 +552,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       final dynamic selectedSlot = widget.selectionData['selectedTimeSlot'];
       String startTime = '00:00';
       String endTime = '00:00';
-      
+
       // Extract time information from slot data
       if (selectedSlot is Map<String, dynamic>) {
         startTime = selectedSlot['start_time']?.toString() ?? startTime;
@@ -540,12 +562,13 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         startTime = parts[0].trim();
         endTime = parts.length > 1 ? parts[1].trim() : endTime;
       }
-      
+
       final user = supabase.auth.currentUser;
       final celebrationName = _celebrationNameController.text.trim();
-      final customerName = user?.userMetadata?['full_name']?.toString() ?? 
-                          user?.email?.split('@').first ?? 
-                          (celebrationName.isNotEmpty ? celebrationName : 'Customer');
+      final customerName =
+          user?.userMetadata?['full_name']?.toString() ??
+          user?.email?.split('@').first ??
+          (celebrationName.isNotEmpty ? celebrationName : 'Customer');
 
       // Get theater owner's auth_user_id for vendor lookup
       String? vendorAuthId;
@@ -563,10 +586,11 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       final notificationPayload = {
         'booking_id': bookingId,
         'theater_id': widget.theaterId,
-        'vendor_id': vendorAuthId,  // Remove fallback to user?.id as this should be theater owner
+        'vendor_id':
+            vendorAuthId, // Remove fallback to user?.id as this should be theater owner
         'customer_name': customerName,
-        'booking_date': widget.selectedDate.contains('T') 
-            ? widget.selectedDate.split('T')[0] 
+        'booking_date': widget.selectedDate.contains('T')
+            ? widget.selectedDate.split('T')[0]
             : widget.selectedDate,
         'start_time': startTime,
         'end_time': endTime,
@@ -587,7 +611,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         if (response.status != 200) {
           debugPrint('⚠️ Failed to send vendor notification: ${response.data}');
         } else {
-          debugPrint('✅ Vendor notification sent successfully: ${response.data}');
+          debugPrint(
+            '✅ Vendor notification sent successfully: ${response.data}',
+          );
         }
       } else {
         debugPrint('⚠️ No vendor ID found, skipping notification');
@@ -612,17 +638,21 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     // Validate payment response according to Razorpay documenta tion
     if (response.paymentId == null || response.paymentId!.isEmpty) {
       debugPrint('❌ Invalid payment response: Missing payment ID');
-      _handlePaymentError(PaymentFailureResponse(
-        1,
-        'Invalid payment response received - missing payment ID',
-        {'error': 'INVALID_PAYMENT_ID'},
-      ));
+      _handlePaymentError(
+        PaymentFailureResponse(
+          1,
+          'Invalid payment response received - missing payment ID',
+          {'error': 'INVALID_PAYMENT_ID'},
+        ),
+      );
       return;
     }
 
     // Additional validation for signature (recommended by Razorpay)
     if (response.signature == null || response.signature!.isEmpty) {
-      debugPrint('⚠️ Warning: Payment signature is missing - this may indicate a security issue');
+      debugPrint(
+        '⚠️ Warning: Payment signature is missing - this may indicate a security issue',
+      );
     }
 
     try {
@@ -673,7 +703,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
             if (user != null) {
               context.go('/');
             } else {
-              debugPrint('⚠️ User authentication lost, staying on current screen');
+              debugPrint(
+                '⚠️ User authentication lost, staying on current screen',
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
@@ -690,11 +722,11 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     } catch (e) {
       debugPrint('❌ Error in payment success handler: $e');
       debugPrint('❌ Error stack trace: ${StackTrace.current}');
-      
+
       if (mounted) {
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
-        
+
         // Show error message but still navigate since payment was successful
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -709,12 +741,14 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
               textColor: Colors.white,
               onPressed: () {
                 // Copy payment ID to clipboard for support
-                debugPrint('User requested to copy Payment ID: ${response.paymentId}');
+                debugPrint(
+                  'User requested to copy Payment ID: ${response.paymentId}',
+                );
               },
             ),
           ),
         );
-        
+
         // Navigate to home after showing error message
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
@@ -723,7 +757,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
             if (user != null) {
               context.go('/');
             } else {
-              debugPrint('⚠️ User authentication lost, staying on current screen');
+              debugPrint(
+                '⚠️ User authentication lost, staying on current screen',
+              );
             }
           }
         });
@@ -736,50 +772,63 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       _isProcessingPayment = false;
     });
 
-    debugPrint('❌ Payment Error - Code: ${response.code}, Message: ${response.message}');
+    debugPrint(
+      '❌ Payment Error - Code: ${response.code}, Message: ${response.message}',
+    );
     debugPrint('💰 Failed amount: ₹${_advanceAmount.toStringAsFixed(2)}');
-    
+
     String errorMessage = response.message ?? "Unknown error occurred";
     String actionLabel = 'Retry';
     bool showRetry = true;
-    
+
     // Enhanced error handling based on Razorpay documentation
     if (response.code == Razorpay.PAYMENT_CANCELLED) {
-      errorMessage = "Payment was cancelled by you. You can try again when ready.";
+      errorMessage =
+          "Payment was cancelled by you. You can try again when ready.";
       showRetry = true;
       actionLabel = 'Try Again';
     } else if (response.code == Razorpay.NETWORK_ERROR) {
-      errorMessage = "Network error. Please check your internet connection and try again.";
+      errorMessage =
+          "Network error. Please check your internet connection and try again.";
       showRetry = true;
-    } else if (response.code == 2) { // Invalid credentials
+    } else if (response.code == 2) {
+      // Invalid credentials
       errorMessage = "Payment configuration error. Please contact support.";
       showRetry = false;
       actionLabel = 'Contact Support';
-    } else if (response.code == 3) { // Amount limit exceeded
+    } else if (response.code == 3) {
+      // Amount limit exceeded
       errorMessage = "Payment amount exceeds limit. Please contact support.";
       showRetry = false;
       actionLabel = 'Contact Support';
-    } else if (response.code == 4) { // Bad request error
-      errorMessage = "Invalid payment request. Please try again or contact support.";
+    } else if (response.code == 4) {
+      // Bad request error
+      errorMessage =
+          "Invalid payment request. Please try again or contact support.";
       showRetry = true;
-    } else if (response.code == 5) { // Server error
+    } else if (response.code == 5) {
+      // Server error
       errorMessage = "Payment server error. Please try again in a few moments.";
       showRetry = true;
-    } else if (response.code == 6) { // Gateway error
-      errorMessage = "Payment gateway error. Please try again or use a different payment method.";
+    } else if (response.code == 6) {
+      // Gateway error
+      errorMessage =
+          "Payment gateway error. Please try again or use a different payment method.";
       showRetry = true;
-    } else if (errorMessage.toLowerCase().contains('svg') || 
-               errorMessage.toLowerCase().contains('attribute') ||
-               errorMessage.toLowerCase().contains('width') ||
-               errorMessage.toLowerCase().contains('height')) {
-      errorMessage = "Payment interface loading issue. This is a browser compatibility issue. Please try using a different browser.";
+    } else if (errorMessage.toLowerCase().contains('svg') ||
+        errorMessage.toLowerCase().contains('attribute') ||
+        errorMessage.toLowerCase().contains('width') ||
+        errorMessage.toLowerCase().contains('height')) {
+      errorMessage =
+          "Payment interface loading issue. This is a browser compatibility issue. Please try using a different browser.";
       showRetry = true;
       actionLabel = 'Try Different Browser';
     } else if (errorMessage.toLowerCase().contains('timeout')) {
       errorMessage = "Payment request timed out. Please try again.";
       showRetry = true;
     } else if (errorMessage.toLowerCase().contains('insufficient')) {
-      errorMessage = "Insufficient funds. Please check your account balance or try a different payment method.";
+      errorMessage =
+          "Insufficient funds. Please check your account balance or try a different payment method.";
       showRetry = true;
       actionLabel = 'Try Again';
     }
@@ -793,20 +842,24 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         ),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 8),
-        action: showRetry ? SnackBarAction(
-          label: actionLabel,
-          textColor: Colors.white,
-          onPressed: () {
-            if (actionLabel.contains('Support')) {
-              // You can add support contact functionality here
-              debugPrint('User requested support for payment error: ${response.code}');
-            } else {
-              Future.delayed(const Duration(milliseconds: 500), () {
-                _startPayment();
-              });
-            }
-          },
-        ) : null,
+        action: showRetry
+            ? SnackBarAction(
+                label: actionLabel,
+                textColor: Colors.white,
+                onPressed: () {
+                  if (actionLabel.contains('Support')) {
+                    // You can add support contact functionality here
+                    debugPrint(
+                      'User requested support for payment error: ${response.code}',
+                    );
+                  } else {
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      _startPayment();
+                    });
+                  }
+                },
+              )
+            : null,
       ),
     );
   }
@@ -848,12 +901,16 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
 
     final theaterAsync = ref.read(theaterProvider(widget.theaterId));
     final theater = theaterAsync.value;
-    
+
     // Get current user data for prefill
     final user = supabase.auth.currentUser;
-    final userPhone = user?.phone ?? user?.userMetadata?['phone'] ?? '9999999999';
+    final userPhone =
+        user?.phone ?? user?.userMetadata?['phone'] ?? '9999999999';
     final userEmail = user?.email ?? 'user@example.com';
-    final userName = user?.userMetadata?['full_name'] ?? user?.userMetadata?['name'] ?? 'User';
+    final userName =
+        user?.userMetadata?['full_name'] ??
+        user?.userMetadata?['name'] ??
+        'User';
 
     // Create payment options following Razorpay documentation
     var options = <String, dynamic>{
@@ -861,67 +918,57 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       'amount': (_advanceAmount * 100).toInt(), // Amount in paise
       'currency': 'INR',
       'name': 'Sylonow',
-      'description': 'Theater Booking (Advance Payment) - ${theater?.name ?? "Private Theater"}',
+      'description':
+          'Theater Booking (Advance Payment) - ${theater?.name ?? "Private Theater"}',
       'timeout': 300, // 5 minutes timeout
-      'prefill': {
-        'contact': userPhone,
-        'email': userEmail,
-        'name': userName,
-      },
-      'theme': {
-        'color': '#FF0080',
-      },
-      'modal': {
-        'backdropclose': false,
-        'escape': false,
-        'handleback': false,
-      },
-      'retry': {
-        'enabled': true,
-        'max_count': 3,
-      },
+      'prefill': {'contact': userPhone, 'email': userEmail, 'name': userName},
+      'theme': {'color': '#FF0080'},
+      'modal': {'backdropclose': false, 'escape': false, 'handleback': false},
+      'retry': {'enabled': true, 'max_count': 3},
       'send_sms_hash': true,
       'remember_customer': false,
-      'readonly': {
-        'email': false,
-        'contact': false,
-        'name': false,
-      },
+      'readonly': {'email': false, 'contact': false, 'name': false},
     };
 
     try {
-      debugPrint('🚀 Opening Razorpay checkout with options: ${options.keys.join(", ")}');
-      debugPrint('💰 Payment amount: ₹${_advanceAmount.toStringAsFixed(2)} (${(_advanceAmount * 100).toInt()} paise)');
-      
+      debugPrint(
+        '🚀 Opening Razorpay checkout with options: ${options.keys.join(", ")}',
+      );
+      debugPrint(
+        '💰 Payment amount: ₹${_advanceAmount.toStringAsFixed(2)} (${(_advanceAmount * 100).toInt()} paise)',
+      );
+
       _razorpay.open(options);
     } catch (e) {
       debugPrint('❌ Razorpay checkout error: $e');
       setState(() {
         _isProcessingPayment = false;
       });
-      
+
       String errorMessage = 'Payment initialization failed';
       String actionLabel = 'Retry';
-      
+
       // Enhanced error handling based on Razorpay documentation
       if (e.toString().toLowerCase().contains('key')) {
         errorMessage = 'Invalid payment configuration. Please contact support.';
         actionLabel = 'Contact Support';
       } else if (e.toString().toLowerCase().contains('amount')) {
         errorMessage = 'Invalid payment amount. Please try again.';
-      } else if (e.toString().toLowerCase().contains('network') || 
-                 e.toString().toLowerCase().contains('internet') ||
-                 e.toString().toLowerCase().contains('connection')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (e.toString().toLowerCase().contains('svg') || 
-                 e.toString().toLowerCase().contains('attribute') ||
-                 e.toString().toLowerCase().contains('width') ||
-                 e.toString().toLowerCase().contains('height')) {
-        errorMessage = 'Payment interface loading issue. This may be a browser compatibility issue. Please try using a different browser.';
+      } else if (e.toString().toLowerCase().contains('network') ||
+          e.toString().toLowerCase().contains('internet') ||
+          e.toString().toLowerCase().contains('connection')) {
+        errorMessage =
+            'Network error. Please check your internet connection and try again.';
+      } else if (e.toString().toLowerCase().contains('svg') ||
+          e.toString().toLowerCase().contains('attribute') ||
+          e.toString().toLowerCase().contains('width') ||
+          e.toString().toLowerCase().contains('height')) {
+        errorMessage =
+            'Payment interface loading issue. This may be a browser compatibility issue. Please try using a different browser.';
       } else if (e.toString().toLowerCase().contains('timeout')) {
         errorMessage = 'Payment request timed out. Please try again.';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -953,28 +1000,31 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       debugPrint('❌ User not authenticated');
       throw Exception('User not authenticated');
     }
-    
+
     debugPrint('✅ User authenticated: ${user.id}');
     debugPrint('📋 Selection data: ${widget.selectionData}');
 
     try {
-
       debugPrint('🧾 Starting booking save...');
-      debugPrint('🧾 selectionData keys: ${widget.selectionData.keys.toList()}');
+      debugPrint(
+        '🧾 selectionData keys: ${widget.selectionData.keys.toList()}',
+      );
       debugPrint('🧾 selectionData full: ${widget.selectionData}');
 
       // Parse time slot from selectionData (supports Map or String)
       final dynamic selectedSlot = widget.selectionData['selectedTimeSlot'];
-      debugPrint('🧾 selectedSlot type: ${selectedSlot.runtimeType}, value: $selectedSlot');
+      debugPrint(
+        '🧾 selectedSlot type: ${selectedSlot.runtimeType}, value: $selectedSlot',
+      );
       String? slotIdFromSelection;
       String startTime = '00:00';
       String endTime = '00:00';
-      
+
       // Extract time slot information based on data type
       if (selectedSlot is Map) {
         // Extract slot ID if available
         slotIdFromSelection = selectedSlot['id']?.toString();
-        
+
         // Extract start and end times
         if (selectedSlot['start_time'] != null) {
           startTime = selectedSlot['start_time'].toString().trim();
@@ -982,8 +1032,10 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         if (selectedSlot['end_time'] != null) {
           endTime = selectedSlot['end_time'].toString().trim();
         }
-        
-        debugPrint('🧾 Selected slot (Map): id=$slotIdFromSelection start=$startTime end=$endTime');
+
+        debugPrint(
+          '🧾 Selected slot (Map): id=$slotIdFromSelection start=$startTime end=$endTime',
+        );
         debugPrint('🧾 Full selected slot data: $selectedSlot');
       } else if (selectedSlot is String) {
         final rawSlot = selectedSlot;
@@ -992,30 +1044,40 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           startTime = parts[0].trim();
           endTime = parts.length > 1 ? parts[1].trim() : endTime;
         }
-        debugPrint('🧾 Selected slot (String): start=$startTime end=$endTime from "$selectedSlot"');
+        debugPrint(
+          '🧾 Selected slot (String): start=$startTime end=$endTime from "$selectedSlot"',
+        );
       } else {
-        final String rawSlot = widget.selectionData['selectedTimeSlot']?.toString() ?? '';
+        final String rawSlot =
+            widget.selectionData['selectedTimeSlot']?.toString() ?? '';
         if (rawSlot.contains('-')) {
           final parts = rawSlot.split('-');
           startTime = parts[0].trim();
           endTime = parts.length > 1 ? parts[1].trim() : endTime;
         }
-        debugPrint('🧾 Selected slot (Fallback): start=$startTime end=$endTime from "$rawSlot"');
+        debugPrint(
+          '🧾 Selected slot (Fallback): start=$startTime end=$endTime from "$rawSlot"',
+        );
       }
-      
+
       // Additional validation for time values
       if (startTime == '00:00' || endTime == '00:00') {
-        debugPrint('⚠️ WARNING: Invalid time values detected - start: $startTime, end: $endTime');
+        debugPrint(
+          '⚠️ WARNING: Invalid time values detected - start: $startTime, end: $endTime',
+        );
       }
 
       // Ensure times are in HH:mm:ss
       String normalizeHms(String t) {
         if (t.isEmpty) return '00:00:00';
         final segs = t.split(':');
-        if (segs.length == 2) return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:00';
-        if (segs.length >= 3) return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:${segs[2].padLeft(2, '0')}';
+        if (segs.length == 2)
+          return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:00';
+        if (segs.length >= 3)
+          return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:${segs[2].padLeft(2, '0')}';
         return t;
       }
+
       final String startTimeHms = normalizeHms(startTime);
       final String endTimeHms = normalizeHms(endTime);
 
@@ -1034,7 +1096,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
             .select('id')
             .eq('auth_user_id', user.id)
             .maybeSingle();
-        
+
         if (userProfileResp != null) {
           vendorId = userProfileResp['id'] as String;
           debugPrint('🧾 ✅ Found current user profile ID: $vendorId');
@@ -1043,10 +1105,7 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           debugPrint('🧾 Creating user profile for auth user: ${user.id}');
           final newProfileResp = await supabase
               .from('user_profiles')
-              .insert({
-                'auth_user_id': user.id,
-                'app_type': 'customer',
-              })
+              .insert({'auth_user_id': user.id, 'app_type': 'customer'})
               .select('id')
               .single();
           vendorId = newProfileResp['id'] as String;
@@ -1055,45 +1114,65 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       } catch (e) {
         debugPrint('⚠️ Failed to resolve user profile ID: $e');
         // As a last resort, try to use any existing profile ID
-        vendorId = '75029394-260f-491e-b337-8bc08aa834c0'; // Fallback to the profile we just created
+        vendorId =
+            '75029394-260f-491e-b337-8bc08aa834c0'; // Fallback to the profile we just created
       }
       debugPrint('🧾 Final vendor_id: $vendorId, user_id: ${user.id}');
 
       // Contact details (required NOT NULL columns)
       String contactName = _celebrationNameController.text.trim();
       if (contactName.isEmpty) {
-        contactName = (user.userMetadata?['full_name']?.toString() ?? user.email ?? 'Guest User');
+        contactName =
+            (user.userMetadata?['full_name']?.toString() ??
+            user.email ??
+            'Guest User');
         if (contactName.isEmpty) contactName = 'Guest User';
       }
-      String contactPhone = (user.userMetadata?['phone']?.toString() ?? user.phone ?? '0000000000');
+      String contactPhone =
+          (user.userMetadata?['phone']?.toString() ??
+          user.phone ??
+          '0000000000');
       if (contactPhone.isEmpty) contactPhone = '0000000000';
-      String contactEmail = user.email ?? (user.userMetadata?['email']?.toString() ?? 'guest@example.com');
+      String contactEmail =
+          user.email ??
+          (user.userMetadata?['email']?.toString() ?? 'guest@example.com');
       if (contactEmail.isEmpty) contactEmail = 'guest@example.com';
-      debugPrint('🧾 Contact name: $contactName, phone: $contactPhone, email: $contactEmail');
+      debugPrint(
+        '🧾 Contact name: $contactName, phone: $contactPhone, email: $contactEmail',
+      );
 
       // Try to resolve a time_slot_id. Prefer the id provided in selection (if UUID), else lookup by screenId + times
-      String? screenId = widget.selectionData['screenId'] as String? ?? 
-                          (selectedSlot is Map ? selectedSlot['screen_id'] : null);
-      debugPrint('🧾 Screen ID resolution: widget.screenId=${widget.selectionData['screenId']}, slot.screenId=${selectedSlot is Map ? selectedSlot['screen_id'] : null}, final=$screenId');
+      String? screenId =
+          widget.selectionData['screenId'] as String? ??
+          (selectedSlot is Map ? selectedSlot['screen_id'] : null);
+      debugPrint(
+        '🧾 Screen ID resolution: widget.screenId=${widget.selectionData['screenId']}, slot.screenId=${selectedSlot is Map ? selectedSlot['screen_id'] : null}, final=$screenId',
+      );
       String? resolvedTimeSlotId;
       if (_looksLikeUuid(slotIdFromSelection)) {
         resolvedTimeSlotId = slotIdFromSelection;
-        debugPrint('🧾 Using provided time_slot_id from selection: $resolvedTimeSlotId');
+        debugPrint(
+          '🧾 Using provided time_slot_id from selection: $resolvedTimeSlotId',
+        );
       } else if (screenId != null) {
         try {
-          debugPrint('🧾 Attempting time slot lookup with screen_id=$screenId, start_time=$startTimeHms, end_time=$endTimeHms');
+          debugPrint(
+            '🧾 Attempting time slot lookup with screen_id=$screenId, start_time=$startTimeHms, end_time=$endTimeHms',
+          );
           final ts = await supabase
               .from('theater_time_slots')
               .select('id, start_time, end_time, theater_id')
               .eq('screen_id', screenId)
               .eq('start_time', startTimeHms)
               .eq('end_time', endTimeHms);
-          
+
           debugPrint('🧾 Time slot lookup results: $ts');
-          
+
           if (ts.isNotEmpty) {
             resolvedTimeSlotId = ts.first['id'] as String?;
-            debugPrint('🧾 ✅ Resolved time_slot_id via lookup: $resolvedTimeSlotId');
+            debugPrint(
+              '🧾 ✅ Resolved time_slot_id via lookup: $resolvedTimeSlotId',
+            );
           } else {
             // Try a broader search without exact time match
             debugPrint('🧾 No exact match found, trying broader search...');
@@ -1101,21 +1180,28 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
                 .from('theater_time_slots')
                 .select('id, start_time, end_time, theater_id, screen_id')
                 .eq('screen_id', screenId);
-            debugPrint('🧾 Available time slots for screen $screenId: $broadSearch');
-            
+            debugPrint(
+              '🧾 Available time slots for screen $screenId: $broadSearch',
+            );
+
             // Try to find closest time match in case of format issues
             if (broadSearch.isNotEmpty) {
               debugPrint('🧾 Attempting fuzzy time matching...');
               for (final slot in broadSearch) {
                 final slotStart = slot['start_time'] as String?;
                 final slotEnd = slot['end_time'] as String?;
-                debugPrint('🧾 Comparing $slotStart-$slotEnd vs $startTimeHms-$endTimeHms');
-                
+                debugPrint(
+                  '🧾 Comparing $slotStart-$slotEnd vs $startTimeHms-$endTimeHms',
+                );
+
                 // Check if times match (with potential format variations)
                 if (slotStart != null && slotEnd != null) {
-                  if (_timesMatch(slotStart, startTimeHms) && _timesMatch(slotEnd, endTimeHms)) {
+                  if (_timesMatch(slotStart, startTimeHms) &&
+                      _timesMatch(slotEnd, endTimeHms)) {
                     resolvedTimeSlotId = slot['id'] as String?;
-                    debugPrint('🧾 ✅ Resolved via fuzzy matching: $resolvedTimeSlotId');
+                    debugPrint(
+                      '🧾 ✅ Resolved via fuzzy matching: $resolvedTimeSlotId',
+                    );
                     break;
                   }
                 }
@@ -1133,20 +1219,21 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       final dynamic selectedOccasion = widget.selectionData['selectedOccasion'];
       String? occasionName;
       String? occasionId;
-      
+
       if (selectedOccasion is OccasionModel) {
         occasionName = selectedOccasion.name;
         occasionId = selectedOccasion.id;
       } else if (selectedOccasion is Map<String, dynamic>) {
-        occasionName = selectedOccasion['name']?.toString() ?? 
-                      selectedOccasion['title']?.toString() ?? 
-                      selectedOccasion['occasion']?.toString() ??
-                      selectedOccasion['label']?.toString();
+        occasionName =
+            selectedOccasion['name']?.toString() ??
+            selectedOccasion['title']?.toString() ??
+            selectedOccasion['occasion']?.toString() ??
+            selectedOccasion['label']?.toString();
         occasionId = selectedOccasion['id']?.toString();
       } else if (selectedOccasion is String) {
         occasionName = selectedOccasion;
       }
-      
+
       debugPrint('🧾 Occasion data: name=$occasionName, id=$occasionId');
 
       // Insert into private_theater_bookings and get the booking id
@@ -1162,11 +1249,14 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
         'payment_id': paymentId,
         'booking_status': 'confirmed',
         'guest_count': _numberOfPeople,
-        'special_requests': null, // Reset to null since we have proper occasion columns now
+        'special_requests':
+            null, // Reset to null since we have proper occasion columns now
         'contact_name': contactName,
         'contact_phone': contactPhone,
         'contact_email': contactEmail,
-        'celebration_name': _celebrationNameController.text.trim().isNotEmpty ? _celebrationNameController.text.trim() : null,
+        'celebration_name': _celebrationNameController.text.trim().isNotEmpty
+            ? _celebrationNameController.text.trim()
+            : null,
         'number_of_people': _numberOfPeople,
         'vendor_id': vendorId,
         'screen_id': screenId,
@@ -1196,7 +1286,9 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
           await supabase.from('theater_time_slot_bookings').insert(slotRow);
           debugPrint('✅ theater_time_slot_bookings inserted');
         } catch (e) {
-          debugPrint('⚠️ Failed to insert theater_time_slot_bookings (likely RLS vendor-only): $e');
+          debugPrint(
+            '⚠️ Failed to insert theater_time_slot_bookings (likely RLS vendor-only): $e',
+          );
         }
       }
 
@@ -1251,16 +1343,19 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
     } catch (e, stackTrace) {
       debugPrint('❌ Error saving booking: $e');
       debugPrint('❌ Stack trace: $stackTrace');
-      
+
       // Log the specific error details for debugging
-      if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+      if (e.toString().contains('column') &&
+          e.toString().contains('does not exist')) {
         debugPrint('❌ Database schema error - column doesn\'t exist');
       } else if (e.toString().contains('null value')) {
-        debugPrint('❌ Database constraint error - null value in required field');
+        debugPrint(
+          '❌ Database constraint error - null value in required field',
+        );
       } else if (e.toString().contains('foreign key')) {
         debugPrint('❌ Database constraint error - foreign key violation');
       }
-      
+
       // Re-throw the error so it can be handled by the payment success handler
       throw Exception('Database insertion failed: ${e.toString()}');
     }
@@ -2136,37 +2231,38 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
 
   String _getSelectedTimeSlotDisplay() {
     final dynamic selectedSlot = widget.selectionData['selectedTimeSlot'];
-    
+
     // Debug logging
     debugPrint('🧾 _getSelectedTimeSlotDisplay - selectedSlot: $selectedSlot');
-    
+
     // Handle Map type time slot
     if (selectedSlot is Map<String, dynamic>) {
       // Try to get formatted time display
-      if (selectedSlot['start_time'] != null && selectedSlot['end_time'] != null) {
+      if (selectedSlot['start_time'] != null &&
+          selectedSlot['end_time'] != null) {
         final start = selectedSlot['start_time'].toString();
         final end = selectedSlot['end_time'].toString();
         debugPrint('🧾 Found time slot: $start - $end');
         return '$start - $end';
       }
-      
+
       // Fallback to id if available
       if (selectedSlot['id'] != null) {
         return selectedSlot['id'].toString();
       }
     }
-    
+
     // Handle String type time slot
     if (selectedSlot is String) {
       return selectedSlot;
     }
-    
+
     // Fallback to selectionData value
     final slotFromData = widget.selectionData['selectedTimeSlot'];
     if (slotFromData != null) {
       return slotFromData.toString();
     }
-    
+
     // Log warning and return default
     debugPrint('🧾 WARNING: No time slot display found, using default');
     return 'Time Slot Not Selected';
@@ -2174,40 +2270,43 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
 
   String _getSelectedOccasionDisplay() {
     final dynamic selectedOccasion = widget.selectionData['selectedOccasion'];
-    
+
     // Debug logging
-    debugPrint('🧾 _getSelectedOccasionDisplay - selectedOccasion: $selectedOccasion');
-    
+    debugPrint(
+      '🧾 _getSelectedOccasionDisplay - selectedOccasion: $selectedOccasion',
+    );
+
     // Handle OccasionModel type
     if (selectedOccasion is OccasionModel) {
       debugPrint('🧾 Found occasion: ${selectedOccasion.name}');
       return selectedOccasion.name;
     }
-    
+
     // Handle Map type occasion
     if (selectedOccasion is Map<String, dynamic>) {
       // Try common name fields
-      final name = selectedOccasion['name'] ?? 
-                   selectedOccasion['title'] ?? 
-                   selectedOccasion['occasion'] ??
-                   selectedOccasion['label'];
-      
+      final name =
+          selectedOccasion['name'] ??
+          selectedOccasion['title'] ??
+          selectedOccasion['occasion'] ??
+          selectedOccasion['label'];
+
       if (name != null) {
         debugPrint('🧾 Found occasion: $name');
         return name.toString();
       }
-      
+
       // Fallback to id if available
       if (selectedOccasion['id'] != null) {
         return selectedOccasion['id'].toString();
       }
     }
-    
+
     // Handle String type occasion
     if (selectedOccasion is String) {
       return selectedOccasion;
     }
-    
+
     // Log warning and return default
     debugPrint('🧾 WARNING: No occasion display found, using default');
     return 'No Occasion Selected';

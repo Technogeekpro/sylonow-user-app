@@ -6,6 +6,7 @@ import '../models/addon_model.dart';
 import '../services/theater_screen_detail_service.dart';
 import '../services/screen_package_service.dart';
 import '../services/addon_service.dart';
+import '../services/theater_booking_service.dart';
 
 // Service providers
 final theaterScreenDetailServiceProvider = Provider<TheaterScreenDetailService>((ref) {
@@ -18,6 +19,10 @@ final screenPackageServiceProvider = Provider<ScreenPackageService>((ref) {
 
 final addonServiceProvider = Provider<AddonService>((ref) {
   return AddonService(Supabase.instance.client);
+});
+
+final theaterBookingServiceProvider = Provider<TheaterBookingService>((ref) {
+  return TheaterBookingService(Supabase.instance.client);
 });
 
 // Parameters class for better provider caching
@@ -101,4 +106,31 @@ final addonByIdProvider = FutureProvider.family<AddonModel?, String>((ref, addon
 final addonsByTheaterProvider = FutureProvider.family<List<AddonModel>, String>((ref, theaterId) async {
   final service = ref.read(addonServiceProvider);
   return await service.getAddonsByTheaterId(theaterId);
+});
+
+// Category-specific addon providers
+class AddonCategoryParams {
+  final String theaterId;
+  final String category;
+
+  const AddonCategoryParams({
+    required this.theaterId,
+    required this.category,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AddonCategoryParams &&
+        other.theaterId == theaterId &&
+        other.category == category;
+  }
+
+  @override
+  int get hashCode => theaterId.hashCode ^ category.hashCode;
+}
+
+final addonsByCategoryProvider = FutureProvider.family<List<AddonModel>, AddonCategoryParams>((ref, params) async {
+  final service = ref.read(addonServiceProvider);
+  return await service.getAddonsByTheaterAndCategory(params.theaterId, params.category);
 });
