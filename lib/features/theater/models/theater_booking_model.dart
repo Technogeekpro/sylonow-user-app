@@ -33,7 +33,11 @@ class TheaterBookingModel with _$TheaterBookingModel {
     @JsonKey(name: 'theater_name') String? theaterName,
     @JsonKey(name: 'theater_address') String? theaterAddress,
     @JsonKey(name: 'theater_images') List<String>? theaterImages,
-    
+
+    // Joined data from screen
+    @JsonKey(name: 'screen_name') String? screenName,
+    @JsonKey(name: 'screen_number') int? screenNumber,
+
     // Joined data from add-ons
     @JsonKey(name: 'addons') List<TheaterBookingAddonModel>? addons,
   }) = _TheaterBookingModel;

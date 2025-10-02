@@ -6,7 +6,6 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/onboarding_providers.dart';
 import '../../auth/providers/auth_providers.dart';
-import '../../auth/screens/phone_input_screen.dart';
 
 class OnboardingAuthScreen extends ConsumerStatefulWidget {
   static const String routeName = '/onboarding/auth';

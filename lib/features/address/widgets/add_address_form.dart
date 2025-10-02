@@ -97,7 +97,7 @@ class _AddAddressFormState extends ConsumerState<AddAddressForm> {
                 keyboardType: TextInputType.phone,
               ),
               DropdownButtonFormField<AddressType>(
-                value: _addressType,
+                initialValue: _addressType,
                 decoration: const InputDecoration(labelText: 'Address For'),
                 items: AddressType.values.map((type) {
                   return DropdownMenuItem(

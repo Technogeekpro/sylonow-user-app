@@ -103,17 +103,6 @@ class _InsideScreenState extends ConsumerState<InsideScreen> {
         ),
         child: Row(
           children: [
-            IconButton(
-              onPressed: () => context.pop(),
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Colors.black87,
-                size: 24,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(width: 12),
             const Expanded(
               child: Text(
                 'Inside Decoration',

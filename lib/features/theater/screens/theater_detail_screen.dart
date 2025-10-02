@@ -7,7 +7,6 @@ import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/theater/models/theater_model.dart';
 import 'package:sylonow_user/features/theater/providers/theater_providers.dart';
 import 'package:sylonow_user/features/home/providers/vendor_providers.dart';
-import 'package:sylonow_user/features/theater/models/decoration_model.dart';
 
 
 class TheaterDetailScreen extends ConsumerStatefulWidget {

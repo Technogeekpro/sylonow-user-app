@@ -222,13 +222,11 @@ class RazorpayService {
       );
 
       // Update the order with advance payment information
-      if (updatedPayment != null && updatedPayment.bookingId != null) {
-        await _orderRepository.updateOrderPayment(
-          orderId: updatedPayment.bookingId!,
-          paymentStatus: 'advance_paid',
-        );
-      }
-
+      await _orderRepository.updateOrderPayment(
+        orderId: updatedPayment.bookingId,
+        paymentStatus: 'advance_paid',
+      );
+    
       debugPrint('Razorpay payment successful: ${response.paymentId}');
     } catch (e) {
       debugPrint('Error handling payment success: $e');

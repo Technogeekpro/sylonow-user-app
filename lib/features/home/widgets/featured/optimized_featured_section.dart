@@ -240,7 +240,7 @@ class _OptimizedFeaturedSectionState extends ConsumerState<OptimizedFeaturedSect
                   ),
                   child: Stack(
                     children: [
-                      Container(
+                      SizedBox(
                         width: double.infinity,
                         height: double.infinity,
                         child: CachedNetworkImage(
@@ -283,7 +283,7 @@ class _OptimizedFeaturedSectionState extends ConsumerState<OptimizedFeaturedSect
                               const Icon(Icons.star, color: Colors.orange, size: 14),
                               const SizedBox(width: 2),
                               Text(
-                                '${service.rating?.toStringAsFixed(1) ?? '4.9'}',
+                                service.rating?.toStringAsFixed(1) ?? '4.9',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,

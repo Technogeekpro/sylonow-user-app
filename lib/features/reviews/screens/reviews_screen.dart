@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/review_model.dart';
@@ -470,7 +469,7 @@ class ReviewsScreen extends ConsumerWidget {
 
 // Empty Reviews Widget
 class _EmptyReviewsWidget extends StatelessWidget {
-  const _EmptyReviewsWidget({super.key});
+  const _EmptyReviewsWidget();
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +521,7 @@ class _EmptyReviewsWidget extends StatelessWidget {
 
 // Loading Reviews Widget
 class _LoadingReviewsWidget extends StatelessWidget {
-  const _LoadingReviewsWidget({super.key});
+  const _LoadingReviewsWidget();
 
   @override
   Widget build(BuildContext context) {
@@ -551,7 +550,7 @@ class _LoadingReviewsWidget extends StatelessWidget {
 class _ErrorReviewsWidget extends StatelessWidget {
   final String error;
   
-  const _ErrorReviewsWidget({super.key, required this.error});
+  const _ErrorReviewsWidget({required this.error});
 
   @override
   Widget build(BuildContext context) {

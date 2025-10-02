@@ -66,8 +66,8 @@ class TheaterBookingService {
             'guest_count': peopleCount,
             'number_of_people': peopleCount,
             'total_amount': totalAmount,
-            'payment_status': paymentId != null ? 'paid' : 'pending',
-            'booking_status': 'confirmed',
+            'payment_status': 'pending', // Initially pending, will be updated after payment
+            'booking_status': 'confirmed', // Set to confirmed (allowed values: confirmed, cancelled, completed, no_show)
             'payment_id': paymentId,
             'contact_name': 'User', // Will be updated when we get user details
             'contact_phone': '+919999999999', // Will be updated
@@ -186,7 +186,7 @@ class TheaterBookingService {
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      return response as List<Map<String, dynamic>>;
+      return response;
     } catch (e) {
       print('Error fetching user bookings: $e');
       return [];

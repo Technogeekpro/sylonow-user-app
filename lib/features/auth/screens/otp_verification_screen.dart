@@ -186,7 +186,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                   
                   // OTP Illustration with decorative elements
                   if (MediaQuery.of(context).viewInsets.bottom == 0) ...[
-                    Container(
+                    SizedBox(
                       height: 200,
                       width: 200,
                      

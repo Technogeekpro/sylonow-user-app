@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../repositories/booking_repository.dart';
-import '../../home/models/service_listing_model.dart';
 
 class BookingService {
   final BookingRepository _repository;

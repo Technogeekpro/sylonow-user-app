@@ -36,6 +36,7 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
   // Form controllers
   final TextEditingController _celebrationNameController = TextEditingController();
   int _numberOfPeople = 2;
+  TheaterScreen? _currentScreen;
 
   @override
   void initState() {
@@ -118,7 +119,20 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
     );
   }
 
-  double get _subtotal => _packagePrice + _specialServicesPrice + _addonsPrice;
+  // Calculate extra person charges
+  double get _extraPersonCharges {
+    if (_currentScreen == null) return 0.0;
+
+    final allowedCapacity = _currentScreen!.allowedCapacity ?? 0;
+    final chargesPerPerson = _currentScreen!.chargesExtraPerPerson ?? 0.0;
+
+    if (_numberOfPeople <= allowedCapacity) return 0.0;
+
+    final extraPeople = _numberOfPeople - allowedCapacity;
+    return extraPeople * chargesPerPerson;
+  }
+
+  double get _subtotal => _packagePrice + _specialServicesPrice + _addonsPrice + _extraPersonCharges;
   double get _taxes => PriceCalculator.calculateTaxes(_subtotal);
   double get _totalAmount => _subtotal + _taxes;
   double get _advanceAmount => PriceCalculator.calculateAdvancePayment(_totalAmount);
@@ -158,6 +172,15 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
   }
 
   Widget _buildCheckoutContent(TheaterScreen? screen) {
+    // Store screen data for calculations
+    if (screen != null && _currentScreen == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          _currentScreen = screen;
+        });
+      });
+    }
+
     return Column(
       children: [
         Expanded(
@@ -171,7 +194,7 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
                 const SizedBox(height: 16),
 
                 // Celebration Details Card
-                _buildCelebrationDetailsCard(),
+                _buildCelebrationDetailsCard(screen),
                 const SizedBox(height: 16),
 
                 // Selected Items Summary
@@ -293,7 +316,12 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
     );
   }
 
-  Widget _buildCelebrationDetailsCard() {
+  Widget _buildCelebrationDetailsCard(TheaterScreen? screen) {
+    final allowedCapacity = screen?.allowedCapacity ?? 0;
+    final totalCapacity = screen?.totalCapacity ?? 20;
+    final chargesPerPerson = screen?.chargesExtraPerPerson ?? 0.0;
+    final isExceedingAllowed = _numberOfPeople > allowedCapacity;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -384,7 +412,7 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: _numberOfPeople < 20
+                      onPressed: _numberOfPeople < totalCapacity
                           ? () => setState(() => _numberOfPeople++)
                           : null,
                       icon: const Icon(Icons.add, size: 18),
@@ -395,6 +423,47 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
               ),
             ],
           ),
+
+          // Capacity info and extra charges warning
+          if (allowedCapacity > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isExceedingAllowed
+                    ? Colors.orange[50]
+                    : Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isExceedingAllowed
+                      ? Colors.orange[200]!
+                      : Colors.blue[200]!,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isExceedingAllowed ? Icons.warning_amber : Icons.info_outline,
+                    color: isExceedingAllowed ? Colors.orange[700] : Colors.blue[700],
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isExceedingAllowed
+                          ? 'Extra charges: ₹${chargesPerPerson.round()}/person beyond $allowedCapacity people'
+                          : 'Package includes up to $allowedCapacity people',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isExceedingAllowed ? Colors.orange[700] : Colors.blue[700],
+                        fontFamily: 'Okra',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -669,7 +738,12 @@ class _OutsideCheckoutScreenState extends ConsumerState<OutsideCheckoutScreen> {
 
           if (_isBillDetailsExpanded) ...[
             const SizedBox(height: 8),
-            _buildBillRow('Subtotal', _subtotal),
+            _buildBillRow('Package & Add-ons', _packagePrice + _specialServicesPrice + _addonsPrice),
+            if (_extraPersonCharges > 0)
+              _buildBillRow(
+                'Extra Person Charges (${_numberOfPeople - (_currentScreen?.allowedCapacity ?? 0)} ${(_numberOfPeople - (_currentScreen?.allowedCapacity ?? 0)) == 1 ? 'person' : 'people'})',
+                _extraPersonCharges,
+              ),
             _buildBillRow('Taxes & Fees', _taxes),
             const Divider(),
             _buildBillRow('Total Amount', _totalAmount, isTotal: true),

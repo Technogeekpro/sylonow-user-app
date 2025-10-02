@@ -9,7 +9,6 @@ import '../../home/models/service_listing_model.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../providers/booking_providers.dart';
 import '../models/order_model.dart';
-import '../models/payment_model.dart';
 import '../services/razorpay_service.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {

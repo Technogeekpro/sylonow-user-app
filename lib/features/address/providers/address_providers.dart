@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/address/repositories/address_repository.dart';
-import 'package:sylonow_user/features/auth/providers/auth_providers.dart' hide supabaseClientProvider;
 
 final addressRepositoryProvider = Provider<AddressRepository>((ref) {
   final supabaseClient = ref.watch(supabaseClientProvider);

@@ -7,7 +7,6 @@ import '../../../core/widgets/custom_button.dart';
 import '../../home/models/service_listing_model.dart';
 import '../models/payment_method_model.dart';
 import '../providers/payment_providers.dart';
-import '../services/payment_service.dart';
 import '../../auth/providers/auth_providers.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {

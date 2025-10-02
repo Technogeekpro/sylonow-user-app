@@ -68,6 +68,11 @@ mixin _$TheaterBookingModel {
   String? get theaterAddress => throw _privateConstructorUsedError;
   @JsonKey(name: 'theater_images')
   List<String>? get theaterImages =>
+      throw _privateConstructorUsedError; // Joined data from screen
+  @JsonKey(name: 'screen_name')
+  String? get screenName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'screen_number')
+  int? get screenNumber =>
       throw _privateConstructorUsedError; // Joined data from add-ons
   @JsonKey(name: 'addons')
   List<TheaterBookingAddonModel>? get addons =>
@@ -110,6 +115,8 @@ abstract class $TheaterBookingModelCopyWith<$Res> {
       @JsonKey(name: 'theater_name') String? theaterName,
       @JsonKey(name: 'theater_address') String? theaterAddress,
       @JsonKey(name: 'theater_images') List<String>? theaterImages,
+      @JsonKey(name: 'screen_name') String? screenName,
+      @JsonKey(name: 'screen_number') int? screenNumber,
       @JsonKey(name: 'addons') List<TheaterBookingAddonModel>? addons});
 }
 
@@ -150,6 +157,8 @@ class _$TheaterBookingModelCopyWithImpl<$Res, $Val extends TheaterBookingModel>
     Object? theaterName = freezed,
     Object? theaterAddress = freezed,
     Object? theaterImages = freezed,
+    Object? screenName = freezed,
+    Object? screenNumber = freezed,
     Object? addons = freezed,
   }) {
     return _then(_value.copyWith(
@@ -249,6 +258,14 @@ class _$TheaterBookingModelCopyWithImpl<$Res, $Val extends TheaterBookingModel>
           ? _value.theaterImages
           : theaterImages // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      screenName: freezed == screenName
+          ? _value.screenName
+          : screenName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      screenNumber: freezed == screenNumber
+          ? _value.screenNumber
+          : screenNumber // ignore: cast_nullable_to_non_nullable
+              as int?,
       addons: freezed == addons
           ? _value.addons
           : addons // ignore: cast_nullable_to_non_nullable
@@ -290,6 +307,8 @@ abstract class _$$TheaterBookingModelImplCopyWith<$Res>
       @JsonKey(name: 'theater_name') String? theaterName,
       @JsonKey(name: 'theater_address') String? theaterAddress,
       @JsonKey(name: 'theater_images') List<String>? theaterImages,
+      @JsonKey(name: 'screen_name') String? screenName,
+      @JsonKey(name: 'screen_number') int? screenNumber,
       @JsonKey(name: 'addons') List<TheaterBookingAddonModel>? addons});
 }
 
@@ -328,6 +347,8 @@ class __$$TheaterBookingModelImplCopyWithImpl<$Res>
     Object? theaterName = freezed,
     Object? theaterAddress = freezed,
     Object? theaterImages = freezed,
+    Object? screenName = freezed,
+    Object? screenNumber = freezed,
     Object? addons = freezed,
   }) {
     return _then(_$TheaterBookingModelImpl(
@@ -427,6 +448,14 @@ class __$$TheaterBookingModelImplCopyWithImpl<$Res>
           ? _value._theaterImages
           : theaterImages // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      screenName: freezed == screenName
+          ? _value.screenName
+          : screenName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      screenNumber: freezed == screenNumber
+          ? _value.screenNumber
+          : screenNumber // ignore: cast_nullable_to_non_nullable
+              as int?,
       addons: freezed == addons
           ? _value._addons
           : addons // ignore: cast_nullable_to_non_nullable
@@ -463,6 +492,8 @@ class _$TheaterBookingModelImpl implements _TheaterBookingModel {
       @JsonKey(name: 'theater_name') this.theaterName,
       @JsonKey(name: 'theater_address') this.theaterAddress,
       @JsonKey(name: 'theater_images') final List<String>? theaterImages,
+      @JsonKey(name: 'screen_name') this.screenName,
+      @JsonKey(name: 'screen_number') this.screenNumber,
       @JsonKey(name: 'addons') final List<TheaterBookingAddonModel>? addons})
       : _theaterImages = theaterImages,
         _addons = addons;
@@ -550,6 +581,13 @@ class _$TheaterBookingModelImpl implements _TheaterBookingModel {
     return EqualUnmodifiableListView(value);
   }
 
+// Joined data from screen
+  @override
+  @JsonKey(name: 'screen_name')
+  final String? screenName;
+  @override
+  @JsonKey(name: 'screen_number')
+  final int? screenNumber;
 // Joined data from add-ons
   final List<TheaterBookingAddonModel>? _addons;
 // Joined data from add-ons
@@ -565,7 +603,7 @@ class _$TheaterBookingModelImpl implements _TheaterBookingModel {
 
   @override
   String toString() {
-    return 'TheaterBookingModel(id: $id, theaterId: $theaterId, timeSlotId: $timeSlotId, userId: $userId, bookingDate: $bookingDate, startTime: $startTime, endTime: $endTime, totalAmount: $totalAmount, paymentStatus: $paymentStatus, paymentId: $paymentId, bookingStatus: $bookingStatus, guestCount: $guestCount, specialRequests: $specialRequests, contactName: $contactName, contactPhone: $contactPhone, contactEmail: $contactEmail, celebrationName: $celebrationName, numberOfPeople: $numberOfPeople, createdAt: $createdAt, updatedAt: $updatedAt, vendorId: $vendorId, theaterName: $theaterName, theaterAddress: $theaterAddress, theaterImages: $theaterImages, addons: $addons)';
+    return 'TheaterBookingModel(id: $id, theaterId: $theaterId, timeSlotId: $timeSlotId, userId: $userId, bookingDate: $bookingDate, startTime: $startTime, endTime: $endTime, totalAmount: $totalAmount, paymentStatus: $paymentStatus, paymentId: $paymentId, bookingStatus: $bookingStatus, guestCount: $guestCount, specialRequests: $specialRequests, contactName: $contactName, contactPhone: $contactPhone, contactEmail: $contactEmail, celebrationName: $celebrationName, numberOfPeople: $numberOfPeople, createdAt: $createdAt, updatedAt: $updatedAt, vendorId: $vendorId, theaterName: $theaterName, theaterAddress: $theaterAddress, theaterImages: $theaterImages, screenName: $screenName, screenNumber: $screenNumber, addons: $addons)';
   }
 
   @override
@@ -618,6 +656,10 @@ class _$TheaterBookingModelImpl implements _TheaterBookingModel {
                 other.theaterAddress == theaterAddress) &&
             const DeepCollectionEquality()
                 .equals(other._theaterImages, _theaterImages) &&
+            (identical(other.screenName, screenName) ||
+                other.screenName == screenName) &&
+            (identical(other.screenNumber, screenNumber) ||
+                other.screenNumber == screenNumber) &&
             const DeepCollectionEquality().equals(other._addons, _addons));
   }
 
@@ -649,6 +691,8 @@ class _$TheaterBookingModelImpl implements _TheaterBookingModel {
         theaterName,
         theaterAddress,
         const DeepCollectionEquality().hash(_theaterImages),
+        screenName,
+        screenNumber,
         const DeepCollectionEquality().hash(_addons)
       ]);
 
@@ -693,6 +737,8 @@ abstract class _TheaterBookingModel implements TheaterBookingModel {
           @JsonKey(name: 'theater_name') final String? theaterName,
           @JsonKey(name: 'theater_address') final String? theaterAddress,
           @JsonKey(name: 'theater_images') final List<String>? theaterImages,
+          @JsonKey(name: 'screen_name') final String? screenName,
+          @JsonKey(name: 'screen_number') final int? screenNumber,
           @JsonKey(name: 'addons')
           final List<TheaterBookingAddonModel>? addons}) =
       _$TheaterBookingModelImpl;
@@ -771,6 +817,12 @@ abstract class _TheaterBookingModel implements TheaterBookingModel {
   @override
   @JsonKey(name: 'theater_images')
   List<String>? get theaterImages;
+  @override // Joined data from screen
+  @JsonKey(name: 'screen_name')
+  String? get screenName;
+  @override
+  @JsonKey(name: 'screen_number')
+  int? get screenNumber;
   @override // Joined data from add-ons
   @JsonKey(name: 'addons')
   List<TheaterBookingAddonModel>? get addons;

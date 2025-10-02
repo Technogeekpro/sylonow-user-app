@@ -274,21 +274,25 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
           // Main ticket content
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -308,11 +312,23 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                               color: Colors.black87,
                             ),
                           ),
+                          if (booking.screenName != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              booking.screenName!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Okra',
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 4),
                           Text(
                             'BOOKING ID: ${booking.id.substring(0, 8).toUpperCase()}',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontFamily: 'Okra',
                               color: Colors.grey[600],
                               letterSpacing: 0.5,
@@ -345,10 +361,11 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Ticket details row
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Left side - Theater image and details
                     Expanded(
@@ -359,14 +376,18 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                           // Theater image
                           Container(
                             width: double.infinity,
-                            height: 80,
+                            height: 100,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[50],
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.15),
+                                width: 1,
+                              ),
                             ),
                             child: booking.theaterImages?.isNotEmpty == true
                                 ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(12),
                                     child: CachedNetworkImage(
                                       imageUrl: booking.theaterImages!.first,
                                       fit: BoxFit.cover,
@@ -376,21 +397,21 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                                           strokeWidth: 2,
                                         ),
                                       ),
-                                      errorWidget: (context, url, error) => const Icon(
-                                        Icons.movie_outlined,
-                                        color: Colors.grey,
-                                        size: 32,
+                                      errorWidget: (context, url, error) => Icon(
+                                        Icons.movie_creation_outlined,
+                                        color: Colors.grey[400],
+                                        size: 40,
                                       ),
                                     ),
                                   )
-                                : const Icon(
-                                    Icons.movie_outlined,
-                                    color: Colors.grey,
-                                    size: 32,
+                                : Icon(
+                                    Icons.movie_creation_outlined,
+                                    color: Colors.grey[400],
+                                    size: 40,
                                   ),
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
                           // Date and time
                           _buildTicketDetail('DATE', DateFormat('MMM dd, yyyy').format(booking.bookingDate)),
@@ -402,50 +423,73 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                       ),
                     ),
 
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 18),
 
                     // Right side - QR Code and price
                     Column(
                       children: [
                         // QR Code
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 90,
+                          height: 90,
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                spreadRadius: 0,
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(8),
                             child: QrImageView(
                               data: booking.id,
                               version: QrVersions.auto,
-                              size: 72,
+                              size: 74,
                               foregroundColor: Colors.black87,
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
 
                         // Price
-                        Text(
-                          '₹${_formatAmount(booking.totalAmount)}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Okra',
-                            color: AppTheme.primaryColor,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
-
-                        Text(
-                          'Total',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Okra',
-                            color: Colors.grey[600],
+                          child: Column(
+                            children: [
+                              Text(
+                                '₹${_formatAmount(booking.totalAmount)}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Okra',
+                                  color: AppTheme.primaryColor,
+                                  height: 1.2,
+                                ),
+                              ),
+                              Text(
+                                'Total',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: 'Okra',
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -762,6 +806,8 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
                       const SizedBox(height: 20),
 
                       _buildDetailSection('Theater', booking.theaterName ?? 'N/A'),
+                      if (booking.screenName != null)
+                        _buildDetailSection('Screen', booking.screenName!),
                       _buildDetailSection('Date', DateFormat('MMM dd, yyyy').format(booking.bookingDate)),
                       _buildDetailSection('Time', '${booking.startTime} - ${booking.endTime}'),
                       _buildDetailSection('Booking ID', booking.id),

@@ -6,7 +6,6 @@ import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/models/category_model.dart';
-import 'package:sylonow_user/core/utils/location_utils.dart';
 
 /// Repository class for handling home screen data operations
 /// 

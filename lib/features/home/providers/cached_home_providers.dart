@@ -58,7 +58,7 @@ class CachedFeaturedServicesNotifier extends StateNotifier<AsyncValue<List<Servi
 
     try {
       await _loadPage(_currentPage + 1);
-    } catch (error, stackTrace) {
+    } catch (error) {
       // Don't update state on error when loading more, just log it
       print('Error loading more services: $error');
     }

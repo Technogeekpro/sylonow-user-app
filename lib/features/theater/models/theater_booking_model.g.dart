@@ -39,6 +39,8 @@ _$TheaterBookingModelImpl _$$TheaterBookingModelImplFromJson(
       theaterImages: (json['theater_images'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      screenName: json['screen_name'] as String?,
+      screenNumber: (json['screen_number'] as num?)?.toInt(),
       addons: (json['addons'] as List<dynamic>?)
           ?.map((e) =>
               TheaterBookingAddonModel.fromJson(e as Map<String, dynamic>))
@@ -72,6 +74,8 @@ Map<String, dynamic> _$$TheaterBookingModelImplToJson(
       'theater_name': instance.theaterName,
       'theater_address': instance.theaterAddress,
       'theater_images': instance.theaterImages,
+      'screen_name': instance.screenName,
+      'screen_number': instance.screenNumber,
       'addons': instance.addons,
     };
 

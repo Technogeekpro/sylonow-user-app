@@ -21,6 +21,10 @@ class TheaterBookingRepository {
               address,
               images
             ),
+            theater_screens(
+              screen_name,
+              screen_number
+            ),
             private_theater_booking_addons(
               *,
               add_ons(
@@ -38,6 +42,7 @@ class TheaterBookingRepository {
       return (response as List).map((data) {
         // Transform the nested data structure
         final theaterData = data['private_theaters'] as Map<String, dynamic>?;
+        final screenData = data['theater_screens'] as Map<String, dynamic>?;
         final addonsData = data['private_theater_booking_addons'] as List<dynamic>?;
         
         // Transform addons data
@@ -91,9 +96,11 @@ class TheaterBookingRepository {
           vendorId: data['vendor_id'],
           theaterName: theaterData?['name'],
           theaterAddress: theaterData?['address'],
-          theaterImages: theaterData?['images'] != null 
-              ? List<String>.from(theaterData!['images']) 
+          theaterImages: theaterData?['images'] != null
+              ? List<String>.from(theaterData!['images'])
               : null,
+          screenName: screenData?['screen_name'],
+          screenNumber: screenData?['screen_number'],
           addons: addons,
         );
       }).toList();

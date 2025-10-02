@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 
@@ -50,22 +51,42 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
-  List<AddonModel> _selectedCakes = [];
+  final List<AddonModel> _selectedCakes = [];
   double _totalCakePrice = 0.0;
   int _peopleCount = 1;
   bool _isProcessingPayment = false;
   late RazorpayPaymentService _razorpayService;
 
+  // Advance payment calculation (60% upfront, 40% after service)
+  Map<String, dynamic>? advancePaymentData;
+  bool isLoadingAdvancePayment = false;
+
   @override
   void initState() {
     super.initState();
     _razorpayService = RazorpayPaymentService();
+
+    // Calculate advance payment after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateAdvancePayment();
+    });
   }
 
   @override
   void dispose() {
     _razorpayService.dispose();
     super.dispose();
+  }
+
+  // Calculate extra person charges
+  double get _extraPersonCharges {
+    final allowedCapacity = widget.screen.allowedCapacity ?? 0;
+    final chargesPerPerson = widget.screen.chargesExtraPerPerson ?? 0.0;
+
+    if (_peopleCount <= allowedCapacity || allowedCapacity == 0) return 0.0;
+
+    final extraPeople = _peopleCount - allowedCapacity;
+    return extraPeople * chargesPerPerson;
   }
 
   @override
@@ -87,10 +108,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         title: const Text(
           'Checkout',
           style: TextStyle(
-            color: Colors.black87,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
             fontFamily: 'Okra',
+            letterSpacing: -0.5,
           ),
         ),
         centerTitle: true,
@@ -115,9 +137,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   _buildPeopleCountSection(),
                   const SizedBox(height: 20),
 
-                  // Cakes Section
-                  _buildCakesSection(cakes),
-                  const SizedBox(height: 20),
+                  // Cakes Section - Only show if cakes are available
+                  cakes.maybeWhen(
+                    data: (cakesList) {
+                      if (cakesList.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _buildCakesSection(cakes),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
 
                   // Order Summary
                   _buildOrderSummary(),
@@ -167,16 +201,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ? const Icon(Icons.check, size: 12, color: Colors.white)
                 : null,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
               fontFamily: 'Okra',
-              color: isActive ? AppTheme.primaryColor : Colors.grey[600],
+              color: isActive ? AppTheme.primaryColor : Colors.grey[500],
+              letterSpacing: -0.2,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -212,13 +249,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           const Text(
             'Booking Summary',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               fontFamily: 'Okra',
-              color: Color(0xFF1F2937),
+              color: Color(0xFF111827),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Screen details
           Row(
@@ -255,10 +293,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Text(
                       widget.screen.screenName,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Okra',
-                        color: Color(0xFF1F2937),
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.3,
+                        height: 1.3,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -299,9 +339,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Text(
                       'Date: ${DateFormat('MMM dd, yyyy').format(DateTime.parse(widget.selectedDate))}',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Okra',
+                        color: Color(0xFF374151),
+                        letterSpacing: -0.2,
                       ),
                     ),
                   ],
@@ -314,9 +356,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Text(
                       'Time: ${_formatTime(widget.timeSlot.startTime)} - ${_formatTime(widget.timeSlot.endTime)}',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         fontFamily: 'Okra',
+                        color: Color(0xFF374151),
+                        letterSpacing: -0.2,
                       ),
                     ),
                   ],
@@ -349,19 +393,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           const Text(
             'Number of People',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               fontFamily: 'Okra',
-              color: Color(0xFF1F2937),
+              color: Color(0xFF111827),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             'How many people will be attending?',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontFamily: 'Okra',
+              fontWeight: FontWeight.w500,
               color: Colors.grey[600],
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
@@ -389,15 +436,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 child: Text(
                   '$_peopleCount',
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Okra',
                     color: AppTheme.primaryColor,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ),
               IconButton(
-                onPressed: _peopleCount < (widget.screen.allowedCapacity ?? widget.screen.capacity)
+                onPressed: _peopleCount < (widget.screen.totalCapacity ?? widget.screen.capacity)
                     ? () {
                         setState(() {
                           _peopleCount++;
@@ -406,14 +454,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     : null,
                 icon: Icon(
                   Icons.add_circle_outline,
-                  color: _peopleCount < (widget.screen.allowedCapacity ?? widget.screen.capacity)
+                  color: _peopleCount < (widget.screen.totalCapacity ?? widget.screen.capacity)
                       ? AppTheme.primaryColor
                       : Colors.grey[400],
                 ),
               ),
               const Spacer(),
               Text(
-                'Max: ${widget.screen.allowedCapacity ?? widget.screen.capacity}',
+                'Max: ${widget.screen.totalCapacity ?? widget.screen.capacity}',
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'Okra',
@@ -422,6 +470,54 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ],
           ),
+
+          // Capacity info and extra charges warning
+          if ((widget.screen.allowedCapacity ?? 0) > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                    ? Colors.orange[50]
+                    : Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                      ? Colors.orange[200]!
+                      : Colors.blue[200]!,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                        ? Icons.warning_amber
+                        : Icons.info_outline,
+                    color: _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                        ? Colors.orange[700]
+                        : Colors.blue[700],
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                          ? 'Extra charges: ₹${(widget.screen.chargesExtraPerPerson ?? 0).round()}/person beyond ${widget.screen.allowedCapacity} people'
+                          : 'Package includes up to ${widget.screen.allowedCapacity} people',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Okra',
+                        fontWeight: FontWeight.w500,
+                        color: _peopleCount > (widget.screen.allowedCapacity ?? 0)
+                            ? Colors.orange[700]
+                            : Colors.blue[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -447,19 +543,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           const Text(
             'Add Cakes',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               fontFamily: 'Okra',
-              color: Color(0xFF1F2937),
+              color: Color(0xFF111827),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             'Make your celebration special with delicious cakes',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontFamily: 'Okra',
+              fontWeight: FontWeight.w500,
               color: Colors.grey[600],
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
@@ -529,6 +628,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             _totalCakePrice += cake.price;
           }
         });
+        // Recalculate advance payment when cakes change
+        _calculateAdvancePayment();
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
@@ -592,25 +693,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   Text(
                     cake.displayName,
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       fontFamily: 'Okra',
-                      color: Color(0xFF1F2937),
+                      color: Color(0xFF111827),
+                      letterSpacing: -0.2,
+                      height: 1.3,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         cake.formattedPrice,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           fontFamily: 'Okra',
                           color: AppTheme.primaryColor,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       if (isSelected)
@@ -635,7 +739,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final totalExtraPrice = widget.totalAddonPrice +
                           widget.totalExtraSpecialPrice +
                           widget.totalSpecialServicesPrice +
-                          _totalCakePrice;
+                          _totalCakePrice +
+                          _extraPersonCharges;
     final grandTotal = basePrice + totalExtraPrice;
 
     return Container(
@@ -657,13 +762,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           const Text(
             'Order Summary',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               fontFamily: 'Okra',
-              color: Color(0xFF1F2937),
+              color: Color(0xFF111827),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Base price
           _buildSummaryRow('Time Slot Base Price', '₹${basePrice.round()}'),
@@ -680,11 +786,72 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           if (_selectedCakes.isNotEmpty)
             _buildSummaryRow('Cakes (${_selectedCakes.length})', '₹${_totalCakePrice.round()}'),
 
+          if (_extraPersonCharges > 0)
+            _buildSummaryRow(
+              'Extra Person Charges (${_peopleCount - (widget.screen.allowedCapacity ?? 0)} ${(_peopleCount - (widget.screen.allowedCapacity ?? 0)) == 1 ? 'person' : 'people'})',
+              '₹${_extraPersonCharges.round()}',
+            ),
+
           _buildSummaryRow('People Count', '$_peopleCount', showPrice: false),
 
           const Divider(height: 24),
 
           _buildSummaryRow('Total', '₹${grandTotal.round()}', isTotal: true),
+
+          // Advance payment section
+          if (advancePaymentData != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Payment Split',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue[700],
+                            fontFamily: 'Okra',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildSummaryRow(
+                    'Advance (60%)',
+                    '₹${(advancePaymentData!['user_advance_payment'] as num).round()}',
+                  ),
+                  _buildSummaryRow(
+                    'After Service (40%)',
+                    '₹${((grandTotal - (advancePaymentData!['user_advance_payment'] as num))).round()}',
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (isLoadingAdvancePayment)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -692,26 +859,28 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildSummaryRow(String label, String value, {bool isTotal = false, bool showPrice = true}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: isTotal ? 6 : 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              fontSize: isTotal ? 17 : 15,
+              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
               fontFamily: 'Okra',
-              color: isTotal ? const Color(0xFF1F2937) : Colors.grey[600],
+              color: isTotal ? const Color(0xFF111827) : Colors.grey[600],
+              letterSpacing: isTotal ? -0.3 : -0.1,
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              fontSize: isTotal ? 18 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+              fontSize: isTotal ? 22 : 16,
+              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w700,
               fontFamily: 'Okra',
-              color: isTotal ? AppTheme.primaryColor : const Color(0xFF1F2937),
+              color: isTotal ? AppTheme.primaryColor : const Color(0xFF111827),
+              letterSpacing: isTotal ? -0.5 : -0.2,
             ),
           ),
         ],
@@ -724,7 +893,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       widget.totalAddonPrice +
                       widget.totalExtraSpecialPrice +
                       widget.totalSpecialServicesPrice +
-                      _totalCakePrice;
+                      _totalCakePrice +
+                      _extraPersonCharges;
+
+    // Get advance payment amount (60% of total)
+    final advanceAmount = advancePaymentData != null
+        ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
+        : grandTotal * 0.6; // Fallback to 60% if RPC fails
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -746,20 +921,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Total Amount',
+                  Text(
+                    'Pay Now (60%)',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Okra',
+                      color: Colors.grey[700],
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '₹${advanceAmount.round()}',
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryColor,
+                      fontFamily: 'Okra',
+                      letterSpacing: -0.8,
+                      height: 1.2,
                     ),
                   ),
                   Text(
-                    '₹${grandTotal.round()}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
+                    'Total: ₹${grandTotal.round()}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
                       fontFamily: 'Okra',
                     ),
                   ),
@@ -791,9 +979,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   : const Text(
                       'Pay Now',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Okra',
+                        letterSpacing: -0.3,
                       ),
                     ),
             ),
@@ -825,16 +1014,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         widget.totalAddonPrice +
                         widget.totalExtraSpecialPrice +
                         widget.totalSpecialServicesPrice +
-                        _totalCakePrice;
+                        _totalCakePrice +
+                        _extraPersonCharges;
+
+      // Calculate advance payment (60% of total)
+      final advanceAmount = advancePaymentData != null
+          ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
+          : grandTotal * 0.6; // Fallback to 60% if RPC fails
+
+      print('📊 Payment Details:');
+      print('  Grand Total: ₹${grandTotal.round()}');
+      print('  Advance (60%): ₹${advanceAmount.round()}');
+      print('  Remaining (40%): ₹${(grandTotal - advanceAmount).round()}');
 
       // For testing without backend, we'll skip order creation
-      // final orderId = await _razorpayService.createOrder(
-      //   amount: grandTotal,
-      //   currency: 'INR',
-      // );
       final orderId = 'test_order_${DateTime.now().millisecondsSinceEpoch}';
 
       // Create booking first (with pending status)
+      print('🎬 Creating theater booking...');
       final bookingService = ref.read(theaterBookingServiceProvider);
       final bookingId = await bookingService.createPrivateTheaterBooking(
         userId: user.id,
@@ -849,23 +1046,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         selectedCakes: _selectedCakes,
         selectedPackage: widget.selectedPackage,
       );
+      print('✅ Booking created with ID: $bookingId');
 
       // Create time slot booking
+      print('📅 Creating time slot booking...');
       await bookingService.createTimeSlotBooking(
         timeSlotId: widget.timeSlot.id,
         selectedDate: widget.selectedDate,
       );
+      print('✅ Time slot booking created');
 
-      // Initiate Razorpay payment
+      // Initiate Razorpay payment with advance amount
+      print('💳 Initiating payment for ₹${advanceAmount.round()}...');
       await _razorpayService.initiatePayment(
-        amount: grandTotal,
+        amount: advanceAmount, // Pay only 60% upfront
         orderId: orderId,
-        customerName: user.email?.split('@').first ?? 'User',
+        customerName: user.email?.split('@').first ?? user.phone ?? 'User',
         customerEmail: user.email ?? 'user@example.com',
         customerPhone: user.phone ?? '+919999999999',
-        description: 'Theater booking for ${widget.screen.screenName}',
+        description: 'Theater booking for ${widget.screen.screenName} (Advance payment)',
         onSuccess: (PaymentSuccessResponse response) {
-          _handlePaymentSuccess(response, bookingId, bookingService);
+          _handlePaymentSuccess(response, bookingId, bookingService, grandTotal, advanceAmount);
         },
         onError: (PaymentFailureResponse response) {
           _handlePaymentError(response, bookingId, bookingService);
@@ -876,6 +1077,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
 
     } catch (e) {
+      print('❌ Booking error: $e');
       if (mounted) {
         setState(() {
           _isProcessingPayment = false;
@@ -889,30 +1091,38 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     PaymentSuccessResponse response,
     String bookingId,
     TheaterBookingService bookingService,
+    double grandTotal,
+    double advanceAmount,
   ) async {
     try {
+      print('✅ Payment successful! Payment ID: ${response.paymentId}');
+
       // Update booking with payment details
+      // Note: payment_status stays 'pending' for remaining 40% (allowed: pending, paid, failed, refunded)
+      // We keep it as 'pending' to indicate the remaining 40% is still due
       await bookingService.updateBookingStatus(
         bookingId: bookingId,
         bookingStatus: 'confirmed',
-        paymentStatus: 'paid',
+        paymentStatus: 'pending', // Keep as pending since 40% is still due (no 'partial' option)
         paymentId: response.paymentId,
       );
+      print('✅ Booking status updated to confirmed with partial payment');
 
       // Mark time slot as booked
       await bookingService.markTimeSlotAsBooked(
         widget.timeSlot.id,
         widget.selectedDate,
       );
+      print('✅ Time slot marked as booked');
 
       if (mounted) {
         setState(() {
           _isProcessingPayment = false;
         });
-        _showSuccessDialog();
+        _showSuccessDialog(grandTotal, advanceAmount);
       }
     } catch (e) {
-      print('Error updating booking after payment success: $e');
+      print('❌ Error updating booking after payment success: $e');
       if (mounted) {
         setState(() {
           _isProcessingPayment = false;
@@ -928,10 +1138,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     TheaterBookingService bookingService,
   ) async {
     try {
-      // Update booking as failed
+      // Update booking as cancelled (since 'failed' is not allowed by the constraint)
       await bookingService.updateBookingStatus(
         bookingId: bookingId,
-        bookingStatus: 'failed',
+        bookingStatus: 'cancelled',
         paymentStatus: 'failed',
       );
 
@@ -952,7 +1162,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(double grandTotal, double advanceAmount) {
+    final remainingAmount = grandTotal - advanceAmount;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -972,22 +1184,87 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const Text(
               'Booking Confirmed!',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 fontFamily: 'Okra',
+                color: Color(0xFF111827),
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               'Your theater booking has been confirmed',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontFamily: 'Okra',
+                fontWeight: FontWeight.w500,
                 color: Colors.grey[600],
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // Payment info container
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Paid Now (60%):',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                      Text(
+                        '₹${advanceAmount.round()}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.green,
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'After Service (40%):',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                      Text(
+                        '₹${remainingAmount.round()}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.orange[700],
+                          fontFamily: 'Okra',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -998,6 +1275,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1005,9 +1283,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 child: const Text(
                   'Go to Home',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Okra',
+                    letterSpacing: -0.3,
                   ),
                 ),
               ),
@@ -1037,18 +1316,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const Text(
               'Payment Failed',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 fontFamily: 'Okra',
+                color: Color(0xFF111827),
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               message,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontFamily: 'Okra',
+                fontWeight: FontWeight.w500,
                 color: Colors.grey[600],
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1061,9 +1344,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     child: const Text(
                       'Cancel',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Okra',
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
@@ -1085,9 +1369,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     child: const Text(
                       'Retry',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Okra',
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
@@ -1098,5 +1383,109 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ),
       ),
     );
+  }
+
+  /// Calculate advance payment using Supabase RPC
+  /// This calls the calculate_advance_payment RPC function that calculates 60% advance
+  Future<void> _calculateAdvancePayment() async {
+    setState(() {
+      isLoadingAdvancePayment = true;
+    });
+
+    try {
+      final basePrice = widget.timeSlot.effectivePrice;
+      final addonsTotal = widget.totalAddonPrice +
+                          widget.totalExtraSpecialPrice +
+                          widget.totalSpecialServicesPrice +
+                          _totalCakePrice;
+
+      print('🧮 Calculating advance payment...');
+      print('  Base Price: ₹${basePrice.round()}');
+      print('  Add-ons Total: ₹${addonsTotal.round()}');
+
+      // Get theater owner's vendor_id
+      final theaterResponse = await Supabase.instance.client
+          .from('private_theaters')
+          .select('owner_id')
+          .eq('id', widget.screen.theaterId)
+          .maybeSingle();
+
+      if (theaterResponse == null) {
+        throw Exception('Theater not found');
+      }
+
+      final ownerId = theaterResponse['owner_id'] as String?;
+      if (ownerId == null) {
+        throw Exception('Theater has no owner assigned');
+      }
+
+      // Get user_profiles id from owner_id (auth.users.id)
+      final profileResponse = await Supabase.instance.client
+          .from('user_profiles')
+          .select('id')
+          .eq('id', ownerId)
+          .maybeSingle();
+
+      if (profileResponse == null) {
+        // If no profile found, use a fallback calculation
+        print('⚠️ No vendor profile found, using 60% fallback');
+        final grandTotal = basePrice + addonsTotal;
+        final advanceAmount = grandTotal * 0.6;
+
+        if (mounted) {
+          setState(() {
+            advancePaymentData = {
+              'user_advance_payment': advanceAmount,
+              'vendor_advance_payment': advanceAmount, // Same as user for theater bookings
+            };
+            isLoadingAdvancePayment = false;
+          });
+        }
+        return;
+      }
+
+      final vendorId = profileResponse['id'] as String;
+      print('  Vendor ID: $vendorId');
+
+      // Call the Supabase RPC function
+      final response = await Supabase.instance.client.rpc(
+        'calculate_advance_payment',
+        params: {
+          'p_vendor_id': vendorId,
+          'p_service_discounted_price': basePrice,
+          'p_addons_discounted_price': addonsTotal,
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          advancePaymentData = response as Map<String, dynamic>;
+          isLoadingAdvancePayment = false;
+        });
+        print('✅ Advance payment calculated:');
+        print('  User pays: ₹${(response as Map<String, dynamic>)['user_advance_payment']}');
+        print('  Vendor receives: ₹${response['vendor_advance_payment']}');
+      }
+    } catch (e) {
+      print('⚠️ Error calculating advance payment: $e');
+      // Fallback to simple 60% calculation
+      final basePrice = widget.timeSlot.effectivePrice;
+      final addonsTotal = widget.totalAddonPrice +
+                          widget.totalExtraSpecialPrice +
+                          widget.totalSpecialServicesPrice +
+                          _totalCakePrice;
+      final grandTotal = basePrice + addonsTotal;
+      final advanceAmount = grandTotal * 0.6;
+
+      if (mounted) {
+        setState(() {
+          advancePaymentData = {
+            'user_advance_payment': advanceAmount,
+            'vendor_advance_payment': advanceAmount,
+          };
+          isLoadingAdvancePayment = false;
+        });
+      }
+    }
   }
 }

@@ -1071,10 +1071,12 @@ class _TheaterCheckoutScreenState extends ConsumerState<TheaterCheckoutScreen> {
       String normalizeHms(String t) {
         if (t.isEmpty) return '00:00:00';
         final segs = t.split(':');
-        if (segs.length == 2)
+        if (segs.length == 2) {
           return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:00';
-        if (segs.length >= 3)
+        }
+        if (segs.length >= 3) {
           return '${segs[0].padLeft(2, '0')}:${segs[1].padLeft(2, '0')}:${segs[2].padLeft(2, '0')}';
+        }
         return t;
       }
 

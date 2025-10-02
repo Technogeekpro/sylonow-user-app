@@ -39,7 +39,7 @@ extension CakeModelExtension on CakeModel {
 
   String get preparationTimeText {
     if (preparationTimeMinutes <= 60) {
-      return '${preparationTimeMinutes} mins';
+      return '$preparationTimeMinutes mins';
     }
     final hours = preparationTimeMinutes ~/ 60;
     final minutes = preparationTimeMinutes % 60;

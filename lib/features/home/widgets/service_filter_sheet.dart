@@ -175,7 +175,7 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
   Widget _buildTabBar() {
     final tabs = ['Sort', 'Categories', 'Price', 'Features'];
     
-    return Container(
+    return SizedBox(
       height: 50,
       child: Row(
         children: List.generate(tabs.length, (index) {
@@ -544,7 +544,7 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.primaryColor,
+            activeThumbColor: AppTheme.primaryColor,
           ),
         ],
       ),

@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking_model.dart';
-import '../models/payment_model.dart';
 
 class BookingRepository {
   final SupabaseClient _supabase;

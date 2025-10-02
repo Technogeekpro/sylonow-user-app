@@ -1,23 +1,21 @@
 {
   "mcpServers": {
     "supabase": {
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--access-token",
-        "sbp_f86cc788044e30bfaf2762478dae32f2fbfa1afe"
-      ]
+        "--project-ref=txgszrxjyanazlrupaty"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_f86cc788044e30bfaf2762478dae32f2fbfa1afe"
+      }
     },
     "dart": {
       "command": "dart",
       "args": [
-        "mcp-server",
-        "--force-roots-fallback"
+        "mcp-server"
       ]
     }
-   
   }
 }

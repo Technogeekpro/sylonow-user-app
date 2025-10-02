@@ -38,7 +38,7 @@ class _TheaterScreenDetailScreenState
   ScreenPackageModel? _selectedPackage;
   final ScrollController _scrollController = ScrollController();
   bool _showAppBarTitle = false;
-  List<AddonModel> _selectedAddons = [];
+  final List<AddonModel> _selectedAddons = [];
   double _totalAddonPrice = 0.0;
 
   @override

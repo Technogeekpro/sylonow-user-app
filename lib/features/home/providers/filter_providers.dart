@@ -20,12 +20,7 @@ final filteredInsideServicesProvider = FutureProvider<List<ServiceListingModel>>
     final baseServices = await ref.watch(servicesByDecorationTypeProvider('inside').future);
     final filter = ref.watch(insideFilterProvider);
     
-    print('🔍 FILTER_PROVIDER: Inside services received - count: ${baseServices?.length ?? 0}');
-    
-    if (baseServices == null) {
-      print('🔍 FILTER_PROVIDER: Base services is null for inside decoration');
-      return <ServiceListingModel>[];
-    }
+    print('🔍 FILTER_PROVIDER: Inside services received - count: ${baseServices.length ?? 0}');
     
     final filteredServices = _applyFilters(baseServices, filter);
     print('🔍 FILTER_PROVIDER: Inside services after filtering - count: ${filteredServices.length}');
@@ -45,13 +40,8 @@ final filteredOutsideServicesProvider = FutureProvider<List<ServiceListingModel>
     final baseServices = await ref.watch(servicesByDecorationTypeProvider('outside').future);
     final filter = ref.watch(outsideFilterProvider);
     
-    print('🔍 FILTER_PROVIDER: Outside services received - count: ${baseServices?.length ?? 0}');
+    print('🔍 FILTER_PROVIDER: Outside services received - count: ${baseServices.length ?? 0}');
     print('🐛 FILTER_PROVIDER: baseServices type: ${baseServices.runtimeType}');
-    
-    if (baseServices == null) {
-      print('🔍 FILTER_PROVIDER: Base services is null for outside decoration');
-      return <ServiceListingModel>[];
-    }
     
     print('🐛 FILTER_PROVIDER: About to call _applyFilters with ${baseServices.length} services');
     final filteredServices = _applyFilters(baseServices, filter);
@@ -240,7 +230,7 @@ List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, Serv
   } catch (e, stackTrace) {
     print('🐛 CRITICAL ERROR at Line 68 - _applyFilters(): $e');
     print('🐛 Stack trace: $stackTrace');
-    print('🐛 Services that caused error: ${services.map((s) => s?.id ?? 'null').toList()}');
+    print('🐛 Services that caused error: ${services.map((s) => s.id ?? 'null').toList()}');
     return <ServiceListingModel>[];
   }
 }

@@ -542,7 +542,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;
           final selectedDate = extra['selectedDate'] as String;
-          final selectionData = extra as Map<String, dynamic>;
+          final selectionData = extra;
           return OutsideOccasionsScreen(
             screenId: screenId,
             selectedDate: selectedDate,
@@ -557,7 +557,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;
           final selectedDate = extra['selectedDate'] as String;
-          final selectionData = extra as Map<String, dynamic>;
+          final selectionData = extra;
           return OutsideSpecialServicesScreen(
             screenId: screenId,
             selectedDate: selectedDate,
@@ -572,7 +572,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;
           final selectedDate = extra['selectedDate'] as String;
-          final selectionData = extra as Map<String, dynamic>;
+          final selectionData = extra;
           return OutsideAddonsScreen(
             screenId: screenId,
             selectedDate: selectedDate,
@@ -748,7 +748,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final screenId = state.pathParameters['screenId']!;
           final extra = state.extra as Map<String, dynamic>;
           final selectedDate = extra['selectedDate'] as String;
-          final selectionData = extra as Map<String, dynamic>;
+          final selectionData = extra;
           return OutsideCheckoutScreen(
             screenId: screenId,
             selectedDate: selectedDate,

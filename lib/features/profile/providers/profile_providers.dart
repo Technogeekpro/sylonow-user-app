@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import '../../../core/providers/core_providers.dart' as core;
 import '../models/user_profile_model.dart';
 import '../repositories/profile_repository.dart';

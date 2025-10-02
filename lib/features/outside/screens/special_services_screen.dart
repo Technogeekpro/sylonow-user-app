@@ -41,7 +41,7 @@ class SpecialServicesScreen extends ConsumerStatefulWidget {
 }
 
 class _SpecialServicesScreenState extends ConsumerState<SpecialServicesScreen> {
-  List<AddonModel> _selectedSpecialServices = [];
+  final List<AddonModel> _selectedSpecialServices = [];
   double _totalSpecialServicesPrice = 0.0;
 
   @override

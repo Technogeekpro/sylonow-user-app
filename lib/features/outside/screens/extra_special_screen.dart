@@ -37,7 +37,7 @@ class ExtraSpecialScreen extends ConsumerStatefulWidget {
 }
 
 class _ExtraSpecialScreenState extends ConsumerState<ExtraSpecialScreen> {
-  List<AddonModel> _selectedExtraSpecials = [];
+  final List<AddonModel> _selectedExtraSpecials = [];
   double _totalExtraSpecialPrice = 0.0;
 
   @override

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart' as core;
-import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import '../models/review_model.dart';
 import '../repositories/reviews_repository.dart';
 
