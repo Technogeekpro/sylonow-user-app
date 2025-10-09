@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +15,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
-  debugPrint('🔔 Background message received: ${message.messageId}');
-  debugPrint('🔔 Background message title: ${message.notification?.title}');
-  debugPrint('🔔 Background message body: ${message.notification?.body}');
+
+  if (kDebugMode) {
+    debugPrint('🔔 Background message received: ${message.messageId}');
+    debugPrint('🔔 Background message title: ${message.notification?.title}');
+    debugPrint('🔔 Background message body: ${message.notification?.body}');
+  }
 }
 
 void main() async {
@@ -28,20 +31,26 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('🔥 Firebase initialized successfully');
+    if (kDebugMode) {
+      debugPrint('🔥 Firebase initialized successfully');
+    }
 
     // Set up background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
+
     // Initialize Supabase
     await Supabase.initialize(
       url: AppConstants.supabaseUrl,
       anonKey: AppConstants.supabaseAnonKey,
     );
-    debugPrint('🗄️ Supabase initialized successfully');
-    
+    if (kDebugMode) {
+      debugPrint('🗄️ Supabase initialized successfully');
+    }
+
   } catch (e) {
-    debugPrint('❌ Error initializing services: $e');
+    if (kDebugMode) {
+      debugPrint('❌ Error initializing services: $e');
+    }
   }
   
   runApp(

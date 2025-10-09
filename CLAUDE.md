@@ -185,3 +185,30 @@ These placeholder screens are defined inline in the router file and should be mo
 - Row Level Security (RLS) policies should be implemented in Supabase
 - Runtime permissions properly handled for location and camera access
 - do not run flutter apps until and unless I tell you to run
+
+## Production Deployment
+
+### Current Status (October 2025)
+- **Version**: 1.0.0+1
+- **Status**: Production-ready, pending external configuration
+
+### Recent Updates for Store Submission
+All code implementations complete for App Store and Google Play submission:
+
+1. **Sign in with Apple** - Fully implemented (needs Apple Developer configuration)
+2. **Android Permissions** - SMS permissions removed (Google Play compliant)
+3. **iOS Permissions** - Enhanced with proper descriptions
+4. **Release Configuration** - Android signing and ProGuard configured
+5. **Production Logging** - Debug prints wrapped in kDebugMode
+
+### Documentation
+Comprehensive deployment guides available:
+- `START_HERE.md` - Quick start guide
+- `APPSTORE_RESUBMISSION_CHECKLIST.md` - iOS submission (addresses rejection issues)
+- `APPLE_SIGNIN_SETUP.md` - Apple Developer configuration
+- `ANDROID_RELEASE_GUIDE.md` - Android submission guide
+- `PRODUCTION_DEPLOYMENT_GUIDE.md` - Complete reference
+
+### Known Store Submission Issues
+- **App Store**: Previously rejected for missing Sign in with Apple, App Tracking Transparency labels, iPad bug, and demo account (all addressed in code, configuration pending)
+- **Google Play**: First submission pending

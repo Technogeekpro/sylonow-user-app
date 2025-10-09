@@ -18,6 +18,21 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   bool _acceptTerms = false;
+  bool _isAppleSignInAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAppleSignInAvailability();
+  }
+
+  Future<void> _checkAppleSignInAvailability() async {
+    final authService = ref.read(authServiceProvider);
+    final isAvailable = await authService.isAppleSignInAvailable();
+    setState(() {
+      _isAppleSignInAvailable = isAvailable;
+    });
+  }
 
   void _continueWithPhone() {
     if (!_acceptTerms) {
@@ -35,6 +50,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  Future<void> _continueWithApple() async {
+    if (!_acceptTerms) {
+      _showTermsError();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authService = ref.read(authServiceProvider);
+
+      // Sign in with Apple
+      final response = await authService.signInWithApple();
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response != null && response.user != null) {
+          // Check if onboarding is completed
+          final isOnboardingCompleted = await authService.isOnboardingCompleted();
+
+          if (mounted) {
+            if (isOnboardingCompleted) {
+              // Onboarding completed, go to home
+              context.go(AppConstants.homeRoute);
+            } else {
+              // Onboarding not completed, go to welcome screen
+              context.go(AppConstants.welcomeRoute);
+            }
+          }
+        } else {
+          // User canceled the sign-in
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Sign in was canceled')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Apple sign in failed: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Future<void> _continueWithGoogle() async {
@@ -61,13 +129,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (response != null && response.user != null) {
           // Check if onboarding is completed
           final isOnboardingCompleted = await authService.isOnboardingCompleted();
-          
-          if (isOnboardingCompleted) {
-            // Onboarding completed, go to home
-            context.go(AppConstants.homeRoute);
-          } else {
-            // Onboarding not completed, go to welcome screen
-            context.go(AppConstants.welcomeRoute);
+
+          if (mounted) {
+            if (isOnboardingCompleted) {
+              // Onboarding completed, go to home
+              context.go(AppConstants.homeRoute);
+            } else {
+              // Onboarding not completed, go to welcome screen
+              context.go(AppConstants.welcomeRoute);
+            }
           }
         } else {
           // User canceled the sign-in
@@ -223,6 +293,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                       ),
                     ),
+
+                    // Continue with Apple Button (only shown on iOS)
+                    if (_isAppleSignInAvailable) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 56,
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading || !_acceptTerms ? null : _continueWithApple,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(56),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(FontAwesomeIcons.apple, size: 24),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Continue with Apple',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Okra',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 24),
 

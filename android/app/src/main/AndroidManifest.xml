@@ -3,8 +3,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- SMS permissions removed: sms_autofill package handles runtime permissions automatically -->
+    <!-- Google Play rejects apps with SMS permissions unless required for core functionality -->
     <application
         android:label="Sylonow"
         android:name="${applicationName}"

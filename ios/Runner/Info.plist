@@ -46,11 +46,17 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open.</string>
+	<string>Sylonow needs your location to show nearby service providers, calculate accurate delivery times, and help vendors reach your address.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to location when in the background.</string>
+	<string>Sylonow needs your location to track service provider arrival and provide real-time updates for your bookings.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to location when in the background.</string>
+	<string>Sylonow needs your location to track service provider arrival and provide real-time updates for your bookings.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Sylonow needs access to your photo library to let you upload profile pictures and share booking details.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Sylonow needs camera access to let you take photos for your profile and scan QR codes for vendor verification.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Sylonow needs permission to save booking receipts and QR codes to your photo library.</string>
 	<key>GIDClientID</key>
 	<string>828054656956-v19ec4b5rna4qen6a0a63pev6s2g96o5.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>

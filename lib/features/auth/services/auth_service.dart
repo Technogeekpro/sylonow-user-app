@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../../core/constants/app_constants.dart';
@@ -9,13 +12,20 @@ import '../../../core/constants/app_constants.dart';
 class AuthService {
   final SupabaseClient _supabaseClient;
   late final GoogleSignIn _googleSignIn;
-  
+
   AuthService(this._supabaseClient) {
     _googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
       // This is the WEB Client ID, which is correct for Supabase integration
       serverClientId: '828054656956-9lb66n0bjgeoo7ta808ank5acj09uno7.apps.googleusercontent.com',
     );
+  }
+
+  /// Check if Sign in with Apple is available on this device
+  Future<bool> isAppleSignInAvailable() async {
+    if (kIsWeb) return false;
+    if (!Platform.isIOS && !Platform.isMacOS) return false;
+    return await SignInWithApple.isAvailable();
   }
   
   // Sign up with email and password
@@ -252,7 +262,58 @@ class AuthService {
     try {
       await _googleSignIn.signOut();
     } catch (e) {
-      debugPrint('Google sign out error: $e');
+      if (kDebugMode) {
+        debugPrint('Google sign out error: $e');
+      }
+    }
+  }
+
+  /// Sign in with Apple
+  /// Returns the AuthResponse from Supabase if successful, otherwise null.
+  Future<AuthResponse?> signInWithApple({String appType = 'customer'}) async {
+    try {
+      // Check if Apple Sign In is available
+      final isAvailable = await isAppleSignInAvailable();
+      if (!isAvailable) {
+        throw 'Sign in with Apple is not available on this device';
+      }
+
+      // Request credential from Apple
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // Check if we got the identity token
+      if (credential.identityToken == null) {
+        throw 'Failed to get identity token from Apple';
+      }
+
+      // Sign in to Supabase with Apple ID token
+      final authResponse = await _supabaseClient.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: credential.identityToken!,
+      );
+
+      // Create user profile after successful Apple sign-in
+      if (authResponse.user != null) {
+        await _createUserProfile(authResponse.user!.id, appType);
+
+        // Update SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(AppConstants.isLoggedInKey, true);
+        await prefs.setString(AppConstants.userEmailKey, authResponse.user!.email ?? '');
+        await prefs.setString(AppConstants.userIdKey, authResponse.user!.id);
+      }
+
+      return authResponse;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Apple sign in error: $e');
+      }
+      rethrow;
     }
   }
 
