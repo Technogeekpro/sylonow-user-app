@@ -7,6 +7,7 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+import java.util.Properties
 
 android {
     namespace = "com.sylonow.sylonowUser"
@@ -36,7 +37,7 @@ android {
             // Load keystore properties from key.properties file
             val keystorePropertiesFile = rootProject.file("key.properties")
             if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = java.util.Properties()
+                val keystoreProperties = Properties()  
                 keystoreProperties.load(keystorePropertiesFile.inputStream())
 
                 storeFile = file(keystoreProperties["storeFile"] as String)

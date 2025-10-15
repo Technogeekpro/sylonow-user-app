@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/filter_model.dart';
 
@@ -22,31 +23,23 @@ class ServiceFilterSheet extends ConsumerStatefulWidget {
 class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
   late ServiceFilter _filter;
   int _selectedTabIndex = 0;
-  
+
   // Filter categories based on decoration type
-  late List<String> _availableCategories;
+  List<String> _availableCategories = [];
   late List<String> _availableVenueTypes;
   late List<String> _availableThemes;
+  bool _loadingCategories = true;
 
   @override
   void initState() {
     super.initState();
     _filter = widget.initialFilter;
     _initializeCategories();
+    _loadCategoriesFromSupabase();
   }
 
   void _initializeCategories() {
     if (widget.decorationType == 'inside') {
-      _availableCategories = [
-        'Birthday Decoration',
-        'Anniversary Setup',
-        'Wedding Decoration',
-        'Baby Shower',
-        'Corporate Events',
-        'Theme Parties',
-        'Room Decoration',
-        'Hall Decoration',
-      ];
       _availableVenueTypes = [
         'Home',
         'Banquet Hall',
@@ -66,16 +59,6 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
         'Elegant',
       ];
     } else {
-      _availableCategories = [
-        'Garden Decoration',
-        'Outdoor Wedding',
-        'Pool Party Setup',
-        'Terrace Makeover',
-        'Lawn Events',
-        'Outdoor Lighting',
-        'Beach Setup',
-        'Farmhouse Decoration',
-      ];
       _availableVenueTypes = [
         'Garden',
         'Terrace',
@@ -96,6 +79,31 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
         'Festival',
         'Country Style',
       ];
+    }
+  }
+
+  Future<void> _loadCategoriesFromSupabase() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('categories')
+          .select('name')
+          .order('name');
+
+      if (mounted) {
+        setState(() {
+          _availableCategories = (response as List)
+              .map((category) => category['name'] as String)
+              .toList();
+          _loadingCategories = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading categories: $e');
+      if (mounted) {
+        setState(() {
+          _loadingCategories = false;
+        });
+      }
     }
   }
 
@@ -293,9 +301,16 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildFilterSection('Categories', _availableCategories, _filter.categories, (categories) {
-            setState(() => _filter = _filter.copyWith(categories: categories));
-          }),
+          _loadingCategories
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  ),
+                )
+              : _buildFilterSection('Categories', _availableCategories, _filter.categories, (categories) {
+                  setState(() => _filter = _filter.copyWith(categories: categories));
+                }),
           const SizedBox(height: 24),
           _buildFilterSection('Venue Types', _availableVenueTypes, _filter.venueTypes, (venueTypes) {
             setState(() => _filter = _filter.copyWith(venueTypes: venueTypes));
@@ -453,8 +468,8 @@ class _ServiceFilterSheetState extends ConsumerState<ServiceFilterSheet> {
           Slider(
             value: _filter.maxDistanceKm,
             min: 1,
-            max: 50,
-            divisions: 49,
+            max: 40,
+            divisions: 39,
             activeColor: AppTheme.primaryColor,
             onChanged: (value) => setState(() => _filter = _filter.copyWith(maxDistanceKm: value)),
           ),

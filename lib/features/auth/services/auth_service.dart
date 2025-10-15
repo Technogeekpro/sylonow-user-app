@@ -1,12 +1,14 @@
 import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:crypto/crypto.dart';
 import '../../../core/constants/app_constants.dart';
 
 class AuthService {
@@ -22,10 +24,29 @@ class AuthService {
   }
 
   /// Check if Sign in with Apple is available on this device
+  /// Note: Apple Sign In only works on real iOS devices, not simulators
   Future<bool> isAppleSignInAvailable() async {
     if (kIsWeb) return false;
     if (!Platform.isIOS && !Platform.isMacOS) return false;
-    return await SignInWithApple.isAvailable();
+
+    // Check if running on simulator
+    // Apple Sign In doesn't work on iOS Simulator
+    try {
+      // The isAvailable() method returns false on simulator
+      final isAvailable = await SignInWithApple.isAvailable();
+
+      if (kDebugMode && !isAvailable) {
+        debugPrint('🍎 Sign in with Apple is not available on this device');
+        debugPrint('🍎 Note: Apple Sign In only works on real iOS devices, not simulators');
+      }
+
+      return isAvailable;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('🍎 Error checking Apple Sign In availability: $e');
+      }
+      return false;
+    }
   }
   
   // Sign up with email and password
@@ -278,24 +299,69 @@ class AuthService {
         throw 'Sign in with Apple is not available on this device';
       }
 
+      if (kDebugMode) {
+        debugPrint('🍎 Starting Apple Sign In process...');
+      }
+
+      // Generate a random nonce for security
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256ofString(rawNonce);
+
+      if (kDebugMode) {
+        debugPrint('🍎 Generated nonce for security');
+      }
+
+      // Determine clientId based on platform
+      // iOS/macOS: Use App ID (com.sylonow.usr.app)
+      // Web: Use Services ID (com.sylonowusr)
+      final clientId = kIsWeb ? 'com.sylonowusr' : 'com.sylonow.usr.app';
+
+      if (kDebugMode) {
+        debugPrint('🍎 Using clientId: $clientId');
+      }
+
       // Request credential from Apple
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: hashedNonce, // Use hashed nonce for Apple request
+        webAuthenticationOptions: kIsWeb
+            ? WebAuthenticationOptions(
+                clientId: clientId,
+                redirectUri: Uri.parse('${AppConstants.supabaseUrl}/auth/v1/callback'),
+              )
+            : null,
       );
+
+      if (kDebugMode) {
+        debugPrint('🍎 Received credential from Apple');
+        debugPrint('🍎 User ID: ${credential.userIdentifier}');
+        debugPrint('🍎 Email: ${credential.email}');
+        debugPrint('🍎 Identity Token available: ${credential.identityToken != null}');
+      }
 
       // Check if we got the identity token
       if (credential.identityToken == null) {
         throw 'Failed to get identity token from Apple';
       }
 
+      // Store raw nonce for backend validation (optional but recommended)
+      await _storeNonce(rawNonce);
+
       // Sign in to Supabase with Apple ID token
+      // Use raw nonce (not hashed) for Supabase
       final authResponse = await _supabaseClient.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: credential.identityToken!,
+        nonce: rawNonce, // Use raw nonce for Supabase validation
       );
+
+      if (kDebugMode) {
+        debugPrint('🍎 Successfully signed in to Supabase');
+        debugPrint('🍎 User ID: ${authResponse.user?.id}');
+      }
 
       // Create user profile after successful Apple sign-in
       if (authResponse.user != null) {
@@ -309,11 +375,83 @@ class AuthService {
       }
 
       return authResponse;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (kDebugMode) {
+        debugPrint('🍎 Apple Sign In Authorization Error: ${e.code}');
+        debugPrint('🍎 Error message: ${e.message}');
+      }
+
+      // Handle specific error codes
+      switch (e.code) {
+        case AuthorizationErrorCode.canceled:
+          if (kDebugMode) {
+            debugPrint('🍎 User canceled Apple Sign In');
+          }
+          return null;
+        case AuthorizationErrorCode.failed:
+          throw 'Apple Sign In failed. Please try again.';
+        case AuthorizationErrorCode.invalidResponse:
+          throw 'Invalid response from Apple. Please try again.';
+        case AuthorizationErrorCode.notHandled:
+          throw 'Apple Sign In not handled. Please contact support.';
+        case AuthorizationErrorCode.unknown:
+          throw 'An unknown error occurred with Apple Sign In (Error 1000). This may be due to:\n'
+              '1. Incorrect Apple Developer configuration\n'
+              '2. Missing redirect URL in Supabase\n'
+              '3. Bundle ID mismatch (expecting com.sylonow.usr.app)\n'
+              'Please check your configuration.';
+        case AuthorizationErrorCode.notInteractive:
+          throw 'Apple Sign In requires user interaction.';
+      }
+    } on AuthApiException catch (e) {
+      if (kDebugMode) {
+        debugPrint('🍎 Supabase Auth API Error: ${e.statusCode}');
+        debugPrint('🍎 Error message: ${e.message}');
+      }
+
+      // Handle audience mismatch error
+      if (e.message.contains('audience') || e.message.contains('aud')) {
+        throw 'Apple Sign In configuration error: Client ID mismatch.\n'
+            'Expected: com.sylonow.usr.app (iOS) or com.sylonowusr (Web)\n'
+            'Please verify your Apple Developer Console settings.';
+      }
+
+      rethrow;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Apple sign in error: $e');
+        debugPrint('🍎 Apple sign in error: $e');
       }
       rethrow;
+    }
+  }
+
+  /// Generate a random nonce for Apple Sign In security
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  /// Compute SHA-256 hash of nonce
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  /// Store nonce securely for backend validation (optional)
+  Future<void> _storeNonce(String nonce) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('appleSignInNonce', nonce);
+      if (kDebugMode) {
+        debugPrint('🍎 Nonce stored securely');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('🍎 Failed to store nonce: $e');
+      }
+      // Non-critical, don't throw
     }
   }
 

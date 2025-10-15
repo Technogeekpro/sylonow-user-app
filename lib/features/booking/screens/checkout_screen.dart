@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
-
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../address/models/address_model.dart';
@@ -20,7 +18,7 @@ import '../../theater/models/add_on_model.dart';
 import '../../theater/models/selected_add_on_model.dart';
 import '../../theater/models/theater_screen_model.dart';
 import '../providers/booking_providers.dart';
-import 'payment_screen.dart';
+import '../services/razorpay_service.dart';
 
 /// Helper function to safely convert dynamic values to double
 double _safeToDouble(dynamic value) {
@@ -73,13 +71,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool isBillDetailsExpanded = false;
   CouponModel? appliedCoupon;
 
-  // Booking for section state
-  bool bookingForSelf = true;
-  final TextEditingController _customerNameController = TextEditingController();
-  final TextEditingController _customerPhoneController =
-      TextEditingController();
-  final GlobalKey<FormState> _bookingFormKey = GlobalKey<FormState>();
-
   // Editable addons state
   Map<String, Map<String, dynamic>>? editableAddOns;
 
@@ -115,9 +106,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           }
         });
       }
-
-      // Load user profile data for booking
-      _loadUserProfileData();
 
       // Load vendor GST status and then calculate advance payment
       _loadVendorGstStatus().then((_) {
@@ -533,7 +521,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   addOnData['isCustomizable'] as bool? ?? false;
               final customText = addOnData['customText'] as String?;
               final characterCount = addOnData['characterCount'] as int?;
-              final totalPrice = _safeToDouble(addOnData['totalPrice'] ?? addOnPrice);
+              final totalPrice = _safeToDouble(
+                addOnData['totalPrice'] ?? addOnPrice,
+              );
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -714,11 +704,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final storedTotalPrice = _safeToDouble(addOnData['totalPrice']);
       final rawPrice = _safeToDouble(addOnData['price']);
       final name = addOnData['name'] as String?;
-      
+
       debugPrint('Add-on: $name (ID: $addOnId)');
       debugPrint('  - Stored totalPrice: $storedTotalPrice');
       debugPrint('  - Raw price: $rawPrice');
-      
+
       if (storedTotalPrice > 0) {
         total += storedTotalPrice;
         debugPrint('  - Using stored totalPrice: ₹$storedTotalPrice');
@@ -747,12 +737,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final characterCount = addOnData['characterCount'] as int? ?? 1;
       final perUnitPrice = _safeToDouble(addOnData['price']);
       final name = addOnData['name'] as String?;
-      
+
       debugPrint('Raw Add-on: $name (ID: $addOnId)');
       debugPrint('  - Stored totalPrice: $storedTotalPrice');
       debugPrint('  - Per-unit price: $perUnitPrice');
       debugPrint('  - Character count: $characterCount');
-      
+
       if (storedTotalPrice > 0) {
         // Calculate raw total by removing the transaction fee from stored totalPrice
         final rawTotal = storedTotalPrice / 1.0354;
@@ -2806,13 +2796,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // For display purposes, show service price with all fees included (no separate transaction fee)
     final servicePriceWithFees = servicePrice + 28.00 + (servicePrice * 0.0354);
     // Add-ons totalPrice already includes transaction fee from service detail screen
-    final addOnsPriceWithFees = addOnsTotal; // No additional fee calculation needed
+    final addOnsPriceWithFees =
+        addOnsTotal; // No additional fee calculation needed
     final totalAmount =
         servicePriceWithFees + addOnsPriceWithFees - couponDiscount;
 
     // Use Canvas formula for accurate calculation
     final canvasResult = _calculateCanvasFormula();
-    
+
     // Use RPC data when available, fallback to Canvas formula
     final payableAmount = advancePaymentData != null
         ? _safeToDouble(advancePaymentData!['user_advance_payment'])
@@ -2823,8 +2814,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final totalPriceUserSees = advancePaymentData != null
         ? _safeToDouble(advancePaymentData!['total_price_user_sees'])
         : canvasResult['total_price_user_sees']!;
-    
-    debugPrint('Canvas calculation - Advance: $payableAmount, Total: ${canvasResult['total_price_user_sees']}, Remaining: $remainingAmount');
+
+    debugPrint(
+      'Canvas calculation - Advance: $payableAmount, Total: ${canvasResult['total_price_user_sees']}, Remaining: $remainingAmount',
+    );
 
     debugPrint('=== BILL DETAILS CALCULATION ===');
     debugPrint('Service price: $servicePrice');
@@ -2832,10 +2825,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     debugPrint('Add-ons total: $addOnsTotal');
     debugPrint('Add-ons with fees: $addOnsPriceWithFees');
     debugPrint('Coupon discount: $couponDiscount');
-    debugPrint('Local total: $totalAmount (should be ${servicePriceWithFees + addOnsPriceWithFees})');
-    debugPrint('RPC total: ${advancePaymentData?['total_price_user_sees'] ?? 'N/A'}');
+    debugPrint(
+      'Local total: $totalAmount (should be ${servicePriceWithFees + addOnsPriceWithFees})',
+    );
+    debugPrint(
+      'RPC total: ${advancePaymentData?['total_price_user_sees'] ?? 'N/A'}',
+    );
     debugPrint('Canvas total: ${canvasResult['total_price_user_sees']}');
-    debugPrint('Bill Details - Total: $totalAmount, Payable: $payableAmount, RPC Data: ${advancePaymentData != null}');
+    debugPrint(
+      'Bill Details - Total: $totalAmount, Payable: $payableAmount, RPC Data: ${advancePaymentData != null}',
+    );
     if (advancePaymentData != null) {
       debugPrint('RPC Data: $advancePaymentData');
     }
@@ -2876,7 +2875,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Bill Summary section
                 Expanded(
                   child: Column(
@@ -2903,9 +2902,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 32),
-                
+
                 // Price section with crossed out original price
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -2913,7 +2912,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Row(
                       children: [
                         // Crossed out original price
-                        if (servicePriceWithFees + addOnsPriceWithFees != totalAmount)
+                        if (servicePriceWithFees + addOnsPriceWithFees !=
+                            totalAmount)
                           Text(
                             '₹${_formatPrice(servicePriceWithFees + addOnsPriceWithFees)}',
                             style: const TextStyle(
@@ -2938,7 +2938,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                     const SizedBox(height: 2),
                     // Savings text
-                    if (servicePriceWithFees + addOnsPriceWithFees != totalAmount)
+                    if (servicePriceWithFees + addOnsPriceWithFees !=
+                        totalAmount)
                       Text(
                         '₹${_formatPrice((servicePriceWithFees + addOnsPriceWithFees) - totalAmount)} Saved',
                         style: const TextStyle(
@@ -2952,7 +2953,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ],
             ),
           ),
-          
+
           // Divider
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
@@ -3008,7 +3009,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ],
                 ),
-                
+
                 // Add-ons row
                 if (addOnsTotal > 0)
                   Row(
@@ -3049,7 +3050,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                     ],
                   ),
-                
+
                 // Convenience Fee row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3092,7 +3093,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ],
             ),
           ),
-          
+
           // Divider before total
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 17),
@@ -3102,7 +3103,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               height: 2,
             ),
           ),
-          
+
           // To Pay - Advance row
           Padding(
             padding: const EdgeInsets.fromLTRB(17, 0, 17, 18),
@@ -3130,7 +3131,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ],
             ),
           ),
-          
+
           // Total Savings container
           Container(
             margin: const EdgeInsets.fromLTRB(17, 0, 17, 18),
@@ -3163,7 +3164,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ],
             ),
           ),
-
         ],
       ),
     );
@@ -3406,21 +3406,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   /// Calculate using Canvas formula
   Map<String, double> _calculateCanvasFormula() {
     final S = _getServicePrice(); // service discounted price
-    final A = _calculateSelectedAddOnsRawTotal(); // add-ons raw price (before fees)
+    final A =
+        _calculateSelectedAddOnsRawTotal(); // add-ons raw price (before fees)
     final F = 28.0; // fixed tax
     final p = 3.54; // percent tax
     final c = 5.0; // commission percent
     final g = 18.0; // commission GST percent
     final adv = 40.0; // advance factor
-    
+
     final serviceWithAll = S + F + S * (p / 100);
     final addonsWithAll = A + A * (p / 100);
     final commission = (S + A) * (c / 100);
     final totalCommission = commission * (1 + g / 100);
     final totalVendorPayout = (S + A) - totalCommission;
     final totalPriceUserSees = serviceWithAll + addonsWithAll;
-    final userAdvancePayment = totalPriceUserSees - totalVendorPayout * (adv / 100);
-    
+    final userAdvancePayment =
+        totalPriceUserSees - totalVendorPayout * (adv / 100);
+
     debugPrint('Canvas Formula Debug:');
     debugPrint('S (service): $S');
     debugPrint('A (add-ons raw): $A');
@@ -3428,7 +3430,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     debugPrint('addonsWithAll: $addonsWithAll');
     debugPrint('totalPriceUserSees: $totalPriceUserSees');
     debugPrint('userAdvancePayment: $userAdvancePayment');
-    
+
     return {
       'total_price_user_sees': totalPriceUserSees,
       'user_advance_payment': userAdvancePayment,
@@ -3445,7 +3447,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   /// Get payment info text for checkout button
   String _getPaymentInfoText(double payableAmount, double totalAmount) {
     if (advancePaymentData != null) {
-      final remainingAmount = _safeToDouble(advancePaymentData!['remaining_payment']);
+      final remainingAmount = _safeToDouble(
+        advancePaymentData!['remaining_payment'],
+      );
       return 'Pay ₹${_formatPrice(payableAmount)} now, remaining ₹${_formatPrice(remainingAmount)} after service completion';
     } else {
       final remainingAmount = totalAmount - payableAmount;
@@ -3468,23 +3472,25 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // Fallback to service listing prices with safe conversion
     double? offerPrice;
     double? originalPrice;
-    
+
     try {
       offerPrice = widget.service.offerPrice;
     } catch (e) {
       debugPrint('⚠️ Error accessing service offerPrice: $e');
       offerPrice = null;
     }
-    
+
     try {
       originalPrice = widget.service.originalPrice;
     } catch (e) {
       debugPrint('⚠️ Error accessing service originalPrice: $e');
       originalPrice = null;
     }
-    
+
     final price = offerPrice ?? originalPrice ?? 0.0;
-    debugPrint('💰 Service price calculated: $price (offer: $offerPrice, original: $originalPrice)');
+    debugPrint(
+      '💰 Service price calculated: $price (offer: $offerPrice, original: $originalPrice)',
+    );
     return price;
   }
 
@@ -3870,81 +3876,47 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       }
       debugPrint('✅ [CHECKOUT] Address verification passed');
 
-      // Get customer details based on booking type
-      String customerName;
-      String customerPhone;
+      // Get customer details from user profile
+      final userProfile = ref.read(currentUserProfileProvider).asData?.value;
+      final customerName = userProfile?.fullName ?? '';
+      final customerPhone = userProfile?.phoneNumber ?? '';
 
-      if (bookingForSelf) {
-        // Get user profile data for self booking
-        final userProfile = ref.read(currentUserProfileProvider).asData?.value;
-        customerName = userProfile?.fullName ?? '';
-        customerPhone = userProfile?.phoneNumber ?? '';
+      debugPrint('📝 [CHECKOUT] Using profile data');
+      debugPrint('📝 [CHECKOUT] Profile Name: $customerName');
+      debugPrint('📝 [CHECKOUT] Profile Phone: $customerPhone');
 
-        debugPrint('📝 [CHECKOUT] Self booking - using profile data');
-        debugPrint('📝 [CHECKOUT] Profile Name: $customerName');
-        debugPrint('📝 [CHECKOUT] Profile Phone: $customerPhone');
-
-        // Validate self booking requirements
-        if (customerName.isEmpty) {
-          debugPrint('❌ [CHECKOUT] User profile missing name');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Please complete your profile with your name',
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+      // Validate customer requirements
+      if (customerName.isEmpty) {
+        debugPrint('❌ [CHECKOUT] User profile missing name');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please complete your profile with your name'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          );
-          setState(() {
-            isProcessing = false;
-          });
-          return;
-        }
-
-        if (customerPhone.isEmpty) {
-          debugPrint('❌ [CHECKOUT] User profile missing phone number');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Please add your phone number to your profile',
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          );
-          setState(() {
-            isProcessing = false;
-          });
-          return;
-        }
-      } else {
-        // Validate form for someone else booking
-        debugPrint('📝 [CHECKOUT] Someone else booking - validating form');
-        if (!_bookingFormKey.currentState!.validate()) {
-          debugPrint('❌ [CHECKOUT] Booking form validation failed');
-          setState(() {
-            isProcessing = false;
-          });
-          return;
-        }
-
-        customerName = _customerNameController.text.trim();
-        customerPhone = _customerPhoneController.text.trim();
-        debugPrint('📝 [CHECKOUT] Form Name: $customerName');
-        debugPrint('📝 [CHECKOUT] Form Phone: $customerPhone');
+          ),
+        );
+        setState(() {
+          isProcessing = false;
+        });
+        return;
       }
 
-      debugPrint('✅ [CHECKOUT] Booking form validation passed');
+      if (customerPhone.isEmpty) {
+        debugPrint('❌ [CHECKOUT] User profile missing phone number');
+        setState(() {
+          isProcessing = false;
+        });
+        // Show dialog to add phone number
+        await _showAddPhoneNumberDialog();
+        return;
+      }
+
+      debugPrint('✅ [CHECKOUT] Customer validation passed');
       debugPrint('✅ [CHECKOUT] Customer Name: $customerName');
       debugPrint('✅ [CHECKOUT] Customer Phone: $customerPhone');
-      debugPrint('✅ [CHECKOUT] Booking for self: $bookingForSelf');
 
       debugPrint('🏪 [CHECKOUT] Getting order creation notifier');
       // Get order creation notifier
@@ -3984,9 +3956,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         );
       } else {
         debugPrint('🛠️ [CHECKOUT] Regular service booking');
-        
+
         // Extract date from customization data first
-        if (widget.customization != null && widget.customization!['date'] != null) {
+        if (widget.customization != null &&
+            widget.customization!['date'] != null) {
           final customDate = widget.customization!['date'] as String;
           if (customDate != 'Select Date' && customDate.isNotEmpty) {
             try {
@@ -3999,7 +3972,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   int.parse(parts[0]), // day
                 );
                 selectedDateStr = customDate;
-                debugPrint('✅ [CHECKOUT] Using selected date from customization: $selectedDateStr');
+                debugPrint(
+                  '✅ [CHECKOUT] Using selected date from customization: $selectedDateStr',
+                );
               } else {
                 throw FormatException('Invalid date format');
               }
@@ -4007,32 +3982,38 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               debugPrint('❌ [CHECKOUT] Error parsing selected date: $e');
               // Fallback to tomorrow
               bookingDate = DateTime.now().add(const Duration(days: 1));
-              selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+              selectedDateStr =
+                  '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
             }
           } else {
             // Fallback to tomorrow if no valid date selected
             bookingDate = DateTime.now().add(const Duration(days: 1));
-            selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+            selectedDateStr =
+                '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
           }
         } else {
           // Fallback to tomorrow if no customization data
           bookingDate = DateTime.now().add(const Duration(days: 1));
-          selectedDateStr = '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
+          selectedDateStr =
+              '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
         }
-        
+
         // Extract time from customization data
-        if (widget.customization != null && widget.customization!['time'] != null) {
+        if (widget.customization != null &&
+            widget.customization!['time'] != null) {
           final selectedTime = widget.customization!['time'] as String;
           if (selectedTime != 'Select Time' && selectedTime.isNotEmpty) {
             selectedTimeSlotStr = selectedTime;
-            debugPrint('✅ [CHECKOUT] Using selected time from customization: $selectedTimeSlotStr');
+            debugPrint(
+              '✅ [CHECKOUT] Using selected time from customization: $selectedTimeSlotStr',
+            );
           } else {
             selectedTimeSlotStr = 'TBD';
           }
         } else {
           selectedTimeSlotStr = 'TBD';
         }
-        
+
         debugPrint(
           '✅ [CHECKOUT] Regular service date: $selectedDateStr, time: $selectedTimeSlotStr',
         );
@@ -4060,7 +4041,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       debugPrint('📊 [CHECKOUT] Address ID: $selectedAddressId');
       debugPrint('📊 [CHECKOUT] Total Amount: $totalAmount');
       debugPrint('📊 [CHECKOUT] Place Image URL: $placeImageUrl');
-      
+
       // Calculate payment amounts based on UI logic
       final payableAmount = advancePaymentData != null
           ? _safeToDouble(advancePaymentData!['user_advance_payment'])
@@ -4068,7 +4049,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final remainingAmount = advancePaymentData != null
           ? _safeToDouble(advancePaymentData!['remaining_payment'])
           : totalAmount * 0.4; // 40% if no RPC data
-          
+
       debugPrint('📊 [CHECKOUT] Payable Amount (advance): $payableAmount');
       debugPrint('📊 [CHECKOUT] Remaining Amount: $remainingAmount');
 
@@ -4076,7 +4057,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final customization = widget.customization ?? <String, dynamic>{};
       final customerAge = customization['customerAge'] as int?;
       final occasion = customization['occasion'] as String?;
-      final orderCustomerName = customization['customerName'] as String? ?? 
+      final orderCustomerName =
+          customization['customerName'] as String? ??
           currentUser.userMetadata?['full_name'] ??
           currentUser.email ??
           'Guest User';
@@ -4114,46 +4096,69 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
 
       if (mounted) {
+        debugPrint(
+          '✅ [CHECKOUT] Order created successfully! Order ID: ${order.id}',
+        );
+        debugPrint('💳 [CHECKOUT] Opening Razorpay payment directly...');
+
+        // Initialize Razorpay service
+        final paymentRepository = ref.read(paymentRepositoryProvider);
+        final orderRepository = ref.read(orderRepositoryProvider);
+        final razorpayService = RazorpayService(
+          paymentRepository,
+          orderRepository,
+        );
+
+        // Process payment directly with Razorpay
+        final paymentResult = await razorpayService.processPayment(
+          orderId: order.id,
+          userId: currentUser.id,
+          vendorId: widget.service.vendorId ?? '',
+          amount: payableAmount,
+          customerName: orderCustomerName,
+          customerEmail: currentUser.email ?? '',
+          customerPhone:
+              currentUser.userMetadata?['phone'] ?? currentUser.phone ?? '',
+          metadata: {
+            'service_id': widget.service.id,
+            'service_name': widget.service.name,
+            'total_amount': totalAmount,
+            'advance_amount': payableAmount,
+            'remaining_amount': remainingAmount,
+            'booking_date': selectedDateStr,
+            'booking_time': selectedTimeSlotStr,
+            'coupon_code': isCouponApplied ? couponCode : null,
+            'coupon_discount': couponDiscount,
+            'place_image': widget.customization?['placeImage'] != null
+                ? 'pending_upload'
+                : null,
+            'selected_addons': editableAddOns,
+          },
+        );
+
         setState(() {
           isProcessing = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order created successfully! Order ID: ${order.id}'),
-            backgroundColor: AppTheme.successColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        // Navigate to payment screen for processing
-        context.push(
-          PaymentScreen.routeName,
-          extra: {
-            'service': widget.service,
-            'customization': widget.customization,
-            'placeImage': widget
-                .customization?['placeImage'], // Pass place image data for later upload
-            'selectedAddressId': selectedAddressId,
-            'totalAmount': totalAmount,
-            'advanceAmount': order.advanceAmount,
-            'remainingAmount': order.remainingAmount,
-            'specialRequirements': null,
-            'couponCode': isCouponApplied ? couponCode : null,
-            'couponDiscount': couponDiscount,
-            'orderId': order.id,
-            'selectedDate': selectedDateStr,
-            'selectedTimeSlot': selectedTimeSlotStr,
-            // Add theater-specific data if available
-            'selectedScreen': widget.selectedScreen,
-            'selectedTimeSlotData': widget.selectedTimeSlot,
-            // Pass the edited addons data
-            'selectedAddOns': editableAddOns,
-          },
-        );
+        if (!paymentResult.isSuccess) {
+          debugPrint(
+            '❌ [CHECKOUT] Failed to initiate Razorpay: ${paymentResult.message}',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Payment failed: ${paymentResult.message}'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        } else {
+          debugPrint('✅ [CHECKOUT] Razorpay payment opened successfully');
+        }
       }
     } catch (e) {
       debugPrint('❌ [CHECKOUT] ERROR: Failed to create order');
@@ -4347,11 +4352,171 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  void _loadUserProfileData() {
-    final userProfile = ref.read(currentUserProfileProvider).asData?.value;
-    if (userProfile != null) {
-      _customerNameController.text = userProfile.fullName ?? '';
-      _customerPhoneController.text = userProfile.phoneNumber ?? '';
+  /// Show dialog to add phone number to user profile
+  Future<void> _showAddPhoneNumberDialog() async {
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.phone, color: AppTheme.primaryColor),
+              const SizedBox(width: 12),
+              const Text(
+                'Add Phone Number',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Please add your phone number to continue with the booking.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondaryColor,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: 'Enter 10-digit mobile number',
+                    prefixIcon: const Icon(Icons.phone_android),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    counterText: '',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your phone number';
+                    }
+                    if (value.length != 10) {
+                      return 'Phone number must be 10 digits';
+                    }
+                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                      return 'Please enter only numbers';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppTheme.textSecondaryColor,
+                  fontFamily: 'Okra',
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(context).pop(true);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Save',
+                style: TextStyle(color: Colors.white, fontFamily: 'Okra'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      // Save phone number to Supabase
+      final phoneNumber = phoneController.text.trim();
+      await _savePhoneNumberToProfile(phoneNumber);
+    }
+  }
+
+  /// Save phone number to user profile in Supabase
+  Future<void> _savePhoneNumberToProfile(String phoneNumber) async {
+    try {
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Update user profile in Supabase
+      await Supabase.instance.client
+          .from('user_profiles')
+          .update({'phone_number': phoneNumber})
+          .eq('auth_user_id', user.id);
+
+      // Refresh the user profile provider
+      ref.invalidate(currentUserProfileProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Phone number added successfully!'),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+
+      debugPrint('✅ Phone number saved to profile: $phoneNumber');
+    } catch (e) {
+      debugPrint('❌ Error saving phone number: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Failed to save phone number. Please try again.',
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -4393,11 +4558,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _clearCustomerData() {
-    _customerNameController.clear();
-    _customerPhoneController.clear();
-  }
-
   /// Calculate advance payment using Supabase RPC function
   Future<void> _calculateAdvancePayment() async {
     if (widget.service.vendorId == null) return;
@@ -4408,7 +4568,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     try {
       final servicePrice = _getServicePrice();
-      final addOnsTotal = _calculateSelectedAddOnsRawTotal(); // Use raw total for RPC
+      final addOnsTotal =
+          _calculateSelectedAddOnsRawTotal(); // Use raw total for RPC
 
       debugPrint(
         'Calling RPC with: vendor_id=${widget.service.vendorId}, service_price=$servicePrice, addons_raw_total=$addOnsTotal',
@@ -4447,8 +4608,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   void dispose() {
-    _customerNameController.dispose();
-    _customerPhoneController.dispose();
     super.dispose();
   }
 }

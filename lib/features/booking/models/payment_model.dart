@@ -7,7 +7,8 @@ part 'payment_model.g.dart';
 class PaymentModel with _$PaymentModel {
   const factory PaymentModel({
     required String id,
-    @JsonKey(name: 'booking_id') required String bookingId,
+    @JsonKey(name: 'booking_id') String? bookingId,
+    @JsonKey(name: 'order_id') String? orderId,
     @JsonKey(name: 'user_id') required String userId,
     @JsonKey(name: 'vendor_id') required String vendorId,
     

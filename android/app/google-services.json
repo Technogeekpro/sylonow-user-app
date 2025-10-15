@@ -14,12 +14,8 @@
       },
       "oauth_client": [
         {
-          "client_id": "828054656956-oc87buc835s6pp65fn1tmkqglij6k5sj.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.sylonow_user",
-            "certificate_hash": "9e722d213913afe5f4d13140dd348066b06f3499"
-          }
+          "client_id": "828054656956-nr53ldl3l4j18qvpr3bd3kki5c414ref.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
@@ -35,10 +31,10 @@
               "client_type": 3
             },
             {
-              "client_id": "828054656956-qv9jcd8nue1ejka95t695vgk43fe1emt.apps.googleusercontent.com",
+              "client_id": "828054656956-6p0ktdp0gibscid0jo46t3fgh1aickpr.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.sylonowUser"
+                "bundle_id": "com.sylonow.vendor"
               }
             }
           ]
@@ -54,12 +50,8 @@
       },
       "oauth_client": [
         {
-          "client_id": "828054656956-oc87buc835s6pp65fn1tmkqglij6k5sj.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.sylonow_vendor",
-            "certificate_hash": "9e722d213913afe5f4d13140dd348066b06f3499"
-          }
+          "client_id": "828054656956-nr53ldl3l4j18qvpr3bd3kki5c414ref.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
@@ -75,10 +67,62 @@
               "client_type": 3
             },
             {
-              "client_id": "828054656956-qv9jcd8nue1ejka95t695vgk43fe1emt.apps.googleusercontent.com",
+              "client_id": "828054656956-6p0ktdp0gibscid0jo46t3fgh1aickpr.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.sylonowUser"
+                "bundle_id": "com.sylonow.vendor"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:828054656956:android:75bc857f991649fe553db9",
+        "android_client_info": {
+          "package_name": "com.sylonow.sylonowUser"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "828054656956-15ldr87ji1i1uolo73hpjgd82lhv6tf8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sylonow.sylonowUser",
+            "certificate_hash": "eec8124c415ed2b70583d8981e9ab078fa1881cd"
+          }
+        },
+        {
+          "client_id": "828054656956-62kna0v7lqprvg4ofo03ps20bons47ub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sylonow.sylonowUser",
+            "certificate_hash": "f2cbe6d6c2036c84af84a8bec622f494d1942cfd"
+          }
+        },
+        {
+          "client_id": "828054656956-nr53ldl3l4j18qvpr3bd3kki5c414ref.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjRzLOvUo0y8T28WJ9URR7oLTOa9Z0eR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "828054656956-9lb66n0bjgeoo7ta808ank5acj09uno7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "828054656956-6p0ktdp0gibscid0jo46t3fgh1aickpr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sylonow.vendor"
               }
             }
           ]
@@ -100,6 +144,10 @@
             "package_name": "com.sylonow.vendor",
             "certificate_hash": "9e722d213913afe5f4d13140dd348066b06f3499"
           }
+        },
+        {
+          "client_id": "828054656956-nr53ldl3l4j18qvpr3bd3kki5c414ref.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
@@ -115,10 +163,10 @@
               "client_type": 3
             },
             {
-              "client_id": "828054656956-qv9jcd8nue1ejka95t695vgk43fe1emt.apps.googleusercontent.com",
+              "client_id": "828054656956-6p0ktdp0gibscid0jo46t3fgh1aickpr.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.sylonowUser"
+                "bundle_id": "com.sylonow.vendor"
               }
             }
           ]

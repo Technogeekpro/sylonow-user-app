@@ -170,7 +170,6 @@ class PopularNearbySection extends ConsumerWidget {
             SizedBox(
               width: 120,
               height: 120,
-
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: CachedNetworkImage(
@@ -232,7 +231,6 @@ class PopularNearbySection extends ConsumerWidget {
                     Text(
                       service.description ??
                           'Beautiful engagement decoration service',
-
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,

@@ -1056,34 +1056,38 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
                         ),
                       ),
                       child: Stack(
+                        alignment: Alignment.center,
                         children: [
                           Column(
                             mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 DateFormat('dd').format(date),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: !isAvailable 
+                                  color: !isAvailable
                                       ? Colors.grey[500] // Greyed out text for blocked dates
-                                      : isSelected 
-                                          ? Colors.white 
+                                      : isSelected
+                                          ? Colors.white
                                           : Colors.black87,
                                   fontFamily: 'Okra',
                                 ),
+                                textAlign: TextAlign.center,
                               ),
                               Text(
                                 DateFormat('MMM').format(date),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: !isAvailable 
+                                  color: !isAvailable
                                       ? Colors.grey[500] // Greyed out text for blocked dates
-                                      : isSelected 
-                                          ? Colors.white 
+                                      : isSelected
+                                          ? Colors.white
                                           : Colors.grey[600],
                                   fontFamily: 'Okra',
                                 ),
+                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),

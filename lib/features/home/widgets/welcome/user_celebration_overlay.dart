@@ -106,7 +106,7 @@ class _UserCelebrationOverlayState extends ConsumerState<UserCelebrationOverlay>
     if (_isLoading) {
       return Positioned.fill(
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withOpacity(0.5),
           child: const Center(
             child: CircularProgressIndicator(color: Colors.white),
           ),
@@ -122,96 +122,89 @@ class _UserCelebrationOverlayState extends ConsumerState<UserCelebrationOverlay>
       animation: _fadeAnimation,
       builder: (context, child) {
         return Positioned.fill(
-          child: Stack(
-            children: [
-              // Semi-transparent background
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: Colors.black.withOpacity(0.3 * _fadeAnimation.value),
-              ),
-
-              // Main overlay content
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: _buildCelebrationOverlay(
-                    displayName,
-                    displayOccasion,
-                    displayDate,
-                  ),
+          child: Container(
+            color: Colors.black.withOpacity(0.5 * _fadeAnimation.value),
+            child: Center(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: _buildCelebrationCard(
+                  displayName,
+                  displayOccasion,
+                  displayDate,
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildCelebrationOverlay(
+  Widget _buildCelebrationCard(
     String fullName,
     String occasion,
     String date,
   ) {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    final statusBarHeight = mediaQuery.padding.top;
+    final maxWidth = screenWidth > 400 ? 380.0 : screenWidth * 0.9;
 
-    return ClipPath(
-      clipper: TopSemiCircularClipper(),
-      child: Container(
-        width: screenWidth,
-        height: screenHeight * 0.65 + statusBarHeight,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1683C9), Color(0xFF0C4366)],
-          ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      constraints: BoxConstraints(
+        maxWidth: maxWidth,
+        maxHeight: 380,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1683C9), Color(0xFF0C4366)],
         ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            top: statusBarHeight + 80,
-            left: 32,
-            right: 32,
-            bottom: 60,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 5,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Main celebration message
-              Text(
-                "Hey $fullName! 👋",
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Okra',
-                ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Main celebration message
+            Text(
+              "Hey $fullName! 👋",
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'Okra',
               ),
-              const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 16),
 
-              Text(
-                "Let's plan your $occasion on $date",
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontFamily: 'Okra',
-                  fontWeight: FontWeight.w400,
-                  height: 1.4,
-                ),
+            Text(
+              "Let's plan your $occasion on $date",
+              style: const TextStyle(
+                fontSize: 18,
+                color: Colors.white,
+                fontFamily: 'Okra',
+                fontWeight: FontWeight.w400,
+                height: 1.4,
               ),
-              const SizedBox(height: 24),
+            ),
+            const SizedBox(height: 32),
 
-              // Decorative elements
-
-              // Continue button
-              ElevatedButton.icon(
+            // Continue button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
                 icon: const Icon(Icons.arrow_forward, color: Color(0xFF1683C9)),
                 iconAlignment: IconAlignment.end,
                 label: const Text(
@@ -236,8 +229,8 @@ class _UserCelebrationOverlayState extends ConsumerState<UserCelebrationOverlay>
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

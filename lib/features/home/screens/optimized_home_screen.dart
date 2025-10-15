@@ -85,27 +85,18 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
       debugPrint('🎯 OptimizedHomeScreen checking welcome overlay...');
       // Wait for UI to be fully built
       await Future.delayed(const Duration(milliseconds: 500));
-      
-      // FOR TESTING: Always show the overlay
-      debugPrint('🎯 [TESTING MODE] Always showing welcome overlay...');
-      if (mounted) {
+
+      final welcomeService = ref.read(welcomePreferencesServiceProvider);
+      final hasShownWelcome = await welcomeService.hasShownWelcome();
+
+      if (!hasShownWelcome && mounted) {
+        debugPrint('🎯 Showing welcome overlay for the first time...');
         setState(() {
           _showWelcomeOverlay = true;
         });
+      } else {
+        debugPrint('🎯 Welcome overlay already shown, skipping...');
       }
-      
-      // COMMENTED OUT FOR TESTING - Original logic:
-      // final welcomeService = ref.read(welcomePreferencesServiceProvider);
-      // final hasShownWelcome = await welcomeService.hasShownWelcome();
-      // 
-      // if (!hasShownWelcome && mounted) {
-      //   debugPrint('🎯 Showing welcome overlay for the first time...');
-      //   setState(() {
-      //     _showWelcomeOverlay = true;
-      //   });
-      // } else {
-      //   debugPrint('🎯 Welcome overlay already shown, skipping...');
-      // }
     } catch (e) {
       debugPrint('Welcome overlay check error: $e');
     }

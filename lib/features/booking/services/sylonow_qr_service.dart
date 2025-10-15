@@ -6,17 +6,19 @@ import '../repositories/payment_repository.dart';
 
 class SylonowQrService {
   final PaymentRepository _paymentRepository;
-  
+
   // QR Code configuration
   static const String _qrVersion = '1.0';
-  static const String _merchantId = 'SYLONOW_MERCHANT_001'; // Configure as needed
+  static const String _merchantId =
+      'SYLONOW_MERCHANT_001'; // Configure as needed
   static const String _merchantName = 'Sylonow';
 
   SylonowQrService(this._paymentRepository);
 
   /// Generate QR code for Sylonow payment
   Future<QrPaymentResult> generateQrPayment({
-    required String bookingId,
+    String? bookingId,
+    String? orderId,
     required String userId,
     required String vendorId,
     required double amount,
@@ -25,24 +27,35 @@ class SylonowQrService {
     String? customerEmail,
   }) async {
     try {
+      // Validate that either bookingId or orderId is provided
+      if (bookingId == null && orderId == null) {
+        return QrPaymentResult.error(
+          'Either bookingId or orderId must be provided',
+        );
+      }
+
+      final referenceId = bookingId ?? orderId!;
+
       // Create payment transaction record first
-      final paymentTransaction = await _paymentRepository.createPaymentTransaction(
-        bookingId: bookingId,
-        userId: userId,
-        vendorId: vendorId,
-        paymentMethod: 'sylonow_qr',
-        amount: amount,
-        metadata: {
-          'customer_name': customerName,
-          'customer_phone': customerPhone,
-          'customer_email': customerEmail,
-          'qr_version': _qrVersion,
-        },
-      );
+      final paymentTransaction = await _paymentRepository
+          .createPaymentTransaction(
+            bookingId: bookingId,
+            orderId: orderId,
+            userId: userId,
+            vendorId: vendorId,
+            paymentMethod: 'sylonow_qr',
+            amount: amount,
+            metadata: {
+              'customer_name': customerName,
+              'customer_phone': customerPhone,
+              'customer_email': customerEmail,
+              'qr_version': _qrVersion,
+            },
+          );
 
       // Generate payment reference
       final paymentReference = _generatePaymentReference(
-        bookingId: bookingId,
+        referenceId: referenceId,
         paymentTransactionId: paymentTransaction.id,
         amount: amount,
       );
@@ -53,7 +66,7 @@ class SylonowQrService {
         amount: amount,
         customerName: customerName,
         customerPhone: customerPhone,
-        bookingId: bookingId,
+        referenceId: referenceId,
       );
 
       // Update payment transaction with QR data
@@ -72,25 +85,29 @@ class SylonowQrService {
         paymentReference: paymentReference,
         qrWidget: qrWidget,
         amount: amount,
-        expiryTime: DateTime.now().add(const Duration(minutes: 15)), // 15 minutes validity
+        expiryTime: DateTime.now().add(
+          const Duration(minutes: 15),
+        ), // 15 minutes validity
       );
     } catch (e) {
       debugPrint('Error generating QR payment: $e');
-      return QrPaymentResult.error('Failed to generate QR payment: ${e.toString()}');
+      return QrPaymentResult.error(
+        'Failed to generate QR payment: ${e.toString()}',
+      );
     }
   }
 
   /// Generate payment reference
   String _generatePaymentReference({
-    required String bookingId,
+    required String referenceId,
     required String paymentTransactionId,
     required double amount,
   }) {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final amountString = amount.toStringAsFixed(2).replaceAll('.', '');
-    final bookingShort = bookingId.substring(0, 8);
-    
-    return 'SLN${timestamp}_${bookingShort}_$amountString';
+    final referenceShort = referenceId.substring(0, 8);
+
+    return 'SLN${timestamp}_${referenceShort}_$amountString';
   }
 
   /// Create QR code data
@@ -99,7 +116,7 @@ class SylonowQrService {
     required double amount,
     required String customerName,
     required String customerPhone,
-    required String bookingId,
+    required String referenceId,
   }) {
     final qrPayload = {
       'version': _qrVersion,
@@ -111,9 +128,11 @@ class SylonowQrService {
       'currency': 'INR',
       'customer_name': customerName,
       'customer_phone': customerPhone,
-      'booking_id': bookingId,
+      'reference_id': referenceId,
       'timestamp': DateTime.now().toIso8601String(),
-      'expiry': DateTime.now().add(const Duration(minutes: 15)).toIso8601String(),
+      'expiry': DateTime.now()
+          .add(const Duration(minutes: 15))
+          .toIso8601String(),
       'payment_method': 'sylonow_wallet',
     };
 
@@ -131,9 +150,7 @@ class SylonowQrService {
       errorCorrectionLevel: QrErrorCorrectLevel.M,
       padding: const EdgeInsets.all(8.0),
       embeddedImage: null, // Can add Sylonow logo here
-      embeddedImageStyle: const QrEmbeddedImageStyle(
-        size: Size(30, 30),
-      ),
+      embeddedImageStyle: const QrEmbeddedImageStyle(size: Size(30, 30)),
     );
   }
 
@@ -146,7 +163,9 @@ class SylonowQrService {
   }) async {
     try {
       // Get payment transaction
-      final payment = await _paymentRepository.getPaymentById(paymentTransactionId);
+      final payment = await _paymentRepository.getPaymentById(
+        paymentTransactionId,
+      );
       if (payment == null) {
         return PaymentVerificationResult.error('Payment transaction not found');
       }
@@ -157,7 +176,9 @@ class SylonowQrService {
       }
 
       if (payment.status == 'failed' || payment.status == 'cancelled') {
-        return PaymentVerificationResult.error('Payment transaction is ${payment.status}');
+        return PaymentVerificationResult.error(
+          'Payment transaction is ${payment.status}',
+        );
       }
 
       // Verify payment reference matches
@@ -179,8 +200,11 @@ class SylonowQrService {
 
       // In a real implementation, you would verify the payment with your payment processor
       // For now, we'll simulate verification based on verification code
-      final isValidCode = _verifyPaymentCode(verificationCode, paymentReference);
-      
+      final isValidCode = _verifyPaymentCode(
+        verificationCode,
+        paymentReference,
+      );
+
       if (!isValidCode) {
         return PaymentVerificationResult.error('Invalid verification code');
       }
@@ -195,7 +219,9 @@ class SylonowQrService {
       return PaymentVerificationResult.success(updatedPayment);
     } catch (e) {
       debugPrint('Error verifying QR payment: $e');
-      return PaymentVerificationResult.error('Failed to verify payment: ${e.toString()}');
+      return PaymentVerificationResult.error(
+        'Failed to verify payment: ${e.toString()}',
+      );
     }
   }
 
@@ -203,9 +229,10 @@ class SylonowQrService {
   bool _verifyPaymentCode(String verificationCode, String paymentReference) {
     // In a real implementation, this would check with your payment processor
     // For demo purposes, we'll accept codes that match a simple pattern
-    
+
     // Example: verification code should be last 6 digits of payment reference + 'PAID'
-    final expectedCode = '${paymentReference.substring(paymentReference.length - 6)}PAID';
+    final expectedCode =
+        '${paymentReference.substring(paymentReference.length - 6)}PAID';
     return verificationCode.toUpperCase() == expectedCode.toUpperCase();
   }
 
@@ -253,8 +280,9 @@ Note: QR code is valid for 15 minutes only.
     required double amount,
   }) async {
     try {
-      final topUpReference = 'TOPUP_${DateTime.now().millisecondsSinceEpoch}_${userId.substring(0, 8)}';
-      
+      final topUpReference =
+          'TOPUP_${DateTime.now().millisecondsSinceEpoch}_${userId.substring(0, 8)}';
+
       final qrData = jsonEncode({
         'version': _qrVersion,
         'type': 'sylonow_topup',
@@ -265,7 +293,9 @@ Note: QR code is valid for 15 minutes only.
         'amount': amount,
         'currency': 'INR',
         'timestamp': DateTime.now().toIso8601String(),
-        'expiry': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+        'expiry': DateTime.now()
+            .add(const Duration(minutes: 30))
+            .toIso8601String(),
       });
 
       final qrWidget = _generateQrWidget(qrData);
@@ -279,21 +309,33 @@ Note: QR code is valid for 15 minutes only.
       );
     } catch (e) {
       debugPrint('Error generating wallet top-up QR: $e');
-      return QrTopUpResult.error('Failed to generate top-up QR: ${e.toString()}');
+      return QrTopUpResult.error(
+        'Failed to generate top-up QR: ${e.toString()}',
+      );
     }
   }
 
   /// Refresh QR code (generate new one with extended expiry)
   Future<QrPaymentResult> refreshQrPayment(String paymentTransactionId) async {
     try {
-      final payment = await _paymentRepository.getPaymentById(paymentTransactionId);
+      final payment = await _paymentRepository.getPaymentById(
+        paymentTransactionId,
+      );
       if (payment == null) {
         return QrPaymentResult.error('Payment transaction not found');
       }
 
+      // Get reference ID (either bookingId or orderId)
+      final referenceId = payment.bookingId ?? payment.orderId;
+      if (referenceId == null) {
+        return QrPaymentResult.error(
+          'Payment has no valid booking or order ID',
+        );
+      }
+
       // Generate new payment reference
       final newPaymentReference = _generatePaymentReference(
-        bookingId: payment.bookingId,
+        referenceId: referenceId,
         paymentTransactionId: paymentTransactionId,
         amount: payment.amount,
       );
@@ -304,7 +346,7 @@ Note: QR code is valid for 15 minutes only.
         amount: payment.amount,
         customerName: payment.metadata?['customer_name'] ?? 'Customer',
         customerPhone: payment.metadata?['customer_phone'] ?? '',
-        bookingId: payment.bookingId,
+        referenceId: referenceId,
       );
 
       // Update payment transaction
@@ -326,7 +368,9 @@ Note: QR code is valid for 15 minutes only.
       );
     } catch (e) {
       debugPrint('Error refreshing QR payment: $e');
-      return QrPaymentResult.error('Failed to refresh QR payment: ${e.toString()}');
+      return QrPaymentResult.error(
+        'Failed to refresh QR payment: ${e.toString()}',
+      );
     }
   }
 }
@@ -374,10 +418,7 @@ class QrPaymentResult {
   }
 
   factory QrPaymentResult.error(String message) {
-    return QrPaymentResult._(
-      isSuccess: false,
-      message: message,
-    );
+    return QrPaymentResult._(isSuccess: false, message: message);
   }
 }
 
@@ -401,10 +442,7 @@ class PaymentVerificationResult {
   }
 
   factory PaymentVerificationResult.error(String message) {
-    return PaymentVerificationResult._(
-      isSuccess: false,
-      message: message,
-    );
+    return PaymentVerificationResult._(isSuccess: false, message: message);
   }
 }
 
@@ -446,9 +484,6 @@ class QrTopUpResult {
   }
 
   factory QrTopUpResult.error(String message) {
-    return QrTopUpResult._(
-      isSuccess: false,
-      message: message,
-    );
+    return QrTopUpResult._(isSuccess: false, message: message);
   }
-} 
+}

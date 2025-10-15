@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF0B4164);
@@ -12,7 +11,7 @@ class AppTheme {
   static const Color textPrimaryColor = Color(0xFF212121);
   static const Color textSecondaryColor = Color(0xFF757575);
   static const Color headingColor = Color(0xFF2A3143);
-  
+
   static ThemeData lightTheme() {
     return ThemeData(
       useMaterial3: true,
@@ -23,31 +22,37 @@ class AppTheme {
         error: errorColor,
         background: backgroundColor,
       ),
-      fontFamily: 'Okra',
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: headingColor),
-        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: headingColor),
-        displaySmall: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: headingColor),
-        headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: headingColor),
-        headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: headingColor),
-        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: headingColor),
-        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: textPrimaryColor),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal, color: textPrimaryColor),
-        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: textSecondaryColor),
+      fontFamily: GoogleFonts.poppins().fontFamily,
+      textTheme: GoogleFonts.poppinsTextTheme(
+        const TextTheme(
+          displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: headingColor),
+          displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: headingColor),
+          displaySmall: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: headingColor),
+          headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: headingColor),
+          headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: headingColor),
+          titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: headingColor),
+          bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal, color: textPrimaryColor),
+          bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal, color: textPrimaryColor),
+          bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: textSecondaryColor),
+        ),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
           shadowColor: Colors.transparent,
-          textStyle: const TextStyle(
-            fontFamily: 'Okra',
+          textStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -79,7 +84,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: errorColor),
         ),
-        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+        hintStyle: GoogleFonts.poppins(
+          color: Colors.grey.shade500,
+          fontSize: 14,
+        ),
       ),
     );
   }

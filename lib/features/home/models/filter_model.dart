@@ -20,7 +20,7 @@ class ServiceFilter with _$ServiceFilter {
     @Default(SortOption.relevance) SortOption sortBy,
     
     // Location filter
-    @Default(10) double maxDistanceKm,
+    @Default(40) double maxDistanceKm,
     
     // Feature filters
     @Default(false) bool onlyFeatured,

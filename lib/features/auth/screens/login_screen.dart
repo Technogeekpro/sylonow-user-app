@@ -74,24 +74,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         });
 
         if (response != null && response.user != null) {
-          // Check if onboarding is completed
-          final isOnboardingCompleted = await authService.isOnboardingCompleted();
+          // Invalidate auth providers to trigger updates
+          ref.invalidate(isAuthenticatedProvider);
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(isOnboardingCompletedProvider);
+
+          // Wait a moment for providers to update
+          await Future.delayed(const Duration(milliseconds: 100));
 
           if (mounted) {
-            if (isOnboardingCompleted) {
-              // Onboarding completed, go to home
-              context.go(AppConstants.homeRoute);
-            } else {
-              // Onboarding not completed, go to welcome screen
-              context.go(AppConstants.welcomeRoute);
-            }
+            // Navigate to splash screen which will handle the routing based on auth state
+            context.go(AppConstants.splashRoute);
           }
-        } else {
-          // User canceled the sign-in
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Sign in was canceled')));
         }
+        // If response is null, user canceled - no need to show a message
       }
     } catch (e) {
       if (mounted) {
@@ -99,7 +95,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Apple sign in failed: ${e.toString()}')),
+          SnackBar(
+            content: Text('Apple sign in failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -110,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _showTermsError();
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -127,17 +126,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         });
 
         if (response != null && response.user != null) {
-          // Check if onboarding is completed
-          final isOnboardingCompleted = await authService.isOnboardingCompleted();
+          // Invalidate auth providers to trigger updates
+          ref.invalidate(isAuthenticatedProvider);
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(isOnboardingCompletedProvider);
+
+          // Wait a moment for providers to update
+          await Future.delayed(const Duration(milliseconds: 100));
 
           if (mounted) {
-            if (isOnboardingCompleted) {
-              // Onboarding completed, go to home
-              context.go(AppConstants.homeRoute);
-            } else {
-              // Onboarding not completed, go to welcome screen
-              context.go(AppConstants.welcomeRoute);
-            }
+            // Navigate to splash screen which will handle the routing based on auth state
+            context.go(AppConstants.splashRoute);
           }
         } else {
           // User canceled the sign-in
