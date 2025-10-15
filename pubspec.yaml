@@ -1,0 +1,118 @@
+name: sylonow_user
+description: "Sylonow User - Service Marketplace Platform"
+publish_to: 'none'
+version: 1.0.1+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.3.5
+  
+  # Routing
+  go_router: ^14.2.0
+  
+  # Supabase
+  supabase_flutter: ^2.9.1
+  
+  # Authentication
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.3
+  
+  # UI Components
+  flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.3.1
+  flutter_cache_manager: ^3.3.1
+  lottie: ^3.0.0
+  flutter_otp_text_field: ^1.1.1
+  sms_autofill: ^2.3.0
+  flutter_staggered_grid_view: ^0.7.0
+  smooth_page_indicator: ^1.1.0
+  
+  # Utils
+  intl: ^0.19.0
+  logger: ^2.0.2+1
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.5
+  image_picker: ^1.0.7
+  share_plus: ^10.1.2
+  
+  # Models
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  ionicons: ^0.2.2
+  
+  # Animation
+  animated_text_kit: ^4.2.2
+  package_info_plus: ^8.0.0
+  geolocator: ^13.0.1
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.0+1
+  uuid: ^4.5.1
+  
+  # Payment Integration
+  razorpay_flutter: ^1.4.0
+  qr_flutter: ^4.1.0
+  
+  # Notifications
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+  flutter_local_notifications: ^18.0.1
+  
+  # Crypto for payment signature verification
+  crypto: ^3.0.3
+  figma_squircle: ^0.6.3
+  font_awesome_flutter: ^10.8.0
+  google_fonts: ^6.2.1
+  
+  # Tutorial/Showcase
+  tutorial_coach_mark: ^1.3.1
+  dotted_border: ^3.1.0
+  pinput: ^5.0.2
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  riverpod_generator: ^2.3.9
+  build_runner: ^2.4.8
+  custom_lint: ^0.6.2
+  riverpod_lint: ^2.3.7
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21 # optional. default is 21
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/svgs/
+    - assets/animations/
+    - assets/animations/splash.json
+    - assets/animations/splash2.json
+    - assets/animations/loading_animation.json
+    
+  fonts:
+    - family: Okra
+      fonts:
+        - asset: assets/fonts/Okra-Regular.ttf
+        - asset: assets/fonts/Okra-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Okra-MediumLight.ttf
+          weight: 400
+        - asset: assets/fonts/Okra-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Okra-ExtraBold.ttf
+          weight: 800
