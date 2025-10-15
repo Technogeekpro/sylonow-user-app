@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -9,7 +11,7 @@ plugins {
 }
 
 android {
-    namespace = "com.sylonow.sylonowUser"
+    namespace = "com.sylonowusr.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -24,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.sylonow.sylonowUser"
+        applicationId = "com.sylonowusr.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -36,7 +38,7 @@ android {
             // Load keystore properties from key.properties file
             val keystorePropertiesFile = rootProject.file("key.properties")
             if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = java.util.Properties()
+                val keystoreProperties = Properties()
                 keystoreProperties.load(keystorePropertiesFile.inputStream())
 
                 storeFile = file(keystoreProperties["storeFile"] as String)

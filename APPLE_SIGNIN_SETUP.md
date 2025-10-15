@@ -19,7 +19,7 @@
 4. Select **"App"** → Continue
 5. Fill in the details:
    - **Description**: Sylonow User App
-   - **Bundle ID**: `com.sylonow.sylonowUser` (must match your app)
+   - **Bundle ID**: `com.sylonowusr.app` (must match your app)
    - **Capabilities**: Check ✓ **"Sign in with Apple"**
 6. Click **"Continue"** → **"Register"**
 
@@ -29,10 +29,10 @@
 2. Click **"+"** → Select **"Services IDs"** → Continue
 3. Fill in details:
    - **Description**: Sylonow Auth Service
-   - **Identifier**: `com.sylonow.sylonowUser.auth` (can be anything unique)
+   - **Identifier**: `com.sylonowusr.app.auth` (can be anything unique)
 4. Check ✓ **"Sign in with Apple"**
 5. Click **"Configure"** next to Sign in with Apple:
-   - **Primary App ID**: Select `com.sylonow.sylonowUser`
+   - **Primary App ID**: Select `com.sylonowusr.app`
    - **Domains and Subdomains**:
      - Add: `txgszrxjyanazlrupaty.supabase.co`
    - **Return URLs**:
@@ -46,7 +46,7 @@
    - **Key Name**: Sylonow Apple Sign In Key
    - Check ✓ **"Sign in with Apple"**
 3. Click **"Configure"** next to Sign in with Apple:
-   - **Primary App ID**: Select `com.sylonow.sylonowUser`
+   - **Primary App ID**: Select `com.sylonowusr.app`
 4. Click **"Save"** → **"Continue"** → **"Register"**
 5. Click **"Download"** → Save the `.p8` file securely
    - ⚠️ **You can only download this ONCE!** Keep it safe!
@@ -102,12 +102,12 @@ Fill in the following details:
 
 **Services ID:**
 ```
-com.sylonow.sylonowUser.auth
+com.sylonowusr.app.auth
 ```
 
 **Authorized Client IDs** (optional):
 ```
-com.sylonow.sylonowUser
+com.sylonowusr.app
 ```
 
 **Apple Secret (JWT):**
@@ -115,7 +115,7 @@ com.sylonow.sylonowUser
 - Upload your `.p8` file
 - Enter your **Team ID** (from Apple Developer)
 - Enter your **Key ID** (from Apple Developer)
-- Enter your **Services ID**: `com.sylonow.sylonowUser.auth`
+- Enter your **Services ID**: `com.sylonowusr.app.auth`
 - Click **"Generate Secret"**
 - Copy the generated secret
 
@@ -184,8 +184,8 @@ Copy these values for reference:
 
 | Item | Value |
 |------|-------|
-| **Bundle ID** | `com.sylonow.sylonowUser` |
-| **Services ID** | `com.sylonow.sylonowUser.auth` |
+| **Bundle ID** | `com.sylonowusr.app` |
+| **Services ID** | `com.sylonowusr.app.auth` |
 | **Supabase URL** | `https://txgszrxjyanazlrupaty.supabase.co` |
 | **Redirect URL** | `https://txgszrxjyanazlrupaty.supabase.co/auth/v1/callback` |
 | **Team ID** | _(Get from Apple Developer)_ |

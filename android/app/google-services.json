@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:828054656956:android:cca62f9ec8187469553db9",
         "android_client_info": {
-          "package_name": "com.example.sylonow_user"
+          "package_name": "com.sylonowusr.app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "828054656956-oc87buc835s6pp65fn1tmkqglij6k5sj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.sylonow_user",
+            "package_name": "com.sylonowusr.app",
             "certificate_hash": "9e722d213913afe5f4d13140dd348066b06f3499"
           }
         }
@@ -38,7 +38,7 @@
               "client_id": "828054656956-qv9jcd8nue1ejka95t695vgk43fe1emt.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.sylonowUser"
+                "bundle_id": "com.sylonowusr.app"
               }
             }
           ]

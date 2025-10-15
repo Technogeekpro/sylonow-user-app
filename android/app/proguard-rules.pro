@@ -42,7 +42,7 @@
 -keep class retrofit2.** { *; }
 
 ## Keep data models (adjust package names as needed)
--keep class com.sylonow.sylonowUser.** { *; }
+-keep class com.sylonowusr.app.** { *; }
 
 ## Keep native methods
 -keepclasseswithmembernames class * {

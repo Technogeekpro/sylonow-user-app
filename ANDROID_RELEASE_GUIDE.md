@@ -429,7 +429,7 @@ ls -la android/key.properties
 **Solution:**
 ```bash
 # Uninstall old debug version first
-adb uninstall com.sylonow.sylonowUser
+adb uninstall com.sylonowusr.app
 
 # Then install release
 flutter install --release
