@@ -17,7 +17,7 @@ _$ServiceFilterImpl _$$ServiceFilterImplFromJson(Map<String, dynamic> json) =>
       minRating: (json['minRating'] as num?)?.toDouble() ?? 0,
       sortBy: $enumDecodeNullable(_$SortOptionEnumMap, json['sortBy']) ??
           SortOption.relevance,
-      maxDistanceKm: (json['maxDistanceKm'] as num?)?.toDouble() ?? 10,
+      maxDistanceKm: (json['maxDistanceKm'] as num?)?.toDouble() ?? 40,
       onlyFeatured: json['onlyFeatured'] as bool? ?? false,
       hasOffers: json['hasOffers'] as bool? ?? false,
       customizationAvailable: json['customizationAvailable'] as bool? ?? false,

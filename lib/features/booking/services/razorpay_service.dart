@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/payment_model.dart';
 import '../repositories/order_repository.dart';
@@ -13,11 +14,9 @@ class RazorpayService {
   final PaymentRepository _paymentRepository;
   final OrderRepository _orderRepository;
 
-  // Razorpay API credentials (should be moved to environment variables)
-  static const String _keyId =
-      'rzp_test_W7nvo22WaKOB1y'; // Replace with actual key
-  static const String _keySecret =
-      'YlbT7KG7hAr4lTgWYP3i7aOY'; // Replace with actual secret
+  // Razorpay LIVE API credentials
+  static const String _keyId = 'rzp_live_RSUaC7MqY7BfsZ';
+  static const String _keySecret = 'Cc2vEjqs2SATSz0uI10TYLi7';
 
   // Callback functions
   Function(PaymentSuccessResponse)? _onPaymentSuccess;
@@ -37,7 +36,8 @@ class RazorpayService {
 
   /// Create a Razorpay order and initiate payment
   Future<RazorpayPaymentResult> processPayment({
-    required String bookingId,
+    String? bookingId,
+    String? orderId,
     required String userId,
     required String vendorId,
     required double amount,
@@ -47,10 +47,18 @@ class RazorpayService {
     required Map<String, dynamic> metadata,
   }) async {
     try {
+      // Validate that either bookingId or orderId is provided
+      if (bookingId == null && orderId == null) {
+        return RazorpayPaymentResult.error(
+          'Either bookingId or orderId must be provided',
+        );
+      }
+
       // Create payment transaction record first
       final paymentTransaction = await _paymentRepository
           .createPaymentTransaction(
             bookingId: bookingId,
+            orderId: orderId,
             userId: userId,
             vendorId: vendorId,
             paymentMethod: 'razorpay',
@@ -59,20 +67,24 @@ class RazorpayService {
           );
 
       // Create Razorpay order
-      final orderId = await _createRazorpayOrder(
+      // Receipt must be max 40 characters
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final receiptId = '${bookingId != null ? 'B' : 'O'}_$timestamp';
+
+      final razorpayOrderId = await _createRazorpayOrder(
         amount: amount,
         currency: 'INR',
-        receipt:
-            'booking_${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
+        receipt: receiptId,
         notes: {
-          'booking_id': bookingId,
+          if (bookingId != null) 'booking_id': bookingId,
+          if (orderId != null) 'order_id': orderId,
           'user_id': userId,
           'vendor_id': vendorId,
           'payment_transaction_id': paymentTransaction.id,
         },
       );
 
-      if (orderId == null) {
+      if (razorpayOrderId == null) {
         await _paymentRepository.updatePaymentStatus(
           paymentId: paymentTransaction.id,
           status: 'failed',
@@ -93,7 +105,7 @@ class RazorpayService {
         'key': _keyId,
         'amount': (amount * 100).toInt(), // Amount in paise
         'currency': 'INR',
-        'order_id': orderId,
+        'order_id': razorpayOrderId,
         'name': 'Sylonow',
         'description': 'Booking Payment (60%)',
         'timeout': 300, // 5 minutes
@@ -106,15 +118,10 @@ class RazorpayService {
           'color': '#FF0080', // Sylonow brand color
         },
         'notes': {
-          'booking_id': bookingId,
+          if (bookingId != null) 'booking_id': bookingId,
+          if (orderId != null) 'order_id': orderId,
           'payment_type': 'razorpay_60_percent',
           'payment_transaction_id': paymentTransaction.id,
-        },
-        'modal': {
-          'ondismiss': () => {
-            'action': 'payment_cancelled',
-            'payment_transaction_id': paymentTransaction.id,
-          },
         },
       };
 
@@ -124,7 +131,10 @@ class RazorpayService {
       // Open Razorpay checkout
       _razorpay.open(options);
 
-      return RazorpayPaymentResult.processing(paymentTransaction.id, orderId);
+      return RazorpayPaymentResult.processing(
+        paymentTransaction.id,
+        razorpayOrderId,
+      );
     } catch (e) {
       debugPrint('Error processing Razorpay payment: $e');
       return RazorpayPaymentResult.error(
@@ -133,7 +143,7 @@ class RazorpayService {
     }
   }
 
-  /// Create Razorpay order (this would typically be done on your backend)
+  /// Create Razorpay order using Razorpay Orders API
   Future<String?> _createRazorpayOrder({
     required double amount,
     required String currency,
@@ -141,20 +151,40 @@ class RazorpayService {
     Map<String, dynamic>? notes,
   }) async {
     try {
-      // Note: In production, this should be done on your backend server
-      // for security reasons. This is a simplified implementation.
+      // WARNING: In production, this should ALWAYS be done on your backend server
+      // Exposing your key_secret in the client app is a security risk
+      // This is only for MVP/testing purposes
 
-      // For demo purposes, we'll generate a mock order ID
-      // In real implementation, make HTTP request to your backend
+      final url = Uri.parse('https://api.razorpay.com/v1/orders');
+      final basicAuth =
+          'Basic ${base64Encode(utf8.encode('$_keyId:$_keySecret'))}';
 
-      final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': basicAuth,
+        },
+        body: jsonEncode({
+          'amount': (amount * 100).toInt(), // Amount in paise
+          'currency': currency,
+          'receipt': receipt,
+          'notes': notes ?? {},
+        }),
+      );
 
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      return orderId;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final orderId = data['id'] as String;
+        debugPrint('✅ Razorpay order created: $orderId');
+        return orderId;
+      } else {
+        debugPrint('❌ Razorpay order creation failed: ${response.statusCode}');
+        debugPrint('Response: ${response.body}');
+        return null;
+      }
     } catch (e) {
-      debugPrint('Error creating Razorpay order: $e');
+      debugPrint('❌ Error creating Razorpay order: $e');
       return null;
     }
   }
@@ -222,11 +252,20 @@ class RazorpayService {
       );
 
       // Update the order with advance payment information
-      await _orderRepository.updateOrderPayment(
-        orderId: updatedPayment.bookingId,
-        paymentStatus: 'advance_paid',
-      );
-    
+      // Support both bookings and orders tables
+      if (updatedPayment.orderId != null) {
+        await _orderRepository.updateOrderPayment(
+          orderId: updatedPayment.orderId!,
+          paymentStatus: 'advance_paid',
+        );
+      } else if (updatedPayment.bookingId != null) {
+        // For theater bookings, update the bookings table
+        // TODO: Implement booking payment update if needed
+        debugPrint(
+          'Theater booking payment completed: ${updatedPayment.bookingId}',
+        );
+      }
+
       debugPrint('Razorpay payment successful: ${response.paymentId}');
     } catch (e) {
       debugPrint('Error handling payment success: $e');

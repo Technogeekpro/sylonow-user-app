@@ -286,18 +286,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       title: 'Utility',
       items: [
         {
-          'icon': Icons.wallet_outlined,
-          'title': 'Wallet',
-          'subtitle': 'View balance and transaction history',
-          'route': '/wallet',
-        },
-        {
-          'icon': Icons.notifications_outlined,
-          'title': 'Notifications',
-          'subtitle': 'Manage notification preferences',
-          'route': '/profile/notifications',
-        },
-        {
           'icon': Icons.help_outline,
           'title': 'Help & Support',
           'subtitle': 'Get help and contact support',
@@ -867,7 +855,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _buildRefundTable(),
                 const SizedBox(height: 16),
                 const Text(
-                  'Additional Wallet Terms:',
+                  'Additional Terms:',
                   style: TextStyle(
                     fontFamily: 'Okra',
                     fontSize: 14,
@@ -875,7 +863,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildWalletTerms(),
+                _buildRefundTerms(),
               ],
             ),
           ),
@@ -929,17 +917,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    'Bank Refund',
-                    style: TextStyle(
-                      fontFamily: 'Okra',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Wallet Refund',
+                    'Refund Amount',
                     style: TextStyle(
                       fontFamily: 'Okra',
                       fontSize: 12,
@@ -950,16 +928,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ],
             ),
           ),
-          _buildTableRow('More than 24 Hours', '50%', '100%'),
-          _buildTableRow('24 to 12 Hours', '30%', '100%'),
-          _buildTableRow('12 to 6 Hours', '17%', '100%'),
-          _buildTableRow('Less than 6 Hours', 'No Refund', '100%'),
+          _buildTableRow('More than 24 Hours', '50%'),
+          _buildTableRow('24 to 12 Hours', '30%'),
+          _buildTableRow('12 to 6 Hours', '17%'),
+          _buildTableRow('Less than 6 Hours', 'No Refund'),
         ],
       ),
     );
   }
 
-  Widget _buildTableRow(String time, String bankRefund, String walletRefund) {
+  Widget _buildTableRow(String time, String refundAmount) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -976,13 +954,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           Expanded(
             child: Text(
-              bankRefund,
-              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              walletRefund,
+              refundAmount,
               style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
             ),
           ),
@@ -991,15 +963,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildWalletTerms() {
+  Widget _buildRefundTerms() {
     const terms = [
-      '• Bank refunds will be processed within 5-7 working days.',
-      '• Wallet refunds are instant and can only be used for future Sylonow bookings.',
-      '• Wallet balances do not expire and can be used at any time in the future.',
-      '• Wallet balances are non-transferable, non-refundable to bank accounts, and cannot be withdrawn.',
-      '• Maximum wallet balance limit: ₹10,000.',
-      '• Wallet refund is not available if your wallet balance is ₹10,000 or above.',
-      '• Wallet refund becomes available again only when your wallet balance drops below ₹10,000.',
+      '• Refunds will be processed within 5-7 working days.',
+      '• Refund will be credited to the original payment method used during booking.',
+      '• Service charges and transaction fees are non-refundable.',
+      '• In case of any disputes, the decision of Sylonow management will be final.',
     ];
 
     return Column(
@@ -1119,7 +1088,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     const items = [
       '• Profile information and settings',
       '• Booking history and preferences',
-      '• Wallet balance and transactions',
       '• Saved addresses and payment methods',
       '• All account-related data',
     ];

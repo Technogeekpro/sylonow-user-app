@@ -93,17 +93,19 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           phoneNumber: widget.phoneNumber,
           otp: _otp,
         );
-        
+
         if (mounted) {
-          // Check if onboarding is completed
-          final isOnboardingCompleted = await authService.isOnboardingCompleted();
-          
-          if (isOnboardingCompleted) {
-            // Onboarding completed, go to home
-            context.go(AppConstants.homeRoute);
-          } else {
-            // Onboarding not completed, go to onboarding name screen
-            context.go('/onboarding/name');
+          // Invalidate auth providers to trigger updates
+          ref.invalidate(isAuthenticatedProvider);
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(isOnboardingCompletedProvider);
+
+          // Wait a moment for providers to update
+          await Future.delayed(const Duration(milliseconds: 100));
+
+          if (mounted) {
+            // Navigate to splash screen which will handle the routing based on auth state
+            context.go(AppConstants.splashRoute);
           }
         }
       } catch (e) {

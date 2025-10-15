@@ -570,6 +570,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     int reviewCount,
     String? promotionalTag,
   ) {
+    final description = service.description ?? 'A beautiful service designed to make your celebration special.';
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -693,6 +695,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               ),
             ],
           ),
+
+          // Description section with Read More
+          const SizedBox(height: 16),
+          _ExpandableDescription(description: description),
         ],
       ),
     );
@@ -806,11 +812,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-          ),
+          color: Colors.green,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -3854,6 +3856,59 @@ class _ErrorScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Expandable description widget that shows 5 lines by default with Read More option
+class _ExpandableDescription extends StatefulWidget {
+  final String description;
+
+  const _ExpandableDescription({required this.description});
+
+  @override
+  State<_ExpandableDescription> createState() => _ExpandableDescriptionState();
+}
+
+class _ExpandableDescriptionState extends State<_ExpandableDescription> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.description,
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            color: Colors.grey[700],
+            fontFamily: 'Okra',
+          ),
+          maxLines: _isExpanded ? null : 5,
+          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+        ),
+        if (widget.description.length > 200) ...[
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            child: Text(
+              _isExpanded ? 'Read less' : 'Read more',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -57,12 +57,18 @@
       "Bash(git push:*)",
       "Bash(export LANG=en_US.UTF-8)",
       "Bash(pod install:*)",
-      "Read(//Users/arbazkudekar/Downloads/**)"
+      "Read(//Users/arbazkudekar/Downloads/**)",
+      "Bash(keytool:*)",
+      "Bash(sudo softwareupdate:*)",
+      "Bash(brew list:*)",
+      "Bash(brew install:*)",
+      "Bash(idevice_id:*)"
     ],
     "deny": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "supabase"
+    "supabase",
+    "dart"
   ]
 }

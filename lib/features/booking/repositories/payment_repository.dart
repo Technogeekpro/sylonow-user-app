@@ -8,7 +8,8 @@ class PaymentRepository {
 
   /// Create a payment transaction record
   Future<PaymentModel> createPaymentTransaction({
-    required String bookingId,
+    String? bookingId,
+    String? orderId,
     required String userId,
     required String vendorId,
     required String paymentMethod,
@@ -22,8 +23,15 @@ class PaymentRepository {
     Map<String, dynamic>? metadata,
   }) async {
     try {
+      // Validate that either bookingId or orderId is provided
+      if (bookingId == null && orderId == null) {
+        throw Exception('Either bookingId or orderId must be provided');
+      }
+      if (bookingId != null && orderId != null) {
+        throw Exception('Cannot provide both bookingId and orderId');
+      }
+
       final paymentData = {
-        'booking_id': bookingId,
         'user_id': userId,
         'vendor_id': vendorId,
         'payment_method': paymentMethod,
@@ -37,6 +45,14 @@ class PaymentRepository {
         'status': 'pending',
         'metadata': metadata ?? {},
       };
+
+      // Add either booking_id or order_id
+      if (bookingId != null) {
+        paymentData['booking_id'] = bookingId;
+      }
+      if (orderId != null) {
+        paymentData['order_id'] = orderId;
+      }
 
       final response = await _supabase
           .from('payment_transactions')
@@ -129,7 +145,7 @@ class PaymentRepository {
   Future<PaymentSummaryModel?> getPaymentSummary(String bookingId) async {
     try {
       final payments = await getPaymentsByBooking(bookingId);
-      
+
       if (payments.isEmpty) return null;
 
       PaymentModel? razorpayPayment;
@@ -143,7 +159,8 @@ class PaymentRepository {
         }
       }
 
-      final totalAmount = (razorpayPayment?.amount ?? 0) + (sylonowQrPayment?.amount ?? 0);
+      final totalAmount =
+          (razorpayPayment?.amount ?? 0) + (sylonowQrPayment?.amount ?? 0);
       final razorpayAmount = razorpayPayment?.amount ?? 0;
       final sylonowQrAmount = sylonowQrPayment?.amount ?? 0;
 
@@ -154,7 +171,8 @@ class PaymentRepository {
 
       if (razorpayStatus == 'completed' && sylonowQrStatus == 'completed') {
         overallStatus = 'completed';
-      } else if (razorpayStatus == 'completed' || sylonowQrStatus == 'completed') {
+      } else if (razorpayStatus == 'completed' ||
+          sylonowQrStatus == 'completed') {
         overallStatus = 'partial';
       } else if (razorpayStatus == 'failed' && sylonowQrStatus == 'failed') {
         overallStatus = 'failed';
@@ -177,7 +195,8 @@ class PaymentRepository {
   }
 
   /// Get user's payment history
-  Future<List<PaymentModel>> getUserPayments(String userId, {
+  Future<List<PaymentModel>> getUserPayments(
+    String userId, {
     int limit = 20,
     int offset = 0,
   }) async {
@@ -198,7 +217,8 @@ class PaymentRepository {
   }
 
   /// Get vendor's payment history
-  Future<List<PaymentModel>> getVendorPayments(String vendorId, {
+  Future<List<PaymentModel>> getVendorPayments(
+    String vendorId, {
     int limit = 20,
     int offset = 0,
   }) async {
@@ -249,7 +269,8 @@ class PaymentRepository {
   }
 
   /// Get payment statistics for a vendor
-  Future<Map<String, dynamic>> getVendorPaymentStats(String vendorId, {
+  Future<Map<String, dynamic>> getVendorPaymentStats(
+    String vendorId, {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -306,4 +327,4 @@ class PaymentRepository {
       throw Exception('Failed to get payment statistics: $e');
     }
   }
-} 
+}

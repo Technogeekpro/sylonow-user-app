@@ -19,10 +19,17 @@ final filteredInsideServicesProvider = FutureProvider<List<ServiceListingModel>>
     // Get the base services from the existing provider
     final baseServices = await ref.watch(servicesByDecorationTypeProvider('inside').future);
     final filter = ref.watch(insideFilterProvider);
-    
-    print('🔍 FILTER_PROVIDER: Inside services received - count: ${baseServices.length ?? 0}');
-    
-    final filteredServices = _applyFilters(baseServices, filter);
+    final searchQuery = ref.watch(insideSearchQueryProvider);
+
+    print('🔍 FILTER_PROVIDER: Inside services received - count: ${baseServices.length}');
+
+    var filteredServices = _applyFilters(baseServices, filter);
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      filteredServices = _applySearchFilter(filteredServices, searchQuery);
+    }
+
     print('🔍 FILTER_PROVIDER: Inside services after filtering - count: ${filteredServices.length}');
     return filteredServices;
   } catch (e, stackTrace) {
@@ -39,12 +46,19 @@ final filteredOutsideServicesProvider = FutureProvider<List<ServiceListingModel>
     // Get the base services from the existing provider
     final baseServices = await ref.watch(servicesByDecorationTypeProvider('outside').future);
     final filter = ref.watch(outsideFilterProvider);
-    
-    print('🔍 FILTER_PROVIDER: Outside services received - count: ${baseServices.length ?? 0}');
+    final searchQuery = ref.watch(outsideSearchQueryProvider);
+
+    print('🔍 FILTER_PROVIDER: Outside services received - count: ${baseServices.length}');
     print('🐛 FILTER_PROVIDER: baseServices type: ${baseServices.runtimeType}');
-    
+
     print('🐛 FILTER_PROVIDER: About to call _applyFilters with ${baseServices.length} services');
-    final filteredServices = _applyFilters(baseServices, filter);
+    var filteredServices = _applyFilters(baseServices, filter);
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      filteredServices = _applySearchFilter(filteredServices, searchQuery);
+    }
+
     print('🔍 FILTER_PROVIDER: Outside services after filtering - count: ${filteredServices.length}');
     return filteredServices;
   } catch (e, stackTrace) {
@@ -160,7 +174,7 @@ List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, Serv
   }
   
   // Apply distance filter (if location data is available)
-  if (filter.maxDistanceKm < 50) {
+  if (filter.maxDistanceKm < 40) {
     filteredServices = filteredServices.where((service) {
       final distance = service.distanceKm;
       if (distance == null) return true; // Include services without distance data
@@ -253,18 +267,61 @@ final outsideActiveFiltersCountProvider = Provider<int>((ref) {
 // Helper function to count active filters
 int _countActiveFilters(ServiceFilter filter) {
   int count = 0;
-  
+
   if (filter.categories.isNotEmpty) count++;
   if (filter.minPrice > 0 || filter.maxPrice < 10000) count++;
   if (filter.minRating > 0) count++;
   if (filter.sortBy != SortOption.relevance) count++;
-  if (filter.maxDistanceKm < 50) count++;
+  if (filter.maxDistanceKm < 40) count++;
   if (filter.onlyFeatured) count++;
   if (filter.hasOffers) count++;
   if (filter.customizationAvailable) count++;
   if (filter.venueTypes.isNotEmpty) count++;
   if (filter.themeTags.isNotEmpty) count++;
   if (filter.serviceEnvironments.isNotEmpty) count++;
-  
+
   return count;
+}
+
+// Provider to fetch available categories from database
+final availableCategoriesProvider = FutureProvider<List<String>>((ref) async {
+  try {
+    final supabase = ref.watch(supabaseProvider);
+    final response = await supabase
+        .from('service_listings')
+        .select('category')
+        .not('category', 'is', null)
+        .order('category');
+
+    // Extract unique categories and filter out nulls
+    final categories = (response as List)
+        .map((item) => item['category'] as String?)
+        .where((category) => category != null && category.isNotEmpty)
+        .map((category) => category!) // Convert String? to String by asserting non-null
+        .toSet()
+        .toList();
+
+    categories.sort(); // Sort alphabetically
+    return categories;
+  } catch (e) {
+    print('Error fetching categories: $e');
+    return [];
+  }
+});
+
+// Search query provider for inside screen
+final insideSearchQueryProvider = StateProvider<String>((ref) => '');
+
+// Search query provider for outside screen
+final outsideSearchQueryProvider = StateProvider<String>((ref) => '');
+
+// Helper function to apply search filtering
+List<ServiceListingModel> _applySearchFilter(List<ServiceListingModel> services, String query) {
+  final lowerQuery = query.toLowerCase();
+
+  return services.where((service) {
+    return service.name.toLowerCase().contains(lowerQuery) ||
+           (service.description?.toLowerCase().contains(lowerQuery) ?? false) ||
+           (service.category?.toLowerCase().contains(lowerQuery) ?? false);
+  }).toList();
 }

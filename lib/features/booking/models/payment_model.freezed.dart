@@ -22,7 +22,9 @@ PaymentModel _$PaymentModelFromJson(Map<String, dynamic> json) {
 mixin _$PaymentModel {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'booking_id')
-  String get bookingId => throw _privateConstructorUsedError;
+  String? get bookingId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'order_id')
+  String? get orderId => throw _privateConstructorUsedError;
   @JsonKey(name: 'user_id')
   String get userId => throw _privateConstructorUsedError;
   @JsonKey(name: 'vendor_id')
@@ -81,7 +83,8 @@ abstract class $PaymentModelCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      @JsonKey(name: 'booking_id') String bookingId,
+      @JsonKey(name: 'booking_id') String? bookingId,
+      @JsonKey(name: 'order_id') String? orderId,
       @JsonKey(name: 'user_id') String userId,
       @JsonKey(name: 'vendor_id') String vendorId,
       @JsonKey(name: 'payment_method') String paymentMethod,
@@ -117,7 +120,8 @@ class _$PaymentModelCopyWithImpl<$Res, $Val extends PaymentModel>
   @override
   $Res call({
     Object? id = null,
-    Object? bookingId = null,
+    Object? bookingId = freezed,
+    Object? orderId = freezed,
     Object? userId = null,
     Object? vendorId = null,
     Object? paymentMethod = null,
@@ -143,10 +147,14 @@ class _$PaymentModelCopyWithImpl<$Res, $Val extends PaymentModel>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      bookingId: null == bookingId
+      bookingId: freezed == bookingId
           ? _value.bookingId
           : bookingId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
+      orderId: freezed == orderId
+          ? _value.orderId
+          : orderId // ignore: cast_nullable_to_non_nullable
+              as String?,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -237,7 +245,8 @@ abstract class _$$PaymentModelImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      @JsonKey(name: 'booking_id') String bookingId,
+      @JsonKey(name: 'booking_id') String? bookingId,
+      @JsonKey(name: 'order_id') String? orderId,
       @JsonKey(name: 'user_id') String userId,
       @JsonKey(name: 'vendor_id') String vendorId,
       @JsonKey(name: 'payment_method') String paymentMethod,
@@ -271,7 +280,8 @@ class __$$PaymentModelImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? bookingId = null,
+    Object? bookingId = freezed,
+    Object? orderId = freezed,
     Object? userId = null,
     Object? vendorId = null,
     Object? paymentMethod = null,
@@ -297,10 +307,14 @@ class __$$PaymentModelImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      bookingId: null == bookingId
+      bookingId: freezed == bookingId
           ? _value.bookingId
           : bookingId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
+      orderId: freezed == orderId
+          ? _value.orderId
+          : orderId // ignore: cast_nullable_to_non_nullable
+              as String?,
       userId: null == userId
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
@@ -386,7 +400,8 @@ class __$$PaymentModelImplCopyWithImpl<$Res>
 class _$PaymentModelImpl implements _PaymentModel {
   const _$PaymentModelImpl(
       {required this.id,
-      @JsonKey(name: 'booking_id') required this.bookingId,
+      @JsonKey(name: 'booking_id') this.bookingId,
+      @JsonKey(name: 'order_id') this.orderId,
       @JsonKey(name: 'user_id') required this.userId,
       @JsonKey(name: 'vendor_id') required this.vendorId,
       @JsonKey(name: 'payment_method') required this.paymentMethod,
@@ -415,7 +430,10 @@ class _$PaymentModelImpl implements _PaymentModel {
   final String id;
   @override
   @JsonKey(name: 'booking_id')
-  final String bookingId;
+  final String? bookingId;
+  @override
+  @JsonKey(name: 'order_id')
+  final String? orderId;
   @override
   @JsonKey(name: 'user_id')
   final String userId;
@@ -492,7 +510,7 @@ class _$PaymentModelImpl implements _PaymentModel {
 
   @override
   String toString() {
-    return 'PaymentModel(id: $id, bookingId: $bookingId, userId: $userId, vendorId: $vendorId, paymentMethod: $paymentMethod, amount: $amount, currency: $currency, razorpayPaymentId: $razorpayPaymentId, razorpayOrderId: $razorpayOrderId, razorpaySignature: $razorpaySignature, qrCodeData: $qrCodeData, qrPaymentReference: $qrPaymentReference, qrVerifiedBy: $qrVerifiedBy, status: $status, failureReason: $failureReason, refundAmount: $refundAmount, refundId: $refundId, metadata: $metadata, processedAt: $processedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'PaymentModel(id: $id, bookingId: $bookingId, orderId: $orderId, userId: $userId, vendorId: $vendorId, paymentMethod: $paymentMethod, amount: $amount, currency: $currency, razorpayPaymentId: $razorpayPaymentId, razorpayOrderId: $razorpayOrderId, razorpaySignature: $razorpaySignature, qrCodeData: $qrCodeData, qrPaymentReference: $qrPaymentReference, qrVerifiedBy: $qrVerifiedBy, status: $status, failureReason: $failureReason, refundAmount: $refundAmount, refundId: $refundId, metadata: $metadata, processedAt: $processedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -503,6 +521,7 @@ class _$PaymentModelImpl implements _PaymentModel {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.bookingId, bookingId) ||
                 other.bookingId == bookingId) &&
+            (identical(other.orderId, orderId) || other.orderId == orderId) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.vendorId, vendorId) ||
                 other.vendorId == vendorId) &&
@@ -545,6 +564,7 @@ class _$PaymentModelImpl implements _PaymentModel {
         runtimeType,
         id,
         bookingId,
+        orderId,
         userId,
         vendorId,
         paymentMethod,
@@ -583,7 +603,8 @@ class _$PaymentModelImpl implements _PaymentModel {
 abstract class _PaymentModel implements PaymentModel {
   const factory _PaymentModel(
       {required final String id,
-      @JsonKey(name: 'booking_id') required final String bookingId,
+      @JsonKey(name: 'booking_id') final String? bookingId,
+      @JsonKey(name: 'order_id') final String? orderId,
       @JsonKey(name: 'user_id') required final String userId,
       @JsonKey(name: 'vendor_id') required final String vendorId,
       @JsonKey(name: 'payment_method') required final String paymentMethod,
@@ -612,7 +633,10 @@ abstract class _PaymentModel implements PaymentModel {
   String get id;
   @override
   @JsonKey(name: 'booking_id')
-  String get bookingId;
+  String? get bookingId;
+  @override
+  @JsonKey(name: 'order_id')
+  String? get orderId;
   @override
   @JsonKey(name: 'user_id')
   String get userId;

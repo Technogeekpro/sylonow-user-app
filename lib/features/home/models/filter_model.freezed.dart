@@ -282,7 +282,7 @@ class _$ServiceFilterImpl implements _ServiceFilter {
       this.maxPrice = 10000,
       this.minRating = 0,
       this.sortBy = SortOption.relevance,
-      this.maxDistanceKm = 10,
+      this.maxDistanceKm = 40,
       this.onlyFeatured = false,
       this.hasOffers = false,
       this.customizationAvailable = false,

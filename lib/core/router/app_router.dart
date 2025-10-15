@@ -9,6 +9,7 @@ import '../../features/auth/screens/otp_verification_screen.dart';
 import '../../features/auth/screens/phone_input_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/auth/providers/auth_providers.dart';
 import '../../features/onboarding/screens/welcome_screen.dart';
 import '../../features/onboarding/screens/name_screen.dart';
 import '../../features/onboarding/screens/occasion_screen.dart';
@@ -67,6 +68,9 @@ import '../../features/outside/screens/checkout_screen.dart' as outside_checkout
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  // Watch auth state stream to rebuild router when auth changes
+  ref.watch(authStateStreamProvider);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppConstants.splashRoute,
