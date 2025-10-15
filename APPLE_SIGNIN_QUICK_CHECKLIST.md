@@ -7,10 +7,10 @@ Use this checklist to verify all Apple Sign-In configuration steps are complete.
 - [x] Updated [auth_service.dart](lib/features/auth/services/auth_service.dart#L292) with correct clientId
 - [x] Implemented secure nonce generation with `Random.secure()`
 - [x] Added SHA-256 nonce hashing
-- [x] Added platform-specific clientId logic (iOS: `com.sylonow.usr.app`, Web: `com.sylonowusr`)
+- [x] Added platform-specific clientId logic (iOS: `com.sylonowusr.app`, Web: `com.sylonowusr`)
 - [x] Enhanced error handling for audience mismatch
 - [x] Updated [Info.plist](ios/Runner/Info.plist#L35) with Apple URL scheme
-- [x] Changed Bundle Identifier to `com.sylonow.usr.app` in Xcode project
+- [x] Changed Bundle Identifier to `com.sylonowusr.app` in Xcode project
 - [x] Code passes `flutter analyze` with no issues
 
 ## ⚠️ External Configuration (ACTION REQUIRED)
@@ -21,7 +21,7 @@ Log in to [Apple Developer Portal](https://developer.apple.com/account/resources
 
 #### App ID Configuration
 - [ ] Navigate to **Identifiers** → **App IDs**
-- [ ] Find or create App ID: `com.sylonow.usr.app`
+- [ ] Find or create App ID: `com.sylonowusr.app`
 - [ ] Verify **Sign In with Apple** capability is enabled
 - [ ] Click **Edit** → Enable as Primary App ID → **Save**
 
@@ -30,7 +30,7 @@ Log in to [Apple Developer Portal](https://developer.apple.com/account/resources
 - [ ] Find or create Services ID: `com.sylonowusr`
 - [ ] Enable **Sign In with Apple**
 - [ ] Click **Configure**:
-  - [ ] Primary App ID: `com.sylonow.usr.app`
+  - [ ] Primary App ID: `com.sylonowusr.app`
   - [ ] Domains: `txgszrxjyanazlrupaty.supabase.co`
   - [ ] Return URLs: `https://txgszrxjyanazlrupaty.supabase.co/auth/v1/callback`
 - [ ] Click **Save** → **Continue** → **Register**
@@ -40,7 +40,7 @@ Log in to [Apple Developer Portal](https://developer.apple.com/account/resources
 - [ ] Click **+** to create new key
 - [ ] Name: "Sylonow Apple Sign In Key"
 - [ ] Check **Sign In with Apple**
-- [ ] Click **Configure** → Select `com.sylonow.usr.app`
+- [ ] Click **Configure** → Select `com.sylonowusr.app`
 - [ ] Click **Save** → **Continue** → **Register**
 - [ ] **Download the .p8 file** (only available once!)
 - [ ] **Save the Key ID** (shown at top of page)
@@ -57,7 +57,7 @@ Log in to [Supabase Dashboard](https://supabase.com/dashboard)
 - [ ] Navigate to your project → **Authentication** → **Providers**
 - [ ] Find **Apple** provider and enable it
 - [ ] Configure settings:
-  - [ ] **Client ID (iOS)**: `com.sylonow.usr.app`
+  - [ ] **Client ID (iOS)**: `com.sylonowusr.app`
   - [ ] **Client ID (Web)**: `com.sylonowusr` (if supporting web)
   - [ ] **Team ID**: [Your Team ID from Apple]
   - [ ] **Key ID**: [Your Key ID from Apple]
@@ -81,7 +81,7 @@ open Runner.xcodeproj
 #### Verify Settings
 - [ ] Select **Runner** target
 - [ ] Go to **Signing & Capabilities** tab
-- [ ] Verify **Bundle Identifier**: `com.sylonow.usr.app`
+- [ ] Verify **Bundle Identifier**: `com.sylonowusr.app`
 - [ ] Select your **Team**
 - [ ] Verify **Sign In with Apple** capability is present
 - [ ] If missing, click **+ Capability** → Add **Sign In with Apple**
@@ -114,7 +114,7 @@ open Runner.xcodeproj
 
 If you encounter issues, check:
 
-- [ ] **"Invalid client_id"**: Verify Bundle Identifier matches `com.sylonow.usr.app` in Xcode
+- [ ] **"Invalid client_id"**: Verify Bundle Identifier matches `com.sylonowusr.app` in Xcode
 - [ ] **"Audience mismatch"**: Verify Supabase Apple provider uses correct Client IDs
 - [ ] **"Sign in not available"**: Ensure using real device, not simulator
 - [ ] **"Error 1000"**: Check all Apple Developer Console settings are correct
@@ -135,7 +135,7 @@ Before deploying to production:
 - [ ] Apple Sign-In tested successfully on real device
 - [ ] User profile created correctly in Supabase
 - [ ] No console errors during authentication
-- [ ] App Store Connect bundle ID updated to `com.sylonow.usr.app`
+- [ ] App Store Connect bundle ID updated to `com.sylonowusr.app`
 - [ ] Provisioning profiles regenerated with new Bundle ID
 - [ ] Push notification certificates updated (if applicable)
 

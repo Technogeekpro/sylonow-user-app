@@ -5,7 +5,7 @@ This guide provides step-by-step instructions to configure Apple Sign-In for the
 ## Overview
 
 The app has been updated to use the correct client IDs:
-- **iOS/macOS**: `com.sylonow.usr.app` (App ID)
+- **iOS/macOS**: `com.sylonowusr.app` (App ID)
 - **Web**: `com.sylonowusr` (Services ID)
 
 ## Code Changes Completed
@@ -20,11 +20,11 @@ The app has been updated to use the correct client IDs:
 
 ### 2. Updated [Info.plist](ios/Runner/Info.plist)
 
-- ✅ Added Apple Sign-In URL scheme: `com.sylonow.usr.app`
+- ✅ Added Apple Sign-In URL scheme: `com.sylonowusr.app`
 
 ### 3. Updated Xcode Project Configuration
 
-- ✅ Changed Bundle Identifier from `com.sylonow.sylonowUser` to `com.sylonow.usr.app`
+- ✅ Changed Bundle Identifier from `com.sylonow.sylonowUser` to `com.sylonowusr.app`
 
 ## Apple Developer Console Configuration
 
@@ -32,7 +32,7 @@ The app has been updated to use the correct client IDs:
 
 1. Log in to [Apple Developer Portal](https://developer.apple.com/account/resources/)
 2. Navigate to **Certificates, Identifiers & Profiles** → **Identifiers**
-3. Find or create **App ID**: `com.sylonow.usr.app`
+3. Find or create **App ID**: `com.sylonowusr.app`
 4. Ensure **Sign In with Apple** capability is enabled:
    - Click on the App ID
    - Scroll to **Capabilities**
@@ -48,7 +48,7 @@ If you plan to support web:
 3. Enable **Sign In with Apple**
 4. Click **Configure** next to Sign In with Apple
 5. Set the following:
-   - **Primary App ID**: Select `com.sylonow.usr.app`
+   - **Primary App ID**: Select `com.sylonowusr.app`
    - **Website URLs**:
      - **Domains**: Add your Supabase project domain (e.g., `yourproject.supabase.co`)
      - **Return URLs**: Add `https://yourproject.supabase.co/auth/v1/callback`
@@ -56,7 +56,7 @@ If you plan to support web:
 
 ### Step 3: Verify Sign In with Apple Configuration
 
-1. Go to **Identifiers** → Select `com.sylonow.usr.app`
+1. Go to **Identifiers** → Select `com.sylonowusr.app`
 2. Scroll to **Sign In with Apple** capability
 3. Click **Edit**
 4. Ensure configuration shows:
@@ -69,7 +69,7 @@ If you plan to support web:
 2. Click **+** to create a new key
 3. Enter a name (e.g., "Sylonow Apple Sign In Key")
 4. Check **Sign In with Apple**
-5. Click **Configure** → Select `com.sylonow.usr.app`
+5. Click **Configure** → Select `com.sylonowusr.app`
 6. Click **Save** → **Continue** → **Register**
 7. Download the `.p8` key file (you can only download it once!)
 8. Save the **Key ID** - you'll need this for Supabase
@@ -80,7 +80,7 @@ For Supabase configuration, you'll need:
 - **Team ID**: Found in Apple Developer Account → Membership
 - **Key ID**: From Step 4
 - **Private Key**: Contents of the `.p8` file
-- **Services ID**: `com.sylonowusr` (for web) or `com.sylonow.usr.app` (for mobile)
+- **Services ID**: `com.sylonowusr` (for web) or `com.sylonowusr.app` (for mobile)
 
 ## Xcode Configuration
 
@@ -96,7 +96,7 @@ open Runner.xcodeproj
 1. Select **Runner** target
 2. Go to **Signing & Capabilities** tab
 3. Verify:
-   - ✅ Bundle Identifier: `com.sylonow.usr.app`
+   - ✅ Bundle Identifier: `com.sylonowusr.app`
    - ✅ Team: Select your team
    - ✅ **Sign In with Apple** capability is added
 
@@ -114,7 +114,7 @@ open Runner.xcodeproj
 2. Navigate to **Authentication** → **Providers**
 3. Find **Apple** provider
 4. Enable it and configure:
-   - **Client ID (iOS)**: `com.sylonow.usr.app`
+   - **Client ID (iOS)**: `com.sylonowusr.app`
    - **Client ID (Web)**: `com.sylonowusr` (if supporting web)
    - **Team ID**: Your Apple Team ID
    - **Key ID**: From Apple Developer Console
@@ -161,8 +161,8 @@ open Runner.xcodeproj
 **Cause**: Bundle Identifier mismatch
 
 **Solution**:
-1. Verify Xcode Bundle Identifier is `com.sylonow.usr.app`
-2. Verify Apple Developer Console has App ID `com.sylonow.usr.app`
+1. Verify Xcode Bundle Identifier is `com.sylonowusr.app`
+2. Verify Apple Developer Console has App ID `com.sylonowusr.app`
 3. Clean build: `flutter clean && flutter pub get`
 
 ### Error: "Audience mismatch" or "aud claim mismatch"
@@ -170,7 +170,7 @@ open Runner.xcodeproj
 **Cause**: Token validation expects different client ID
 
 **Solution**:
-1. Verify code uses `com.sylonow.usr.app` for iOS (check [auth_service.dart:317](lib/features/auth/services/auth_service.dart#L317))
+1. Verify code uses `com.sylonowusr.app` for iOS (check [auth_service.dart:317](lib/features/auth/services/auth_service.dart#L317))
 2. Verify Supabase Apple provider uses correct Client ID
 3. Check Apple Developer Console configuration
 
@@ -213,12 +213,12 @@ Before testing, verify:
 - ✅ Raw nonce is used for Supabase validation
 
 ### iOS Configuration
-- ✅ Bundle Identifier: `com.sylonow.usr.app`
+- ✅ Bundle Identifier: `com.sylonowusr.app`
 - ✅ [Info.plist](ios/Runner/Info.plist) includes Apple URL scheme
 - ✅ Sign In with Apple capability enabled in Xcode
 
 ### Apple Developer Console
-- ✅ App ID `com.sylonow.usr.app` exists
+- ✅ App ID `com.sylonowusr.app` exists
 - ✅ Sign In with Apple enabled for App ID
 - ✅ Private key generated and downloaded
 - ✅ Services ID `com.sylonowusr` configured (if using web)

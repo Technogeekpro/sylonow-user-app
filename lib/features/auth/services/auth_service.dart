@@ -312,9 +312,9 @@ class AuthService {
       }
 
       // Determine clientId based on platform
-      // iOS/macOS: Use App ID (com.sylonow.usr.app)
+      // iOS/macOS: Use App ID (com.sylonowusr.app)
       // Web: Use Services ID (com.sylonowusr)
-      final clientId = kIsWeb ? 'com.sylonowusr' : 'com.sylonow.usr.app';
+      final clientId = kIsWeb ? 'com.sylonowusr' : 'com.sylonowusr.app';
 
       if (kDebugMode) {
         debugPrint('🍎 Using clientId: $clientId');
@@ -398,7 +398,7 @@ class AuthService {
           throw 'An unknown error occurred with Apple Sign In (Error 1000). This may be due to:\n'
               '1. Incorrect Apple Developer configuration\n'
               '2. Missing redirect URL in Supabase\n'
-              '3. Bundle ID mismatch (expecting com.sylonow.usr.app)\n'
+              '3. Bundle ID mismatch (expecting com.sylonowusr.app)\n'
               'Please check your configuration.';
         case AuthorizationErrorCode.notInteractive:
           throw 'Apple Sign In requires user interaction.';
@@ -412,7 +412,7 @@ class AuthService {
       // Handle audience mismatch error
       if (e.message.contains('audience') || e.message.contains('aud')) {
         throw 'Apple Sign In configuration error: Client ID mismatch.\n'
-            'Expected: com.sylonow.usr.app (iOS) or com.sylonowusr (Web)\n'
+            'Expected: com.sylonowusr.app (iOS) or com.sylonowusr (Web)\n'
             'Please verify your Apple Developer Console settings.';
       }
 

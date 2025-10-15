@@ -6,7 +6,7 @@ The app was experiencing an `AuthApiException` with an audience (aud) mismatch e
 
 ## Root Causes Identified
 
-1. **Incorrect Bundle Identifier**: The Xcode project was using `com.sylonow.sylonowUser` instead of the correct `com.sylonow.usr.app`
+1. **Incorrect Bundle Identifier**: The Xcode project was using `com.sylonow.sylonowUser` instead of the correct `com.sylonowusr.app`
 2. **Weak Nonce Generation**: Using `DateTime.now().millisecondsSinceEpoch` instead of cryptographically secure random generation
 3. **Missing Platform-Specific Logic**: No differentiation between iOS and Web client IDs
 4. **Missing URL Scheme**: Apple Sign-In URL scheme not configured in Info.plist
@@ -26,7 +26,7 @@ import 'package:crypto/crypto.dart';
 #### Enhanced Apple Sign-In Method
 - **Line 307-308**: Secure nonce generation using `Random.secure()` and SHA-256 hashing
 - **Line 317**: Platform-specific clientId logic:
-  - iOS/macOS: `com.sylonow.usr.app` (App ID)
+  - iOS/macOS: `com.sylonowusr.app` (App ID)
   - Web: `com.sylonowusr` (Services ID)
 - **Line 329**: Use hashed nonce for Apple authentication request
 - **Line 330-335**: Web authentication options with correct redirect URI
@@ -48,7 +48,7 @@ Added Apple Sign-In URL scheme:
     <string>Editor</string>
     <key>CFBundleURLSchemes</key>
     <array>
-        <string>com.sylonow.usr.app</string>
+        <string>com.sylonowusr.app</string>
     </array>
 </dict>
 ```
@@ -57,7 +57,7 @@ Added Apple Sign-In URL scheme:
 
 Changed Bundle Identifier in `ios/Runner.xcodeproj/project.pbxproj`:
 - **From**: `com.sylonow.sylonowUser`
-- **To**: `com.sylonow.usr.app`
+- **To**: `com.sylonowusr.app`
 
 Applied to all build configurations:
 - Debug (Line 696)
@@ -82,7 +82,7 @@ Applied to all build configurations:
 ### Platform-Specific Client IDs
 
 ```dart
-final clientId = kIsWeb ? 'com.sylonowusr' : 'com.sylonow.usr.app';
+final clientId = kIsWeb ? 'com.sylonowusr' : 'com.sylonowusr.app';
 ```
 
 - **iOS/macOS**: Uses App ID registered in Apple Developer Console
@@ -108,19 +108,19 @@ No issues found! (ran in 0.8s)
 ### Required External Configuration
 
 1. **Apple Developer Console**:
-   - Verify App ID `com.sylonow.usr.app` exists with Sign In with Apple enabled
+   - Verify App ID `com.sylonowusr.app` exists with Sign In with Apple enabled
    - Create/verify Services ID `com.sylonowusr` (if supporting web)
    - Generate private key (.p8 file) for Apple Sign-In
    - Configure return URLs for web
 
 2. **Supabase Dashboard**:
    - Enable Apple provider in Authentication settings
-   - Configure Client IDs (iOS: `com.sylonow.usr.app`, Web: `com.sylonowusr`)
+   - Configure Client IDs (iOS: `com.sylonowusr.app`, Web: `com.sylonowusr`)
    - Add Team ID, Key ID, and Private Key from Apple Developer Console
    - Verify redirect URLs include Supabase callback URL
 
 3. **Xcode**:
-   - Open project and verify Bundle Identifier: `com.sylonow.usr.app`
+   - Open project and verify Bundle Identifier: `com.sylonowusr.app`
    - Ensure Sign In with Apple capability is enabled
    - Select correct development team
 
@@ -155,7 +155,7 @@ No issues found! (ran in 0.8s)
    - Added Apple Sign-In URL scheme
 
 3. `ios/Runner.xcodeproj/project.pbxproj`
-   - Updated Bundle Identifier to `com.sylonow.usr.app`
+   - Updated Bundle Identifier to `com.sylonowusr.app`
 
 ## Files Created
 
@@ -191,7 +191,7 @@ No additional packages needed.
 
 ## Breaking Changes
 
-⚠️ **Bundle Identifier Changed**: From `com.sylonow.sylonowUser` to `com.sylonow.usr.app`
+⚠️ **Bundle Identifier Changed**: From `com.sylonow.sylonowUser` to `com.sylonowusr.app`
 
 **Impact**:
 - Existing app installations will be treated as a different app
@@ -211,7 +211,7 @@ If issues occur, to rollback:
 
 1. Restore Bundle Identifier:
    ```bash
-   sed -i '' 's/PRODUCT_BUNDLE_IDENTIFIER = com.sylonow.usr.app;/PRODUCT_BUNDLE_IDENTIFIER = com.sylonow.sylonowUser;/g' "ios/Runner.xcodeproj/project.pbxproj"
+   sed -i '' 's/PRODUCT_BUNDLE_IDENTIFIER = com.sylonowusr.app;/PRODUCT_BUNDLE_IDENTIFIER = com.sylonow.sylonowUser;/g' "ios/Runner.xcodeproj/project.pbxproj"
    ```
 
 2. Revert auth_service.dart changes:
