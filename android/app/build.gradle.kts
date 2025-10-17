@@ -34,10 +34,9 @@ android {
 
     signingConfigs {
         create("release") {
-            // Load keystore properties from key.properties file
             val keystorePropertiesFile = rootProject.file("key.properties")
             if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = Properties()  
+                val keystoreProperties = Properties()
                 keystoreProperties.load(keystorePropertiesFile.inputStream())
 
                 storeFile = file(keystoreProperties["storeFile"] as String)
@@ -50,15 +49,7 @@ android {
 
     buildTypes {
         release {
-            // Use release signing config if available, otherwise fall back to debug
-            val releaseSigningConfig = signingConfigs.findByName("release")
-            signingConfig = if (releaseSigningConfig != null && releaseSigningConfig.storeFile?.exists() == true) {
-                releaseSigningConfig
-            } else {
-                signingConfigs.getByName("debug")
-            }
-
-            // Enable proguard for code shrinking and obfuscation
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
