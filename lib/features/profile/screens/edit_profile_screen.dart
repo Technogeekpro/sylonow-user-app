@@ -20,12 +20,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _bioController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _postalCodeController = TextEditingController();
-  final _emergencyNameController = TextEditingController();
-  final _emergencyPhoneController = TextEditingController();
 
   DateTime? _selectedDate;
   String? _selectedGender;
@@ -90,12 +84,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _fullNameController.text = profile.fullName ?? '';
           _emailController.text = profile.email ?? '';
           _phoneController.text = profile.phoneNumber ?? '';
-          _bioController.text = profile.bio ?? '';
-          _cityController.text = profile.city ?? '';
-          _stateController.text = profile.state ?? '';
-          _postalCodeController.text = profile.postalCode ?? '';
-          _emergencyNameController.text = profile.emergencyContactName ?? '';
-          _emergencyPhoneController.text = profile.emergencyContactPhone ?? '';
           _selectedDate = profile.dateOfBirth;
           _selectedGender = _mapGenderValue(profile.gender);
         });
@@ -108,12 +96,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _bioController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _postalCodeController.dispose();
-    _emergencyNameController.dispose();
-    _emergencyPhoneController.dispose();
     super.dispose();
   }
 
@@ -169,12 +151,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         fullName: _fullNameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
-        bio: _bioController.text.trim().isNotEmpty ? _bioController.text.trim() : null,
-        city: _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : null,
-        state: _stateController.text.trim().isNotEmpty ? _stateController.text.trim() : null,
-        postalCode: _postalCodeController.text.trim().isNotEmpty ? _postalCodeController.text.trim() : null,
-        emergencyContactName: _emergencyNameController.text.trim().isNotEmpty ? _emergencyNameController.text.trim() : null,
-        emergencyContactPhone: _emergencyPhoneController.text.trim().isNotEmpty ? _emergencyPhoneController.text.trim() : null,
         dateOfBirth: _selectedDate,
         gender: _mapGenderToDatabase(_selectedGender),
       );
@@ -235,6 +211,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             fontFamily: 'Okra',
             fontWeight: FontWeight.w600,
             fontSize: 20,
+            color: Colors.black87,
           ),
         ),
         backgroundColor: Colors.white,
@@ -274,10 +251,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               _buildBasicInfoSection(),
               const SizedBox(height: 20),
               _buildPersonalDetailsSection(),
-              const SizedBox(height: 20),
-              _buildLocationSection(),
-              const SizedBox(height: 20),
-              _buildEmergencyContactSection(),
               const SizedBox(height: 30),
             ],
           ),
@@ -375,10 +348,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _buildTextField(
           controller: _fullNameController,
           label: 'Full Name',
+          placeholder: 'Enter your full name',
           icon: Icons.person_outline,
           validator: (value) {
             if (value?.trim().isEmpty ?? true) {
               return 'Full name is required';
+            }
+            if (value!.trim().length < 2) {
+              return 'Full name must be at least 2 characters';
             }
             return null;
           },
@@ -387,6 +364,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _buildTextField(
           controller: _emailController,
           label: 'Email',
+          placeholder: 'Enter your email address',
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
@@ -397,7 +375,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$',
             );
             if (!emailRegex.hasMatch(value.trim())) {
-              return 'Please enter a valid email';
+              return 'Please enter a valid email address';
             }
             return null;
           },
@@ -406,16 +384,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _buildTextField(
           controller: _phoneController,
           label: 'Phone Number',
+          placeholder: 'Enter your phone number',
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _bioController,
-          label: 'Bio',
-          icon: Icons.info_outline,
-          maxLines: 3,
-          maxLength: 150,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Phone number is required';
+            }
+            // Remove any non-digit characters for validation
+            final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+            if (digitsOnly.length < 10) {
+              return 'Please enter a valid phone number';
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -428,52 +410,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _buildDateField(),
         const SizedBox(height: 16),
         _buildGenderField(),
-      ],
-    );
-  }
-
-  Widget _buildLocationSection() {
-    return _buildSection(
-      title: 'Location',
-      children: [
-        _buildTextField(
-          controller: _cityController,
-          label: 'City',
-          icon: Icons.location_city_outlined,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _stateController,
-          label: 'State',
-          icon: Icons.map_outlined,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _postalCodeController,
-          label: 'Postal Code',
-          icon: Icons.markunread_mailbox_outlined,
-          keyboardType: TextInputType.number,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmergencyContactSection() {
-    return _buildSection(
-      title: 'Emergency Contact',
-      children: [
-        _buildTextField(
-          controller: _emergencyNameController,
-          label: 'Emergency Contact Name',
-          icon: Icons.contact_emergency_outlined,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _emergencyPhoneController,
-          label: 'Emergency Contact Phone',
-          icon: Icons.phone_outlined,
-          keyboardType: TextInputType.phone,
-        ),
       ],
     );
   }
@@ -514,6 +450,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
+    required String placeholder,
     required IconData icon,
     TextInputType? keyboardType,
     int maxLines = 1,
@@ -528,6 +465,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
+        hintText: placeholder,
+        hintStyle: TextStyle(
+          color: Colors.grey[400],
+          fontFamily: 'Okra',
+          fontWeight: FontWeight.w400,
+        ),
         prefixIcon: Icon(icon, color: AppTheme.primaryColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -539,13 +482,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppTheme.primaryColor),
+          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         filled: true,
         fillColor: Colors.grey[50],
         labelStyle: const TextStyle(
           fontFamily: 'Okra',
           fontWeight: FontWeight.w400,
+        ),
+        errorStyle: const TextStyle(
+          fontFamily: 'Okra',
+          fontSize: 12,
         ),
       ),
       style: const TextStyle(
@@ -561,8 +516,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: AbsorbPointer(
         child: TextFormField(
           decoration: InputDecoration(
-            labelText: _selectedDate != null ? 'Date of Birth' : '',
-            hintText: _selectedDate == null ? 'Date of Birth' : null,
+            labelText: 'Date of Birth',
+            hintText: 'Select your date of birth',
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontFamily: 'Okra',
+              fontWeight: FontWeight.w400,
+            ),
             prefixIcon: Icon(Icons.calendar_today_outlined, color: AppTheme.primaryColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -574,7 +534,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: AppTheme.primaryColor),
+              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
             ),
             filled: true,
             fillColor: Colors.grey[50],
@@ -589,7 +549,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
           controller: TextEditingController(
             text: _selectedDate != null
-                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
                 : '',
           ),
         ),
@@ -606,6 +566,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ),
       child: DropdownButtonFormField<String>(
         initialValue: _selectedGender,
+        hint: Text(
+          'Select your gender',
+          style: TextStyle(
+            color: Colors.grey[400],
+            fontFamily: 'Okra',
+            fontWeight: FontWeight.w400,
+          ),
+        ),
         decoration: InputDecoration(
           labelText: 'Gender',
           prefixIcon: Icon(Icons.person_outline, color: AppTheme.primaryColor),

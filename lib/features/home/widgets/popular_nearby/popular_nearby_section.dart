@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/core/utils/price_calculator.dart';
-import 'package:sylonow_user/core/utils/user_location_helper.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
+import 'package:sylonow_user/features/address/providers/address_providers.dart';
 
 class PopularNearbySection extends ConsumerWidget {
   const PopularNearbySection({super.key});
@@ -57,48 +57,32 @@ class PopularNearbySection extends ConsumerWidget {
             ],
           ),
         ),
-        // Location-based Popular Nearby Services
-        FutureBuilder<Map<String, dynamic>?>(
-          future: UserLocationHelper.getLocationParams(ref, radiusKm: 10000.0),
-          builder: (context, locationSnapshot) {
-            if (locationSnapshot.connectionState == ConnectionState.waiting) {
-              return _buildLoadingState();
-            }
+        // Radius-based Popular Nearby Services (20km from selected address)
+        Consumer(
+          builder: (context, ref, child) {
+            // Debug: Watch the selected address to see when it changes
+            final selectedAddress = ref.watch(selectedAddressProvider);
+            debugPrint('🎯 PopularNearbySection: Building with address: ${selectedAddress?.address}');
+            debugPrint('🎯 PopularNearbySection: Coordinates: (${selectedAddress?.latitude}, ${selectedAddress?.longitude})');
 
-            final locationParams = locationSnapshot.data;
-
-            if (locationParams == null) {
-              // Fallback to non-location based services
-              return Consumer(
-                builder: (context, ref, child) {
-                  final featuredServicesState = ref.watch(
-                    featuredServicesProvider,
-                  );
-                  return featuredServicesState.services.isEmpty
-                      ? _buildLoadingState()
-                      : _buildServicesList(
-                          featuredServicesState.services,
-                          isLocationBased: false,
-                        );
-                },
-              );
-            }
-
-            // Use location-based services
-            return Consumer(
-              builder: (context, ref, child) {
-                final servicesAsync = ref.watch(
-                  popularNearbyServicesWithLocationProvider(locationParams),
-                );
-                return servicesAsync.when(
-                  data: (services) {
-                    return services.isEmpty
-                        ? _buildEmptyState()
-                        : _buildServicesList(services, isLocationBased: true);
-                  },
-                  loading: () => _buildLoadingState(),
-                  error: (error, stack) => _buildErrorState(),
-                );
+            final servicesAsync = ref.watch(popularNearbyServicesProvider);
+            return servicesAsync.when(
+              data: (services) {
+                debugPrint('🎯 PopularNearbySection: Received ${services.length} services');
+                if (services.isNotEmpty) {
+                  debugPrint('🎯 First service: ${services.first.name}, distance: ${services.first.distanceKm} km, price: ${services.first.calculatedPrice}');
+                }
+                return services.isEmpty
+                    ? _buildEmptyState()
+                    : _buildServicesList(services, isLocationBased: true);
+              },
+              loading: () {
+                debugPrint('🎯 PopularNearbySection: Loading services...');
+                return _buildLoadingState();
+              },
+              error: (error, stack) {
+                debugPrint('🎯 PopularNearbySection: Error loading services: $error');
+                return _buildErrorState();
               },
             );
           },
@@ -138,6 +122,7 @@ class PopularNearbySection extends ConsumerWidget {
         context.push(
           '/service/${service.id}',
           extra: {
+            'service': service, // Pass the entire service with calculated prices
             'serviceName': service.name,
             'price': service.displayOfferPrice != null
                 ? PriceCalculator.formatPriceAsInt(
@@ -237,9 +222,33 @@ class PopularNearbySection extends ConsumerWidget {
                         fontFamily: 'Okra',
                         color: Color(0xFF666666),
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    // Distance indicator (if available)
+                    if (service.distanceKm != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            size: 10,
+                            color: Color(0xFF999999),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${service.distanceKm!.toStringAsFixed(1)} km away',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Okra',
+                              color: Color(0xFF999999),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 4),
                     // Price section
                     Row(
                       children: [

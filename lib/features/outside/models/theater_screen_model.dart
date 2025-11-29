@@ -19,6 +19,15 @@ class TheaterScreen {
   final Map<String, dynamic>? timeSlots;
   final List<String>? whatIncluded;
   final String? categoryId;
+  final String? theaterName; // Business/Theater name
+
+  // Location-based fields
+  final double? theaterLatitude;
+  final double? theaterLongitude;
+  final String? theaterAddress;
+  final double? theaterRating;
+  final int? theaterTotalReviews;
+  final double? distanceKm; // Distance from user location
 
   const TheaterScreen({
     required this.id,
@@ -40,6 +49,13 @@ class TheaterScreen {
     this.timeSlots,
     this.whatIncluded,
     this.categoryId,
+    this.theaterName,
+    this.theaterLatitude,
+    this.theaterLongitude,
+    this.theaterAddress,
+    this.theaterRating,
+    this.theaterTotalReviews,
+    this.distanceKm,
   });
 
   factory TheaterScreen.fromJson(Map<String, dynamic> json) {
@@ -76,7 +92,37 @@ class TheaterScreen {
           ? List<String>.from(json['what_included'])
           : null,
       categoryId: json['category_id'] as String?,
+      theaterName: _extractTheaterName(json),
+      theaterLatitude: json['theater_latitude'] != null
+          ? (json['theater_latitude'] as num).toDouble()
+          : null,
+      theaterLongitude: json['theater_longitude'] != null
+          ? (json['theater_longitude'] as num).toDouble()
+          : null,
+      theaterAddress: json['theater_address'] as String?,
+      theaterRating: json['theater_rating'] != null
+          ? (json['theater_rating'] as num).toDouble()
+          : null,
+      theaterTotalReviews: json['theater_total_reviews'] as int?,
+      distanceKm: json['distance_km'] != null
+          ? (json['distance_km'] as num).toDouble()
+          : null,
     );
+  }
+
+  /// Helper method to extract theater name from private_theaters table
+  static String? _extractTheaterName(Map<String, dynamic> json) {
+    // Try to extract name from nested private_theaters object (from join)
+    if (json['private_theaters'] != null && json['private_theaters'] is Map) {
+      final theaterData = json['private_theaters'] as Map<String, dynamic>;
+      final theaterName = theaterData['name'] as String?;
+      if (theaterName != null) {
+        return theaterName;
+      }
+    }
+
+    // Fallback to direct theater_name field (for backward compatibility)
+    return json['theater_name'] as String?;
   }
 
   Map<String, dynamic> toJson() {
@@ -100,6 +146,7 @@ class TheaterScreen {
       'time_slots': timeSlots,
       'what_included': whatIncluded,
       'category_id': categoryId,
+      'theater_name': theaterName,
     };
   }
 
@@ -123,6 +170,13 @@ class TheaterScreen {
     Map<String, dynamic>? timeSlots,
     List<String>? whatIncluded,
     String? categoryId,
+    String? theaterName,
+    double? theaterLatitude,
+    double? theaterLongitude,
+    String? theaterAddress,
+    double? theaterRating,
+    int? theaterTotalReviews,
+    double? distanceKm,
   }) {
     return TheaterScreen(
       id: id ?? this.id,
@@ -144,6 +198,13 @@ class TheaterScreen {
       timeSlots: timeSlots ?? this.timeSlots,
       whatIncluded: whatIncluded ?? this.whatIncluded,
       categoryId: categoryId ?? this.categoryId,
+      theaterName: theaterName ?? this.theaterName,
+      theaterLatitude: theaterLatitude ?? this.theaterLatitude,
+      theaterLongitude: theaterLongitude ?? this.theaterLongitude,
+      theaterAddress: theaterAddress ?? this.theaterAddress,
+      theaterRating: theaterRating ?? this.theaterRating,
+      theaterTotalReviews: theaterTotalReviews ?? this.theaterTotalReviews,
+      distanceKm: distanceKm ?? this.distanceKm,
     );
   }
 

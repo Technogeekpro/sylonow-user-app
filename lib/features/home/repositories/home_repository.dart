@@ -131,6 +131,7 @@ class HomeRepository {
           ''')
           .eq('is_featured', true)
           .eq('is_active', true)
+          .eq('is_verified', true)
           .eq('vendors.verification_status', 'verified')
           .limit(limit)
           .range(offset, offset + limit - 1);
@@ -169,6 +170,7 @@ class HomeRepository {
             )
           ''')
           .eq('is_active', true)
+          .eq('is_verified', true)
           .eq('vendors.verification_status', 'verified')
           .ilike('category', '%theater%')
           .order('created_at', ascending: false)
@@ -182,35 +184,100 @@ class HomeRepository {
     }
   }
 
-  /// Fetches popular nearby services
-  /// 
-  /// Returns a list of popular services based on ratings and reviews from verified and active vendors
-  /// This is a simplified version - in production, you'd use user location
+  /// Fetches popular nearby services within a radius
+  ///
+  /// Returns a list of popular services within the specified radius from user's location
+  /// Uses Haversine formula to calculate distance between coordinates
+  /// [userLat] User's latitude coordinate
+  /// [userLon] User's longitude coordinate
+  /// [radiusKm] Search radius in kilometers (default: 20km)
   /// Limited to [limit] number of services (default: 6)
-  Future<List<ServiceListingModel>> getPopularNearbyServices({int limit = 6}) async {
+  Future<List<ServiceListingModel>> getPopularNearbyServices({
+    int limit = 6,
+    double? userLat,
+    double? userLon,
+    double radiusKm = 20.0,
+  }) async {
     try {
-      final response = await _supabase
-          .from('service_listings')
-          .select('''
-            *,
-            vendors!inner(
-              rating,
-              total_reviews,
-              total_jobs_completed,
-              is_verified,
-              is_active
-            )
-          ''')
-          .eq('is_active', true)
-          .eq('vendors.verification_status', 'verified')
-          .order('created_at', ascending: false)
-          .limit(limit);
+      // If no coordinates provided, return all services (fallback)
+      if (userLat == null || userLon == null) {
+        debugPrint('🔍 No coordinates provided, returning all services');
+        final response = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors!inner(
+                rating,
+                total_reviews,
+                total_jobs_completed,
+                is_verified,
+                is_active
+              )
+            ''')
+            .eq('is_active', true)
+            .eq('is_verified', true)
+            .eq('vendors.verification_status', 'verified')
+            .order('created_at', ascending: false)
+            .limit(limit);
 
-      return response
+        return response
+            .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+            .toList();
+      }
+
+      debugPrint('🔍 Filtering services within ${radiusKm}km of ($userLat, $userLon)');
+
+      // Use RPC function to get services within radius with calculated prices
+      debugPrint('🔍 Calling RPC: get_nearby_services_with_price');
+      final response = await _supabase.rpc(
+        'get_nearby_services_with_price',
+        params: {
+          'user_lat': userLat,
+          'user_lon': userLon,
+          'radius_km': radiusKm,
+          'service_limit': limit,
+        },
+      );
+
+      debugPrint('🔍 RPC Response: Found ${response.length} services within ${radiusKm}km radius with dynamic pricing');
+
+      // Log first service details for debugging
+      if (response.isNotEmpty && response is List) {
+        final firstService = response.first;
+        debugPrint('🔍 First service data: ${firstService['title']}, distance: ${firstService['distance_km']}, calculated_price: ${firstService['calculated_price']}');
+      }
+
+      return (response as List)
           .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch popular nearby services: $e');
+      debugPrint('❌ Error fetching nearby services: $e');
+      // Fallback: return all services if RPC fails
+      try {
+        final response = await _supabase
+            .from('service_listings')
+            .select('''
+              *,
+              vendors!inner(
+                rating,
+                total_reviews,
+                total_jobs_completed,
+                is_verified,
+                is_active
+              )
+            ''')
+            .eq('is_active', true)
+            .eq('is_verified', true)
+            .eq('vendors.verification_status', 'verified')
+            .order('created_at', ascending: false)
+            .limit(limit);
+
+        return response
+            .map<ServiceListingModel>((data) => ServiceListingModel.fromJson(data))
+            .toList();
+      } catch (fallbackError) {
+        throw Exception('Failed to fetch nearby services: $fallbackError');
+      }
     }
   }
 
@@ -242,6 +309,7 @@ class HomeRepository {
             ''')
             .eq('id', serviceId)
             .eq('is_active', true)
+            .eq('is_verified', true)
             .eq('vendors.verification_status', 'verified')
             .eq('vendors.is_online', true)
             .single();
@@ -333,6 +401,7 @@ class HomeRepository {
               )
             ''')
             .eq('is_active', true)
+            .eq('is_verified', true)
             .eq('category', category)
             .neq('id', currentServiceId)
             .not('cover_photo', 'is', null)
@@ -359,6 +428,7 @@ class HomeRepository {
               )
             ''')
             .eq('is_active', true)
+            .eq('is_verified', true)
             .neq('id', currentServiceId)
             .not('cover_photo', 'is', null)
             .limit(limit)
@@ -513,6 +583,7 @@ class HomeRepository {
           ''')
           .eq('is_featured', true)
           .eq('is_active', true)
+          .eq('is_verified', true)
           .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
           .limit(limit)
           .range(offset, offset + limit - 1)
@@ -545,6 +616,7 @@ class HomeRepository {
             )
           ''')
           .eq('is_active', true)
+          .eq('is_verified', true)
           .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
           .order('vendors.rating', ascending: false)
           .order('vendors.total_reviews', ascending: false)
@@ -576,12 +648,12 @@ class HomeRepository {
 
       return {
         'dailyQuote': results[0] as QuoteModel?,
-        'featuredPartners': results[1] as List<VendorModel>,
-        'serviceCategories': results[2] as List<ServiceTypeModel>,
-        'featuredServices': results[3] as List<ServiceListingModel>,
-        'privateTheaterServices': results[4] as List<ServiceListingModel>,
-        'popularNearbyServices': results[5] as List<ServiceListingModel>,
-        'categories': results[6] as List<CategoryModel>,
+        'featuredPartners': results[1],
+        'serviceCategories': results[2],
+        'featuredServices': results[3],
+        'privateTheaterServices': results[4],
+        'popularNearbyServices': results[5],
+        'categories': results[6],
       };
     } catch (e) {
       throw Exception('Failed to fetch home screen data: $e');
@@ -605,12 +677,12 @@ class HomeRepository {
 
       return {
         'dailyQuote': results[0] as QuoteModel?,
-        'featuredPartners': results[1] as List<VendorModel>,
-        'serviceCategories': results[2] as List<ServiceTypeModel>,
-        'featuredServices': results[3] as List<ServiceListingModel>,
-        'privateTheaterServices': results[4] as List<ServiceListingModel>,
-        'popularNearbyServices': results[5] as List<ServiceListingModel>,
-        'categories': results[6] as List<CategoryModel>,
+        'featuredPartners': results[1],
+        'serviceCategories': results[2],
+        'featuredServices': results[3],
+        'privateTheaterServices': results[4],
+        'popularNearbyServices': results[5],
+        'categories': results[6],
       };
     } catch (e) {
       throw Exception('Failed to fetch home screen data by decoration type: $e');
@@ -681,7 +753,8 @@ class HomeRepository {
               total_reviews
             )
           ''')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('is_verified', true);
 
       // Apply decoration type filter
       if (decorationType != null) {
@@ -760,7 +833,8 @@ class HomeRepository {
             )
           ''')
           .eq('is_featured', true)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('is_verified', true);
 
       // Apply decoration type filter
       if (decorationType != null) {
@@ -810,6 +884,7 @@ class HomeRepository {
             )
           ''')
           .eq('is_active', true)
+          .eq('is_verified', true)
           .not('cover_photo', 'is', null);
 
       // Apply decoration type filter
@@ -881,6 +956,7 @@ class HomeRepository {
           ''')
           .eq('category', categoryName)
           .eq('is_active', true)
+          .eq('is_verified', true)
           .eq('vendors.verification_status', 'verified')
           .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
           .limit(limit)
@@ -943,6 +1019,7 @@ class HomeRepository {
           ''')
           .eq('category', categoryName)
           .eq('is_active', true)
+          .eq('is_verified', true)
           .eq('vendors.verification_status', 'verified')
           .or('decoration_type.eq.$decorationType,decoration_type.eq.both')
           .not('latitude', 'is', null)
@@ -997,6 +1074,7 @@ class HomeRepository {
             )
           ''')
           .eq('is_active', true)
+          .eq('is_verified', true)
           .not('original_price', 'is', null)
           .not('offer_price', 'is', null)
           .filter('offer_price', 'lt', 'original_price')

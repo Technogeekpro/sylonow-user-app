@@ -17,6 +17,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/price_calculator.dart';
 import '../../../core/widgets/custom_shimmer.dart';
 import '../../booking/screens/checkout_screen.dart';
+import '../../address/providers/address_providers.dart';
 import '../../home/models/service_listing_model.dart';
 import '../../home/models/vendor_model.dart';
 import '../../home/providers/home_providers.dart';
@@ -25,12 +26,14 @@ import '../../reviews/screens/reviews_screen.dart';
 import '../../wishlist/providers/wishlist_providers.dart';
 // Removed unused vendor model import
 
-// Provider to fetch individual service details
+// Provider to fetch individual service details with location-based pricing
 final serviceDetailProvider =
-    FutureProvider.family<ServiceListingModel?, String>((ref, serviceId) async {
+    FutureProvider.family.autoDispose<ServiceListingModel?, String>((ref, serviceId) async {
       try {
         debugPrint('🔄 Fetching service details for ID: $serviceId');
         final repository = ref.watch(homeRepositoryProvider);
+        final selectedAddress = ref.watch(selectedAddressProvider);
+
         final service = await repository.getServiceById(serviceId);
 
         if (service != null) {
@@ -41,6 +44,30 @@ final serviceDetailProvider =
           debugPrint('  - Category: ${service.category}');
           debugPrint('  - Original Price: ${service.originalPrice}');
           debugPrint('  - Offer Price: ${service.offerPrice}');
+          debugPrint('  - Free Service KM: ${service.freeServiceKm}');
+          debugPrint('  - Extra Charges Per KM: ${service.extraChargesPerKm}');
+          debugPrint('  - Service Location: (${service.latitude}, ${service.longitude})');
+
+          // Apply location-based pricing if user has selected an address
+          if (selectedAddress != null &&
+              selectedAddress.latitude != null &&
+              selectedAddress.longitude != null) {
+            debugPrint('🧮 Calculating location-based pricing...');
+            debugPrint('  - User location: (${selectedAddress.latitude}, ${selectedAddress.longitude})');
+
+            final serviceWithLocation = service.copyWithLocationData(
+              userLat: selectedAddress.latitude,
+              userLon: selectedAddress.longitude,
+            );
+
+            debugPrint('  - Distance: ${serviceWithLocation.distanceKm} km');
+            debugPrint('  - Calculated Price: ${serviceWithLocation.calculatedPrice}');
+            debugPrint('  - Adjusted Offer Price: ${serviceWithLocation.adjustedOfferPrice}');
+            debugPrint('  - Display Offer Price: ${serviceWithLocation.displayOfferPrice}');
+            debugPrint('  - Is Price Adjusted: ${serviceWithLocation.isPriceAdjusted}');
+
+            return serviceWithLocation;
+          }
         } else {
           debugPrint('❌ Service not found for ID: $serviceId');
         }
@@ -73,9 +100,9 @@ class RelatedServicesParams {
   int get hashCode => serviceId.hashCode ^ category.hashCode;
 }
 
-// Provider to fetch related services
+// Provider to fetch related services with location-based filtering (20km radius)
 final relatedServicesProvider =
-    FutureProvider.family<List<ServiceListingModel>, RelatedServicesParams>((
+    FutureProvider.family.autoDispose<List<ServiceListingModel>, RelatedServicesParams>((
       ref,
       params,
     ) async {
@@ -85,14 +112,46 @@ final relatedServicesProvider =
         debugPrint('  - Category: ${params.category}');
 
         final repository = ref.watch(homeRepositoryProvider);
+
+        // Watch selected address for location-based filtering (20km radius like popular nearby)
+        final selectedAddress = ref.watch(selectedAddressProvider);
+        final userLat = selectedAddress?.latitude;
+        final userLon = selectedAddress?.longitude;
+
+        debugPrint('📍 Related Services: User location: ($userLat, $userLon)');
+        debugPrint('📍 Selected address: ${selectedAddress?.address}');
+
+        // Fetch related services (repository will handle location filtering if coordinates provided)
         final relatedServices = await repository.getRelatedServices(
           currentServiceId: params.serviceId,
           category: params.category,
         );
 
-        debugPrint(
-          '✅ Related services loaded: ${relatedServices.length} items',
-        );
+        // If user has location, apply client-side filtering for 20km radius and add location data
+        if (userLat != null && userLon != null && relatedServices.isNotEmpty) {
+          debugPrint('📍 Applying 20km radius filter and location data to ${relatedServices.length} services');
+
+          final servicesWithLocation = relatedServices
+              .map((service) => service.copyWithLocationData(
+                    userLat: userLat,
+                    userLon: userLon,
+                  ))
+              .where((service) => service.distanceKm != null && service.distanceKm! <= 20.0) // 20km radius
+              .toList();
+
+          debugPrint('📍 ${servicesWithLocation.length} services within 20km radius');
+
+          // Sort by distance (nearest first)
+          servicesWithLocation.sort((a, b) {
+            final distA = a.distanceKm ?? double.infinity;
+            final distB = b.distanceKm ?? double.infinity;
+            return distA.compareTo(distB);
+          });
+
+          return servicesWithLocation;
+        }
+
+        debugPrint('✅ Related services loaded: ${relatedServices.length} items (no location filtering)');
         for (var service in relatedServices.take(3)) {
           debugPrint('  - ${service.name} (${service.id})');
         }
@@ -196,6 +255,7 @@ class ServiceDetailScreen extends ConsumerStatefulWidget {
   final String? price;
   final String? rating;
   final int? reviewCount;
+  final ServiceListingModel? service; // Pre-calculated service passed from previous screen
 
   const ServiceDetailScreen({
     super.key,
@@ -204,6 +264,7 @@ class ServiceDetailScreen extends ConsumerStatefulWidget {
     this.price,
     this.rating,
     this.reviewCount,
+    this.service, // Optional: if provided, skip fetching from DB
   });
 
   @override
@@ -230,6 +291,23 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // If service was passed from previous screen, use it directly
+    if (widget.service != null) {
+      debugPrint('✅ Using pre-calculated service from navigation');
+      debugPrint('  - Service: ${widget.service!.name}');
+      debugPrint('  - Offer Price: ${widget.service!.offerPrice}');
+      debugPrint('  - Display Offer Price: ${widget.service!.displayOfferPrice}');
+      debugPrint('  - Calculated Price: ${widget.service!.calculatedPrice}');
+      debugPrint('  - Distance: ${widget.service!.distanceKm} km');
+
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: _buildServiceDetail(widget.service!),
+      );
+    }
+
+    // Otherwise fetch from database (fallback for direct navigation)
+    debugPrint('⚠️ Service not passed, fetching from database...');
     final serviceDetailAsync = ref.watch(
       serviceDetailProvider(widget.serviceId),
     );
@@ -260,6 +338,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           debugPrint(
             '✅ Service detail screen rendering with service: ${service.name}',
           );
+
           return _buildServiceDetail(service);
         },
       ),
@@ -272,8 +351,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     debugPrint('  - Has photos: ${service.photos?.isNotEmpty == true}');
     debugPrint('  - Has image: ${service.image?.isNotEmpty ?? false}');
     debugPrint(
-      '  - Has pricing: original=${service.originalPrice}, offer=${service.offerPrice}',
+      '  - Has pricing: original=${service.originalPrice}, offer=${service.offerPrice}, display=${service.displayOfferPrice}',
     );
+    debugPrint('  - Distance: ${service.distanceKm} km');
+    debugPrint('  - Calculated Price: ${service.calculatedPrice}');
 
     // Use fetched service data with fallbacks for backward compatibility
     final serviceName = service.name.isNotEmpty
@@ -285,8 +366,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     final serviceRating =
         service.rating?.toStringAsFixed(1) ?? widget.rating ?? '4.9';
     final reviewCount = service.reviewsCount ?? widget.reviewCount ?? 0;
-    final originalPrice = service.originalPrice;
-    final offerPrice = service.offerPrice;
+    final originalPrice = service.displayOriginalPrice ?? service.originalPrice;
+    final offerPrice = service.displayOfferPrice ?? service.offerPrice;
     final promotionalTag = service.promotionalTag;
 
     return Scaffold(
@@ -1769,18 +1850,59 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      //Description 
+                                      Text(
+                                        service.description!,
+                                        
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          fontFamily: 'Okra',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            price,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryColor,
-                                              fontFamily: 'Okra',
-                                            ),
+                                          // Price section with offer and original price
+                                          Row(
+                                            children: [
+                                              Text(
+                                                price,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.primaryColor,
+                                                  fontFamily: 'Okra',
+                                                ),
+                                              ),
+                                              // Show original price with strikethrough if there's an offer
+                                              if ((service.offerPrice != null &&
+                                                   service.originalPrice != null &&
+                                                   service.offerPrice! < service.originalPrice!) ||
+                                                  (service.displayOfferPrice != null &&
+                                                   service.displayOriginalPrice != null &&
+                                                   service.displayOfferPrice! < service.displayOriginalPrice!)) ...[
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  PriceCalculator.formatPriceAsInt(
+                                                    PriceCalculator.calculateTotalPriceWithTaxes(
+                                                      service.displayOriginalPrice ?? service.originalPrice!,
+                                                    ),
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.grey[600],
+                                                    fontFamily: 'Okra',
+                                                    decoration: TextDecoration.lineThrough,
+                                                    decorationColor: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                           const SizedBox(height: 2),
                                           Row(
@@ -3513,7 +3635,7 @@ class _CustomizationBottomSheetState
       context.push(
         CheckoutScreen.routeName,
         extra: {
-          'service': widget.service,
+          'service': widget.service, // Pass the service with calculated pricing from bottom sheet
           'customization': customizationData,
           'selectedDate': selectedDate,
           'selectedTimeSlot':

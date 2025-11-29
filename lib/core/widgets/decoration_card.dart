@@ -17,339 +17,294 @@ class DecorationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      print('🐛 DecorationCard build() - Line 18: Starting build for service ${service.id}');
-      print('🐛 Service details: name=${service.name}, rating=${service.rating}, offerPrice=${service.offerPrice}, originalPrice=${service.originalPrice}');
-      print('🐛 Service image: ${service.image}, displayOfferPrice=${service.displayOfferPrice}, displayOriginalPrice=${service.displayOriginalPrice}');
-      
-      return Hero(
-        tag: 'service-${service.id}',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap ?? () {
-              try {
-                print('🐛 DecorationCard onTap - Line 25: Navigating to service ${service.id}');
-                context.push('/service/${service.id}');
-              } catch (e, stackTrace) {
-                print('🐛 CRITICAL ERROR at Line 25 - DecorationCard onTap: $e');
-                print('🐛 Stack trace: $stackTrace');
-              }
-            },
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              height: 119,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: const Color(0xFFEFEFEF),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Image section
-                  _buildImageSection(),
-                
-                // Content section
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title and Rating row
-                        Row(
-                          children: [
-                            // Title
-                            Expanded(
-                              child: Text(
-                                service.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1A1D26),
-                                  fontFamily: 'Okra',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            
-                            // Rating
-                            if (service.rating != null) _buildRating(),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 1),
-                        
-                        // Price
-                        _buildPrice(),
-                        
-                        const Spacer(),
-                        
-                        // Description
-                        Text(
-                          service.description ?? 'Professional decoration service',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF8A6175),
-                            fontFamily: 'Okra',
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    } catch (e, stackTrace) {
-      print('🐛 CRITICAL ERROR at Line 18 - DecorationCard build(): $e');
-      print('🐛 Stack trace: $stackTrace');
-      print('🐛 Service data: ${service.toString()}');
-      return Container(
-        height: 119,
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.red[100],
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.red, width: 2),
-        ),
-        child: const Center(
-          child: Text(
-            'Error loading service card',
-            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
+    // Calculate discount percentage
+    int? discountPercentage;
+    if (service.displayOriginalPrice != null && service.displayOfferPrice != null) {
+      final discount = ((service.displayOriginalPrice! - service.displayOfferPrice!) /
+                        service.displayOriginalPrice! * 100);
+      discountPercentage = discount.round();
     }
-  }
 
-  Widget _buildImageSection() {
-    try {
-      print('🐛 DecorationCard _buildImageSection() - Line 142: Building image section for ${service.id}');
-      print('🐛 Image URL: ${service.image}');
-      
-      return Container(
-        width: 117,
-        height: 117,
-        margin: const EdgeInsets.all(1),
-        child: Stack(
-          children: [
-            // Main image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: SizedBox(
-                width: 117,
-                height: 117,
-                child: CachedNetworkImage(
-                  imageUrl: service.image ?? '',
-                  fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primaryColor,
-                      strokeWidth: 2,
+    return GestureDetector(
+      onTap: onTap ?? () {
+        context.push(
+          '/service/${service.id}',
+          extra: {
+            'serviceName': service.name,
+            'price': service.displayOfferPrice != null
+                ? PriceCalculator.formatPriceAsInt(
+                    PriceCalculator.calculateTotalPriceWithTaxes(
+                      service.displayOfferPrice!,
                     ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 32,
-                  ),
-                ),
-              ),
+                  )
+                : service.displayOriginalPrice != null
+                ? PriceCalculator.formatPriceAsInt(
+                    PriceCalculator.calculateTotalPriceWithTaxes(
+                      service.displayOriginalPrice!,
+                    ),
+                  )
+                : null,
+            'rating': (service.rating ?? 4.9).toStringAsFixed(1),
+            'reviewCount': service.reviewsCount ?? 102,
+          },
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          
-          // Gradient overlay
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              width: 117,
-              height: 117,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Service Image with discount badge
+            Expanded(
+              flex: 3,
+              child: _buildImageSection(discountPercentage),
+            ),
+            // Service Details
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Service Name
+                    Text(
+                      service.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Service Description
+                    if (service.description != null && service.description!.isNotEmpty)
+                      Text(
+                        service.description!,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Okra',
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    const Spacer(),
+                    // Price section
+                    _buildPrice(),
+                    const SizedBox(height: 4),
+                    // Rating
+                    _buildRating(),
                   ],
-                  stops: const [0.7, 1.0],
                 ),
-              ),
-            ),
-          ),
-          
-          // Distance indicator at bottom
-      
-        ],
-      ), 
-    );
-    } catch (e, stackTrace) {
-      print('🐛 CRITICAL ERROR at Line 142 - _buildImageSection(): $e');
-      print('🐛 Stack trace: $stackTrace');
-      return Container(
-        width: 117,
-        height: 117,
-        margin: const EdgeInsets.all(1),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Center(
-          child: Icon(Icons.error, color: Colors.red),
-        ),
-      );
-    }
-  } 
-
-  Widget _buildRating() {
-    try {
-      print('🐛 DecorationCard _buildRating() - Line 226: Building rating for ${service.id}');
-      print('🐛 Rating value: ${service.rating}');
-      
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.star,
-              color: Color(0xFFFED05F),
-              size: 16,
-            ), 
-            const SizedBox(width: 3),
-            Text(
-              (service.rating ?? 0.0).toStringAsFixed(1),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1D26),
-                fontFamily: 'Okra',
               ),
             ),
           ],
         ),
-      );
-    } catch (e, stackTrace) {
-      print('🐛 CRITICAL ERROR at Line 226 - _buildRating(): $e');
-      print('🐛 Stack trace: $stackTrace');
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: const Text('Error', style: TextStyle(color: Colors.red)),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildImageSection(int? discountPercentage) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(12),
+          ),
+          child: CachedNetworkImage(
+            imageUrl: service.image ?? '',
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: Colors.grey[200],
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryColor,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey[200],
+              child: const Center(
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: Colors.grey,
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Discount badge
+        if (discountPercentage != null && discountPercentage > 0)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.green[600],
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.arrow_downward,
+                    color: Colors.white,
+                    size: 10,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '$discountPercentage%',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Okra',
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        // Wishlist icon
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.favorite_border,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildPrice() {
-    try {
-      print('🐛 DecorationCard _buildPrice() - Line 264: Building price for ${service.id}');
-      print('🐛 displayOfferPrice: ${service.displayOfferPrice}');
-      print('🐛 displayOriginalPrice: ${service.displayOriginalPrice}');
-      print('🐛 offerPrice: ${service.offerPrice}');
-      print('🐛 originalPrice: ${service.originalPrice}');
-      print('🐛 adjustedOfferPrice: ${service.adjustedOfferPrice}');
-      print('🐛 adjustedOriginalPrice: ${service.adjustedOriginalPrice}');
-      
-      // Calculate tax-inclusive prices
-      double? taxInclusiveOfferPrice;
-      double? taxInclusiveOriginalPrice;
-      
-      if (service.displayOfferPrice != null) {
-        taxInclusiveOfferPrice = PriceCalculator.calculateTotalPriceWithTaxes(service.displayOfferPrice!);
-      }
-      
-      if (service.displayOriginalPrice != null) {
-        taxInclusiveOriginalPrice = PriceCalculator.calculateTotalPriceWithTaxes(service.displayOriginalPrice!);
-      }
-      
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Price section
+        if (service.displayOfferPrice != null) ...[
           Row(
             children: [
-              // Offer price (tax-inclusive)
-              if (taxInclusiveOfferPrice != null)
-                Text(
-                  PriceCalculator.formatPriceAsInt(taxInclusiveOfferPrice),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                    fontFamily: 'Okra',
+              // Offer Price with taxes
+              Text(
+                PriceCalculator.formatPriceAsInt(
+                  PriceCalculator.calculateTotalPriceWithTaxes(
+                    service.displayOfferPrice!,
                   ),
                 ),
-              
-              // Original price (crossed out, tax-inclusive)
-              if (taxInclusiveOriginalPrice != null &&
-                  taxInclusiveOfferPrice != null &&
-                  taxInclusiveOriginalPrice > taxInclusiveOfferPrice) ...[
-                const SizedBox(width: 6),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Okra',
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Original Price (struck through) with taxes
+              if (service.displayOriginalPrice != null)
                 Text(
-                  PriceCalculator.formatPriceAsInt(taxInclusiveOriginalPrice),
-                  style: const TextStyle(
+                  PriceCalculator.formatPriceAsInt(
+                    PriceCalculator.calculateTotalPriceWithTaxes(
+                      service.displayOriginalPrice!,
+                    ),
+                  ),
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Okra',
+                    color: Colors.grey[600],
                     decoration: TextDecoration.lineThrough,
-                    fontFamily: 'Okra',
-                  ),
-                ),
-              ],
-              
-              // Show only original price if no offer price (tax-inclusive)
-              if (taxInclusiveOfferPrice == null && taxInclusiveOriginalPrice != null)
-                Text(
-                  PriceCalculator.formatPriceAsInt(taxInclusiveOriginalPrice),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                    fontFamily: 'Okra',
+                    decorationColor: Colors.grey[600],
                   ),
                 ),
             ],
           ),
-          // Tax inclusive indicator
-          const SizedBox(height: 2),
-          const Text(
-            'All taxes included',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.green,
-              fontWeight: FontWeight.w500,
+        ] else if (service.displayOriginalPrice != null) ...[
+          Text(
+            PriceCalculator.formatPriceAsInt(
+              PriceCalculator.calculateTotalPriceWithTaxes(
+                service.displayOriginalPrice!,
+              ),
+            ),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
               fontFamily: 'Okra',
+              color: Colors.black87,
             ),
           ),
         ],
-      );
-    } catch (e, stackTrace) {
-      print('🐛 CRITICAL ERROR at Line 264 - _buildPrice(): $e');
-      print('🐛 Stack trace: $stackTrace');
-      return const Text(
-        'Price Error',
-        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-      );
-    }
+      ],
+    );
+  }
+
+  Widget _buildRating() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.green[600],
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                (service.rating ?? 4.9).toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Okra',
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 2),
+              const Icon(
+                Icons.star,
+                color: Colors.white,
+                size: 11,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

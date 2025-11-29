@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,10 +30,12 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen> {
   double _minPrice = 0;
   double _maxPrice = 10000;
   double _maxDistance = 60; // in km
+  Timer? _debounce;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -39,44 +43,53 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          // Collapsible App Bar
-          SliverAppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            floating: true,
-            pinned: true,
-            snap: true,
-            expandedHeight: 120,
-            automaticallyImplyLeading: widget.showBackButton,
-            leading: widget.showBackButton
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                    onPressed: () => context.pop(),
-                  )
-                : null,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Theater Screens',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Okra',
+      body: RefreshIndicator(
+        color: AppTheme.primaryColor,
+        onRefresh: () async {
+          // Invalidate the theater screens provider to trigger a refresh
+          ref.invalidate(theaterScreensProvider);
+          // Wait a bit for the provider to refresh
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: CustomScrollView(
+          slivers: [
+            // Collapsible App Bar
+            SliverAppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              floating: true,
+              pinned: true,
+              snap: true,
+              expandedHeight: 120,
+              automaticallyImplyLeading: widget.showBackButton,
+              leading: widget.showBackButton
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      onPressed: () => context.pop(),
+                    )
+                  : null,
+              flexibleSpace: FlexibleSpaceBar(
+                title: const Text(
+                  'Theater Screens',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                  ),
                 ),
+                centerTitle: true,
               ),
-              centerTitle: true,
             ),
-          ),
-          // Search and Filter
-          SliverToBoxAdapter(child: _buildSearchAndFilter()),
-          // Theater Screens Grid
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: _buildTheatersGrid(),
-          ),
-        ],
+            // Search and Filter
+            SliverToBoxAdapter(child: _buildSearchAndFilter()),
+            // Theater Screens Grid
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: _buildTheatersGrid(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -98,8 +111,14 @@ class _OutsideScreenState extends ConsumerState<OutsideScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
+                // Cancel previous timer
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+                // Start new timer with 500ms delay
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  setState(() {
+                    _searchQuery = value;
+                  });
                 });
               },
               decoration: InputDecoration(

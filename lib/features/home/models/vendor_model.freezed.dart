@@ -113,11 +113,11 @@ mixin _$VendorModel {
 
   /// Timestamp when created
   @JsonKey(name: 'created_at')
-  DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime? get createdAt => throw _privateConstructorUsedError;
 
   /// Timestamp when last updated
   @JsonKey(name: 'updated_at')
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -157,8 +157,8 @@ abstract class $VendorModelCopyWith<$Res> {
       @JsonKey(name: 'advance_booking_hours') int advanceBookingHours,
       @JsonKey(name: 'is_online') bool isOnline,
       @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'updated_at') DateTime updatedAt});
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -198,8 +198,8 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
     Object? advanceBookingHours = null,
     Object? isOnline = null,
     Object? lastOnlineAt = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -298,14 +298,14 @@ class _$VendorModelCopyWithImpl<$Res, $Val extends VendorModel>
           ? _value.lastOnlineAt
           : lastOnlineAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -344,8 +344,8 @@ abstract class _$$VendorModelImplCopyWith<$Res>
       @JsonKey(name: 'advance_booking_hours') int advanceBookingHours,
       @JsonKey(name: 'is_online') bool isOnline,
       @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
-      @JsonKey(name: 'created_at') DateTime createdAt,
-      @JsonKey(name: 'updated_at') DateTime updatedAt});
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -383,8 +383,8 @@ class __$$VendorModelImplCopyWithImpl<$Res>
     Object? advanceBookingHours = null,
     Object? isOnline = null,
     Object? lastOnlineAt = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_$VendorModelImpl(
       id: null == id
@@ -483,14 +483,14 @@ class __$$VendorModelImplCopyWithImpl<$Res>
           ? _value.lastOnlineAt
           : lastOnlineAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      createdAt: null == createdAt
+      createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
+              as DateTime?,
+      updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as DateTime?,
     ));
   }
 }
@@ -525,8 +525,8 @@ class _$VendorModelImpl implements _VendorModel {
       @JsonKey(name: 'advance_booking_hours') this.advanceBookingHours = 2,
       @JsonKey(name: 'is_online') this.isOnline = false,
       @JsonKey(name: 'last_online_at') this.lastOnlineAt,
-      @JsonKey(name: 'created_at') required this.createdAt,
-      @JsonKey(name: 'updated_at') required this.updatedAt})
+      @JsonKey(name: 'created_at') this.createdAt,
+      @JsonKey(name: 'updated_at') this.updatedAt})
       : _location = location,
         _portfolioImages = portfolioImages,
         _availabilitySchedule = availabilitySchedule;
@@ -678,12 +678,12 @@ class _$VendorModelImpl implements _VendorModel {
   /// Timestamp when created
   @override
   @JsonKey(name: 'created_at')
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   /// Timestamp when last updated
   @override
   @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
   @override
   String toString() {
@@ -816,8 +816,8 @@ abstract class _VendorModel implements VendorModel {
           @JsonKey(name: 'advance_booking_hours') final int advanceBookingHours,
           @JsonKey(name: 'is_online') final bool isOnline,
           @JsonKey(name: 'last_online_at') final DateTime? lastOnlineAt,
-          @JsonKey(name: 'created_at') required final DateTime createdAt,
-          @JsonKey(name: 'updated_at') required final DateTime updatedAt}) =
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
       _$VendorModelImpl;
 
   factory _VendorModel.fromJson(Map<String, dynamic> json) =
@@ -941,12 +941,12 @@ abstract class _VendorModel implements VendorModel {
 
   /// Timestamp when created
   @JsonKey(name: 'created_at')
-  DateTime get createdAt;
+  DateTime? get createdAt;
   @override
 
   /// Timestamp when last updated
   @JsonKey(name: 'updated_at')
-  DateTime get updatedAt;
+  DateTime? get updatedAt;
   @override
   @JsonKey(ignore: true)
   _$$VendorModelImplCopyWith<_$VendorModelImpl> get copyWith =>

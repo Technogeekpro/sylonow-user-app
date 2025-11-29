@@ -502,7 +502,7 @@ class _TheaterScreenDetailScreenState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  _formatTime(slot.startTime),
+                  '${_formatTime(slot.startTime)} - ${_formatTime(slot.endTime)}',
                   style: TextStyle(
                     color: isBooked
                         ? Colors.grey[500]
@@ -511,7 +511,7 @@ class _TheaterScreenDetailScreenState
                         : isPast
                         ? Colors.grey[400]
                         : Colors.black,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Okra',
                   ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/utils/price_calculator.dart';
 import '../models/theater_screen_model.dart';
 import '../screens/theater_screen_detail_screen.dart';
 
@@ -17,14 +16,12 @@ class TheaterScreenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use the hourly rate as base price and calculate theater listing price with fees
+    // The hourlyRate from screen already includes tax (calculated by database)
+    // No need for frontend calculation anymore
     final basePrice = screen.hourlyRate;
-    final totalPriceWithFees = PriceCalculator.calculateTheaterListingPriceWithTaxes(basePrice);
-
-    // For display purposes, show the base price as discounted and calculate original from total
     final discountedPrice = basePrice;
-    final originalPrice = totalPriceWithFees;
-    final discountAmount = originalPrice - discountedPrice;
+    final originalPrice = basePrice;
+    final discountAmount = 0.0;
 
     return GestureDetector(
       onTap: () {
@@ -70,22 +67,68 @@ class TheaterScreenCard extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: screen.images?.isNotEmpty == true
-              ? Image.network(
-                  screen.images!.first,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: const Color(0xFFD4D4D4),
-                      child: Icon(
-                        Icons.movie,
-                        size: 32,
-                        color: Colors.grey[600],
+          child: Stack(
+            children: [
+              // Image
+              SizedBox.expand(
+                child: screen.images?.isNotEmpty == true
+                    ? Image.network(
+                        screen.images!.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: const Color(0xFFD4D4D4),
+                            child: Icon(
+                              Icons.movie,
+                              size: 32,
+                              color: Colors.grey[600],
+                            ),
+                          );
+                        },
+                      )
+                    : Icon(Icons.movie, size: 32, color: Colors.grey[600]),
+              ),
+              // Theater name chip overlay (top left)
+              if (screen.theaterName != null && screen.theaterName!.isNotEmpty)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        width: 0.5,
                       ),
-                    );
-                  },
-                )
-              : Icon(Icons.movie, size: 32, color: Colors.grey[600]),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.store,
+                          size: 10,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          screen.theaterName!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Okra',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -219,10 +262,10 @@ class TheaterScreenCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          // Capacity Info
+          // Capacity and Distance Info
           Row(
             children: [
-              //Seat Icon from Hero package
+              // Capacity
               Icon(Icons.event_seat, color: Colors.grey[600], size: 10),
               const SizedBox(width: 4),
               Text(
@@ -234,6 +277,21 @@ class TheaterScreenCard extends StatelessWidget {
                   fontFamily: 'Okra',
                 ),
               ),
+              // Distance (if available)
+              if (screen.distanceKm != null) ...[
+                const SizedBox(width: 8),
+                Icon(Icons.location_on, color: Colors.grey[600], size: 10),
+                const SizedBox(width: 2),
+                Text(
+                  '${screen.distanceKm!.toStringAsFixed(1)} km',
+                  style: const TextStyle(
+                    color: Color(0xFF666E7B),
+                    fontSize: 10,
+                    fontWeight: FontWeight.normal,
+                    fontFamily: 'Okra',
+                  ),
+                ),
+              ],
             ],
           ),
         ],

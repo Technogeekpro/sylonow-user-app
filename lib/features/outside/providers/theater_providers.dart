@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/theater_screen_model.dart';
 import '../models/screen_category_model.dart';
 import '../services/theater_service.dart';
+import '../../address/providers/address_providers.dart';
 
 // Service provider
 final theaterServiceProvider = Provider<TheaterService>((ref) {
@@ -14,9 +15,23 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });
 
-// Theater screens provider with optimized query
-final theaterScreensProvider = FutureProvider<List<TheaterScreen>>((ref) async {
+// Theater screens provider with location-based filtering
+final theaterScreensProvider = FutureProvider.autoDispose<List<TheaterScreen>>((ref) async {
   final service = ref.read(theaterServiceProvider);
+  final selectedAddress = ref.watch(selectedAddressProvider);
+
+  // If user has selected an address, use location-based filtering
+  if (selectedAddress != null &&
+      selectedAddress.latitude != null &&
+      selectedAddress.longitude != null) {
+    return await service.fetchTheaterScreensWithLocation(
+      userLat: selectedAddress.latitude,
+      userLon: selectedAddress.longitude,
+      radiusKm: 60.0, // Default 60km radius for theaters
+    );
+  }
+
+  // Fallback to original method without location filtering
   return await service.fetchTheaterScreensWithPricing();
 });
 
@@ -44,9 +59,10 @@ final filteredTheaterScreensProvider = Provider.family<List<TheaterScreen>, Filt
   final screens = ref.watch(theaterScreensProvider).value ?? [];
 
   var filteredScreens = screens.where((screen) {
-    // Search filter
+    // Search filter - searches in screen name, theater name, and description
     final matchesSearch = params.searchQuery.isEmpty ||
         screen.screenName.toLowerCase().contains(params.searchQuery.toLowerCase()) ||
+        (screen.theaterName?.toLowerCase().contains(params.searchQuery.toLowerCase()) ?? false) ||
         (screen.description?.toLowerCase().contains(params.searchQuery.toLowerCase()) ?? false);
 
     // Price filter
@@ -56,9 +72,8 @@ final filteredTheaterScreensProvider = Provider.family<List<TheaterScreen>, Filt
     final matchesCategory = params.selectedCategories.isEmpty ||
         (screen.categoryId != null && params.selectedCategories.contains(screen.categoryId));
 
-    // Distance filter (placeholder - would need actual distance calculation)
-    // For now, we'll just pass all screens as we don't have distance data
-    final matchesDistance = true; // params.maxDistance >= screen.distance
+    // Distance filter - now uses actual distance data from location-based query
+    final matchesDistance = screen.distanceKm == null || screen.distanceKm! <= params.maxDistance;
 
     return matchesSearch && matchesPrice && matchesCategory && matchesDistance;
   }).toList();

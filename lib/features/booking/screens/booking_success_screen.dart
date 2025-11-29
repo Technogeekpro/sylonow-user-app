@@ -234,7 +234,7 @@ class BookingSuccessScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => context.push('/profile/booking-history'),
+                        onPressed: () => context.push('/profile/bookings'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,

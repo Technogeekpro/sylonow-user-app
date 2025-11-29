@@ -18,6 +18,13 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  Future<void> _refreshProfile() async {
+    // Invalidate the profile provider to trigger a refresh
+    ref.invalidate(currentUserProfileProvider);
+    // Wait a bit for the provider to refresh
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
@@ -26,26 +33,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              profileAsyncValue.when(
-                data: (profile) =>
-                    _buildProfileCard(context, currentUser, profile),
-                loading: () => _buildLoadingProfileCard(),
-                error: (error, stack) => _buildErrorProfileCard(context, ref),
-              ),
-              const SizedBox(height: 24),
-              _buildPersonalSection(context, ref),
-              const SizedBox(height: 16),
-              _buildUtilitySection(context, ref),
-              const SizedBox(height: 16),
-              _buildAboutSection(context, ref),
-              const SizedBox(height: 24),
-              _buildSignOutSection(context, ref),
-              const SizedBox(height: 40),
-            ],
+        child: RefreshIndicator(
+          onRefresh: _refreshProfile,
+          color: AppTheme.primaryColor,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                profileAsyncValue.when(
+                  data: (profile) =>
+                      _buildProfileCard(context, currentUser, profile),
+                  loading: () => _buildLoadingProfileCard(),
+                  error: (error, stack) => _buildErrorProfileCard(context, ref),
+                ),
+                const SizedBox(height: 24),
+                _buildPersonalSection(context, ref),
+                const SizedBox(height: 16),
+                _buildUtilitySection(context, ref),
+                const SizedBox(height: 16),
+                _buildAboutSection(context, ref),
+                const SizedBox(height: 24),
+                _buildSignOutSection(context, ref),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -530,27 +542,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Perform complete logout with all data clearing
                   await LogoutService.performCompleteLogout(ref);
 
-                  // Close loading dialog
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-
                   // Test logout state (for debugging)
                   await LogoutTestService.printLogoutState();
 
-                  // Navigate to splash screen to handle auth state
+                  // Close loading dialog and navigate in a single frame
+                  // This prevents any intermediate UI flashes
                   if (context.mounted) {
-                    context.go('/');
-                  }
+                    Navigator.pop(context); // Close loading dialog
 
-                  // Show success message
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Successfully signed out'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                    // Use pushReplacement to completely replace navigation stack
+                    // This ensures clean navigation without history
+                    context.go('/', extra: {'clearHistory': true});
+
+                    // Show success message after navigation
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Successfully signed out'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    });
                   }
                 } catch (e) {
                   // Close loading dialog

@@ -31,7 +31,13 @@ mixin _$Address {
   String? get name => throw _privateConstructorUsedError;
   String? get floor => throw _privateConstructorUsedError;
   @JsonKey(name: 'phone_number')
-  String? get phoneNumber => throw _privateConstructorUsedError;
+  String? get phoneNumber =>
+      throw _privateConstructorUsedError; // Coordinates for location-based features
+  double? get latitude => throw _privateConstructorUsedError;
+  double? get longitude =>
+      throw _privateConstructorUsedError; // State and city for regional service filtering
+  String? get state => throw _privateConstructorUsedError;
+  String? get city => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -52,7 +58,11 @@ abstract class $AddressCopyWith<$Res> {
       String? nearby,
       String? name,
       String? floor,
-      @JsonKey(name: 'phone_number') String? phoneNumber});
+      @JsonKey(name: 'phone_number') String? phoneNumber,
+      double? latitude,
+      double? longitude,
+      String? state,
+      String? city});
 }
 
 /// @nodoc
@@ -77,6 +87,10 @@ class _$AddressCopyWithImpl<$Res, $Val extends Address>
     Object? name = freezed,
     Object? floor = freezed,
     Object? phoneNumber = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
+    Object? state = freezed,
+    Object? city = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -115,6 +129,22 @@ class _$AddressCopyWithImpl<$Res, $Val extends Address>
           ? _value.phoneNumber
           : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      state: freezed == state
+          ? _value.state
+          : state // ignore: cast_nullable_to_non_nullable
+              as String?,
+      city: freezed == city
+          ? _value.city
+          : city // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -135,7 +165,11 @@ abstract class _$$AddressImplCopyWith<$Res> implements $AddressCopyWith<$Res> {
       String? nearby,
       String? name,
       String? floor,
-      @JsonKey(name: 'phone_number') String? phoneNumber});
+      @JsonKey(name: 'phone_number') String? phoneNumber,
+      double? latitude,
+      double? longitude,
+      String? state,
+      String? city});
 }
 
 /// @nodoc
@@ -158,6 +192,10 @@ class __$$AddressImplCopyWithImpl<$Res>
     Object? name = freezed,
     Object? floor = freezed,
     Object? phoneNumber = freezed,
+    Object? latitude = freezed,
+    Object? longitude = freezed,
+    Object? state = freezed,
+    Object? city = freezed,
   }) {
     return _then(_$AddressImpl(
       id: null == id
@@ -196,6 +234,22 @@ class __$$AddressImplCopyWithImpl<$Res>
           ? _value.phoneNumber
           : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
+      latitude: freezed == latitude
+          ? _value.latitude
+          : latitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      longitude: freezed == longitude
+          ? _value.longitude
+          : longitude // ignore: cast_nullable_to_non_nullable
+              as double?,
+      state: freezed == state
+          ? _value.state
+          : state // ignore: cast_nullable_to_non_nullable
+              as String?,
+      city: freezed == city
+          ? _value.city
+          : city // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -212,7 +266,11 @@ class _$AddressImpl implements _Address {
       this.nearby,
       this.name,
       this.floor,
-      @JsonKey(name: 'phone_number') this.phoneNumber});
+      @JsonKey(name: 'phone_number') this.phoneNumber,
+      this.latitude,
+      this.longitude,
+      this.state,
+      this.city});
 
   factory _$AddressImpl.fromJson(Map<String, dynamic> json) =>
       _$$AddressImplFromJson(json);
@@ -238,10 +296,20 @@ class _$AddressImpl implements _Address {
   @override
   @JsonKey(name: 'phone_number')
   final String? phoneNumber;
+// Coordinates for location-based features
+  @override
+  final double? latitude;
+  @override
+  final double? longitude;
+// State and city for regional service filtering
+  @override
+  final String? state;
+  @override
+  final String? city;
 
   @override
   String toString() {
-    return 'Address(id: $id, userId: $userId, addressFor: $addressFor, address: $address, area: $area, nearby: $nearby, name: $name, floor: $floor, phoneNumber: $phoneNumber)';
+    return 'Address(id: $id, userId: $userId, addressFor: $addressFor, address: $address, area: $area, nearby: $nearby, name: $name, floor: $floor, phoneNumber: $phoneNumber, latitude: $latitude, longitude: $longitude, state: $state, city: $city)';
   }
 
   @override
@@ -259,13 +327,19 @@ class _$AddressImpl implements _Address {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.floor, floor) || other.floor == floor) &&
             (identical(other.phoneNumber, phoneNumber) ||
-                other.phoneNumber == phoneNumber));
+                other.phoneNumber == phoneNumber) &&
+            (identical(other.latitude, latitude) ||
+                other.latitude == latitude) &&
+            (identical(other.longitude, longitude) ||
+                other.longitude == longitude) &&
+            (identical(other.state, state) || other.state == state) &&
+            (identical(other.city, city) || other.city == city));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, userId, addressFor, address,
-      area, nearby, name, floor, phoneNumber);
+      area, nearby, name, floor, phoneNumber, latitude, longitude, state, city);
 
   @JsonKey(ignore: true)
   @override
@@ -283,16 +357,19 @@ class _$AddressImpl implements _Address {
 
 abstract class _Address implements Address {
   const factory _Address(
-          {required final String id,
-          @JsonKey(name: 'user_id') required final String userId,
-          @JsonKey(name: 'address_for') required final AddressType addressFor,
-          required final String address,
-          final String? area,
-          final String? nearby,
-          final String? name,
-          final String? floor,
-          @JsonKey(name: 'phone_number') final String? phoneNumber}) =
-      _$AddressImpl;
+      {required final String id,
+      @JsonKey(name: 'user_id') required final String userId,
+      @JsonKey(name: 'address_for') required final AddressType addressFor,
+      required final String address,
+      final String? area,
+      final String? nearby,
+      final String? name,
+      final String? floor,
+      @JsonKey(name: 'phone_number') final String? phoneNumber,
+      final double? latitude,
+      final double? longitude,
+      final String? state,
+      final String? city}) = _$AddressImpl;
 
   factory _Address.fromJson(Map<String, dynamic> json) = _$AddressImpl.fromJson;
 
@@ -317,6 +394,14 @@ abstract class _Address implements Address {
   @override
   @JsonKey(name: 'phone_number')
   String? get phoneNumber;
+  @override // Coordinates for location-based features
+  double? get latitude;
+  @override
+  double? get longitude;
+  @override // State and city for regional service filtering
+  String? get state;
+  @override
+  String? get city;
   @override
   @JsonKey(ignore: true)
   _$$AddressImplCopyWith<_$AddressImpl> get copyWith =>

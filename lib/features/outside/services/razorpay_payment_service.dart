@@ -4,9 +4,9 @@ import '../../payment/models/payment_method_model.dart';
 
 class RazorpayPaymentService {
   static const String _razorpayKey =
-      'rzp_test_W7nvo22WaKOB1y'; // Your Razorpay test key
+      'rzp_live_RSUaC7MqY7BfsZ'; // Razorpay LIVE key
   static const String _razorpaySecret =
-      'YlbT7KG7hAr4lTgWYP3i7aOY'; // Your Razorpay secret key
+      'Cc2vEjqs2SATSz0uI10TYLi7'; // Razorpay LIVE secret key
   late Razorpay _razorpay;
 
   Function(PaymentSuccessResponse)? _onSuccess;

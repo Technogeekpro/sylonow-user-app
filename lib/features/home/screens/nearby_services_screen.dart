@@ -2,8 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
-import 'package:sylonow_user/core/utils/user_location_helper.dart';
+import 'package:sylonow_user/core/utils/price_calculator.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/providers/home_providers.dart';
 
@@ -20,60 +21,30 @@ class NearbyServicesScreen extends ConsumerStatefulWidget {
 class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
   @override
   Widget build(BuildContext context) {
+    // Watch the provider to automatically rebuild when address changes
+    final servicesAsync = ref.watch(popularNearbyServicesProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           'Near by',
-          style: TextStyle(fontFamily: 'Okra', fontWeight: FontWeight.bold),
+          style: TextStyle(fontFamily: 'Okra', fontWeight: FontWeight.bold, color: Colors.black),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
       ),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: UserLocationHelper.getLocationParams(ref, radiusKm: 25.0),
-        builder: (context, locationSnapshot) {
-          if (locationSnapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingGrid();
-          }
-
-          final locationParams = locationSnapshot.data;
-
-          if (locationParams == null) {
-            // Fallback to featured services
-            return Consumer(
-              builder: (context, ref, child) {
-                final featuredServicesState = ref.watch(
-                  featuredServicesProvider,
-                );
-                return featuredServicesState.services.isEmpty
-                    ? _buildLoadingGrid()
-                    : _buildServicesGrid(
-                        featuredServicesState.services,
-                        isLocationBased: false,
-                      );
-              },
-            );
-          }
-
-          // Use location-based services
-          return Consumer(
-            builder: (context, ref, child) {
-              final servicesAsync = ref.watch(
-                popularNearbyServicesWithLocationProvider(locationParams),
-              );
-              return servicesAsync.when(
-                data: (services) {
-                  return services.isEmpty
-                      ? _buildEmptyState()
-                      : _buildServicesGrid(services, isLocationBased: true);
-                },
-                loading: () => _buildLoadingGrid(),
-                error: (error, stack) => _buildErrorState(),
-              );
-            },
-          );
+      body: servicesAsync.when(
+        data: (services) {
+          return services.isEmpty
+              ? _buildEmptyState()
+              : _buildServicesGrid(services, isLocationBased: true);
+        },
+        loading: () => _buildLoadingGrid(),
+        error: (error, stack) {
+          debugPrint('Error loading nearby services: $error');
+          return _buildErrorState();
         },
       ),
     );
@@ -90,8 +61,8 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
           padding: const EdgeInsets.all(16),
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 0.80,
+              crossAxisCount: 2,
+              childAspectRatio: 0.65, // Adjusted for 2x2 grid similar to nearby_services_screen
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -108,55 +79,19 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
     );
   }
 
-  Widget _buildServicesContent(Map<String, dynamic>? locationParams) {
-    if (locationParams == null) {
-      // Fallback to featured services
-      final featuredServicesState = ref.watch(featuredServicesProvider);
-      return featuredServicesState.services.isEmpty
-          ? _buildShimmerGrid()
-          : _buildServicesGrid(
-              featuredServicesState.services,
-              isLocationBased: false,
-            );
-    }
-
-    // Use location-based services
-    final servicesAsync = ref.watch(
-      popularNearbyServicesWithLocationProvider(locationParams),
-    );
-
-    return servicesAsync.when(
-      data: (services) {
-        return services.isEmpty
-            ? _buildEmptyState()
-            : _buildServicesGrid(services, isLocationBased: true);
-      },
-      loading: () => _buildShimmerGrid(),
-      error: (error, stack) {
-        print('Error loading nearby services: $error');
-        return _buildErrorState();
-      },
-    );
-  }
-
-  Widget _buildShimmerGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.80,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: 9,
-      itemBuilder: (context, index) => _buildLoadingCard(),
-    );
-  }
 
   Widget _buildServiceCard(
     ServiceListingModel service, {
     bool isLocationBased = false,
   }) {
+    // Calculate discount percentage
+    int? discountPercentage;
+    if (service.displayOriginalPrice != null && service.displayOfferPrice != null) {
+      final discount = ((service.displayOriginalPrice! - service.displayOfferPrice!) /
+                        service.displayOriginalPrice! * 100);
+      discountPercentage = discount.round();
+    }
+
     return Builder(
       builder: (context) => GestureDetector(
         onTap: () {
@@ -165,65 +100,260 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
             extra: {
               'serviceName': service.name,
               'price': service.displayOfferPrice != null
-                  ? '₹${service.displayOfferPrice!.round()}'
+                  ? PriceCalculator.formatPriceAsInt(
+                      PriceCalculator.calculateTotalPriceWithTaxes(
+                        service.displayOfferPrice!,
+                      ),
+                    )
                   : service.displayOriginalPrice != null
-                  ? '₹${service.displayOriginalPrice!.round()}'
+                  ? PriceCalculator.formatPriceAsInt(
+                      PriceCalculator.calculateTotalPriceWithTaxes(
+                        service.displayOriginalPrice!,
+                      ),
+                    )
                   : null,
               'rating': (service.rating ?? 4.9).toStringAsFixed(1),
               'reviewCount': service.reviewsCount ?? 102,
             },
           );
         },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 1:1 Square Image with 8px radius
-            AspectRatio(
-              aspectRatio: 1,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: service.image ?? '',
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.primaryColor,
-                        strokeWidth: 2,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Service Image with discount badge
+              Expanded(
+                flex: 3,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: service.image ?? '',
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                              size: 32,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: Colors.grey,
-                        size: 32,
+                    // Discount badge
+                    if (discountPercentage != null && discountPercentage > 0)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green[600],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.arrow_downward,
+                                color: Colors.white,
+                                size: 10,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '$discountPercentage%',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Okra',
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Wishlist icon
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.favorite_border,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              // Service Details
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Service Name
+                      Text(
+                        service.name,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Okra',
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Service Description
+                      if (service.description != null && service.description!.isNotEmpty)
+                        Text(
+                          service.description!,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Okra',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      const Spacer(),
+                      // Price section
+                      if (service.displayOfferPrice != null) ...[
+                        Row(
+                          children: [
+                            // Offer Price with taxes
+                            Text(
+                              PriceCalculator.formatPriceAsInt(
+                                PriceCalculator.calculateTotalPriceWithTaxes(
+                                  service.displayOfferPrice!,
+                                ),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Okra',
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // Original Price (struck through) with taxes
+                            if (service.displayOriginalPrice != null)
+                              Text(
+                                PriceCalculator.formatPriceAsInt(
+                                  PriceCalculator.calculateTotalPriceWithTaxes(
+                                    service.displayOriginalPrice!,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Okra',
+                                  color: Colors.grey[600],
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Colors.grey[600],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ] else if (service.displayOriginalPrice != null) ...[
+                        Text(
+                          PriceCalculator.formatPriceAsInt(
+                            PriceCalculator.calculateTotalPriceWithTaxes(
+                              service.displayOriginalPrice!,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Okra',
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      // Rating
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green[600],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  (service.rating ?? 4.9).toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Okra',
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.white,
+                                  size: 11,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            // Service name in small font
-            Flexible(
-              child: Text(
-                service.name,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Okra',
-                  color: Color(0xFF333333),
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -233,56 +363,127 @@ class _NearbyServicesScreenState extends ConsumerState<NearbyServicesScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.80,
+        crossAxisCount: 2,
+        childAspectRatio: 0.65,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: 9,
+      itemCount: 6,
       itemBuilder: (context, index) => _buildLoadingCard(),
     );
   }
 
   Widget _buildLoadingCard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Square image placeholder
-        AspectRatio(
-          aspectRatio: 1,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Center(
-              child: CircularProgressIndicator(
-                color: AppTheme.primaryColor,
-                strokeWidth: 2,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image skeleton
+            Expanded(
+              flex: 3,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
+            // Details skeleton
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title skeleton
+                    Container(
+                      width: double.infinity,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 100,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Description skeleton
+                    Container(
+                      width: 80,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const Spacer(),
+                    // Price skeleton
+                    Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 40,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Rating skeleton
+                    Container(
+                      width: 50,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 6),
-        // Text placeholder
-        Container(
-          height: 8,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Container(
-          height: 8,
-          width: 50,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

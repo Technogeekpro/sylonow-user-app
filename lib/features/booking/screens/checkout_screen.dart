@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +32,23 @@ double _safeToDouble(dynamic value) {
     return parsed ?? 0.0;
   }
   return 0.0;
+}
+
+/// Helper function to format phone number by removing country code prefix (91)
+String _formatPhoneNumber(String? phone) {
+  if (phone == null || phone.isEmpty) return '';
+
+  // Remove any spaces, hyphens, or special characters
+  String cleanPhone = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+
+  // Check if phone starts with +91 or 91
+  if (cleanPhone.startsWith('+91')) {
+    return cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith('91') && cleanPhone.length > 10) {
+    return cleanPhone.substring(2);
+  }
+
+  return phone;
 }
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -428,7 +446,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     Row(
                       children: [
                         Text(
-                          '₹${_formatPrice(_getServicePrice())}',
+                          '₹${_formatPrice(_getServicePriceWithFees())}',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -436,13 +454,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             fontFamily: 'Okra',
                           ),
                         ),
-                        if (widget.service.originalPrice != null &&
-                            widget.service.offerPrice != null &&
-                            widget.service.originalPrice! >
-                                widget.service.offerPrice!) ...[
+                        if (widget.service.displayOriginalPrice != null &&
+                            widget.service.displayOfferPrice != null &&
+                            widget.service.displayOriginalPrice! >
+                                widget.service.displayOfferPrice!) ...[
                           const SizedBox(width: 8),
                           Text(
-                            '₹${_formatPrice(widget.service.originalPrice!)}',
+                            '₹${_formatPrice(widget.service.displayOriginalPrice!)}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppTheme.textSecondaryColor,
@@ -680,12 +698,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   int _calculateDiscount() {
-    if (widget.service.originalPrice != null &&
-        widget.service.offerPrice != null) {
-      final discount =
-          ((widget.service.originalPrice! - widget.service.offerPrice!) /
-              widget.service.originalPrice!) *
-          100;
+    // Use display prices which include distance-based pricing
+    final originalPrice = widget.service.displayOriginalPrice ?? widget.service.originalPrice;
+    final offerPrice = widget.service.displayOfferPrice ?? widget.service.offerPrice;
+
+    if (originalPrice != null && offerPrice != null && originalPrice > offerPrice) {
+      final discount = ((originalPrice - offerPrice) / originalPrice) * 100;
       return discount.round();
     }
     return 0;
@@ -995,11 +1013,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    currentUser?.phone ?? currentUser?.email ?? 'Contact info',
+                    currentUser?.phone != null
+                        ? _formatPhoneNumber(currentUser!.phone!)
+                        : currentUser?.email ?? 'Contact info',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
                       fontFamily: 'Okra',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _showAddAlternateNumberDialog,
+                    child: Text(
+                      'Add alternate number',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Okra',
+                      ),
                     ),
                   ),
                 ],
@@ -1117,6 +1150,116 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showAddAlternateNumberDialog() async {
+    final phoneController = TextEditingController();
+    final currentUser = Supabase.instance.client.auth.currentUser;
+
+    if (currentUser == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Add Alternate Number',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Okra',
+          ),
+        ),
+        content: TextField(
+          controller: phoneController,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            hintText: 'Enter alternate phone number',
+            hintStyle: TextStyle(
+              color: Colors.grey[500],
+              fontFamily: 'Okra',
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primaryColor),
+            ),
+            prefixIcon: Icon(Icons.phone, color: AppTheme.primaryColor),
+          ),
+          style: const TextStyle(fontFamily: 'Okra', fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontFamily: 'Okra',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final phone = phoneController.text.trim();
+              if (phone.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a phone number')),
+                );
+                return;
+              }
+
+              try {
+                // Get current user profile
+                final profileService = ref.read(profileServiceProvider);
+                final profile = await profileService.getCurrentUserProfile();
+
+                if (profile != null) {
+                  // Update profile with alternate phone
+                  final updatedProfile = profile.copyWith(alternatePhone: phone);
+                  await profileService.updateProfile(updatedProfile);
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Alternate number added successfully!'),
+                        backgroundColor: AppTheme.successColor,
+                      ),
+                    );
+                    setState(() {}); // Refresh to show the new number
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to add number: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Okra',
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -3153,7 +3296,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ),
                 Text(
-                  '₹${_formatPrice((servicePriceWithFees + addOnsPriceWithFees + 28) - totalAmount)}',
+                  '₹${_formatPrice(_calculateTotalSavings(servicePriceWithFees, addOnsPriceWithFees, totalAmount))}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -3470,18 +3613,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
 
     // Fallback to service listing prices with safe conversion
+    // Use displayOfferPrice which includes calculated distance-based pricing
     double? offerPrice;
     double? originalPrice;
 
     try {
-      offerPrice = widget.service.offerPrice;
+      // Use displayOfferPrice to get calculated price if available
+      offerPrice = widget.service.displayOfferPrice ?? widget.service.offerPrice;
+      debugPrint('💰 Using display offer price: $offerPrice (calculated: ${widget.service.calculatedPrice}, base: ${widget.service.offerPrice})');
     } catch (e) {
       debugPrint('⚠️ Error accessing service offerPrice: $e');
       offerPrice = null;
     }
 
     try {
-      originalPrice = widget.service.originalPrice;
+      originalPrice = widget.service.displayOriginalPrice ?? widget.service.originalPrice;
     } catch (e) {
       debugPrint('⚠️ Error accessing service originalPrice: $e');
       originalPrice = null;
@@ -3491,7 +3637,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     debugPrint(
       '💰 Service price calculated: $price (offer: $offerPrice, original: $originalPrice)',
     );
+    debugPrint('💰 Distance: ${widget.service.distanceKm} km, Extra charges applied: ${widget.service.isPriceAdjusted}');
     return price;
+  }
+
+  /// Get the service price with all fees included
+  double _getServicePriceWithFees() {
+    final servicePrice = _getServicePrice();
+    return servicePrice + 28.00 + (servicePrice * 0.0354);
+  }
+
+  /// Calculate total savings based on original price with fees vs current discounted price with fees
+  double _calculateTotalSavings(double servicePriceWithFees, double addOnsPriceWithFees, double totalAmount) {
+    // Get the original price if available
+    double? originalPrice;
+    try {
+      originalPrice = widget.service.originalPrice;
+    } catch (e) {
+      originalPrice = null;
+    }
+
+    // If there's no original price or it's the same as current price, no savings
+    if (originalPrice == null || originalPrice <= _getServicePrice()) {
+      return couponDiscount; // Only coupon savings
+    }
+
+    // Calculate original price with fees (without any discounts)
+    final originalPriceWithFees = originalPrice + 28.00 + (originalPrice * 0.0354);
+
+    // Total savings = original price with fees - discounted service price with fees
+    // This shows savings from the original price to the current discounted price
+    final totalSavings = originalPriceWithFees - servicePriceWithFees;
+
+    return totalSavings > 0 ? totalSavings : 0;
   }
 
   /// Get the selected date for display
@@ -3500,7 +3678,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     String? dateToUse = widget.selectedDate;
 
     // If not available, try customization data
-    if ((dateToUse == null || dateToUse.isEmpty) &&
+    if ((dateToUse!.isEmpty) &&
         widget.customization != null &&
         widget.customization!['date'] != null) {
       final customDate = widget.customization!['date'] as String;
@@ -3509,7 +3687,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       }
     }
 
-    if (dateToUse != null && dateToUse.isNotEmpty) {
+    if (dateToUse.isNotEmpty) {
       // Parse and format the date nicely
       try {
         DateTime date;
@@ -3830,11 +4008,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _proceedToRazorpay() async {
-    debugPrint('🚀 [CHECKOUT] Starting booking process');
-    debugPrint('🚀 [CHECKOUT] Selected address ID: $selectedAddressId');
-
     if (selectedAddressId == null) {
-      debugPrint('❌ [CHECKOUT] No address selected');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select an address'),
@@ -3846,48 +4020,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
-    debugPrint('✅ [CHECKOUT] Address validation passed');
     setState(() {
       isProcessing = true;
     });
 
+    // Check if running on iOS Simulator (Razorpay doesn't work on iOS Simulator)
+    if (Platform.isIOS && !kReleaseMode) {
+      // In debug/profile mode on iOS, show warning about simulator limitation
+      debugPrint('⚠️ WARNING: You are running on iOS Simulator. Razorpay payment UI may not appear.');
+      debugPrint('⚠️ For testing Razorpay, please use:');
+      debugPrint('   1. A real iOS device (iPhone/iPad)');
+      debugPrint('   2. An Android emulator');
+      debugPrint('   3. A real Android device');
+    }
+
     try {
-      debugPrint('📱 [CHECKOUT] Getting current user');
       // Get current user
       final currentUser = ref.read(currentUserProvider);
       if (currentUser == null) {
-        debugPrint('❌ [CHECKOUT] User not authenticated');
         throw Exception('User not authenticated');
       }
-      debugPrint('✅ [CHECKOUT] Current user ID: ${currentUser.id}');
-      debugPrint('✅ [CHECKOUT] User email: ${currentUser.email}');
-      debugPrint('✅ [CHECKOUT] User metadata: ${currentUser.userMetadata}');
 
-      debugPrint('📍 [CHECKOUT] Verifying selected address exists');
       // Verify the selected address exists
       final userAddresses = await ref.read(addressesProvider.future);
-      debugPrint('✅ [CHECKOUT] User has ${userAddresses.length} addresses');
       final addressExists = userAddresses.any(
         (addr) => addr.id == selectedAddressId,
       );
       if (!addressExists) {
-        debugPrint('❌ [CHECKOUT] Selected address not found in user addresses');
         throw Exception('Selected address not found');
       }
-      debugPrint('✅ [CHECKOUT] Address verification passed');
 
       // Get customer details from user profile
       final userProfile = ref.read(currentUserProfileProvider).asData?.value;
       final customerName = userProfile?.fullName ?? '';
       final customerPhone = userProfile?.phoneNumber ?? '';
 
-      debugPrint('📝 [CHECKOUT] Using profile data');
-      debugPrint('📝 [CHECKOUT] Profile Name: $customerName');
-      debugPrint('📝 [CHECKOUT] Profile Phone: $customerPhone');
-
       // Validate customer requirements
       if (customerName.isEmpty) {
-        debugPrint('❌ [CHECKOUT] User profile missing name');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Please complete your profile with your name'),
@@ -3905,7 +4074,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       }
 
       if (customerPhone.isEmpty) {
-        debugPrint('❌ [CHECKOUT] User profile missing phone number');
         setState(() {
           isProcessing = false;
         });
@@ -3914,49 +4082,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return;
       }
 
-      debugPrint('✅ [CHECKOUT] Customer validation passed');
-      debugPrint('✅ [CHECKOUT] Customer Name: $customerName');
-      debugPrint('✅ [CHECKOUT] Customer Phone: $customerPhone');
-
-      debugPrint('🏪 [CHECKOUT] Getting order creation notifier');
-      // Get order creation notifier
-      final orderCreationNotifier = ref.read(orderCreationProvider.notifier);
-
-      debugPrint('💰 [CHECKOUT] Calculating total amount');
       // Calculate total amount
       final totalAmount = _getTotalAmount();
-      debugPrint('✅ [CHECKOUT] Total amount calculated: $totalAmount');
-
-      debugPrint('🖼️ [CHECKOUT] Checking for place image data');
-      // Don't upload place image yet - store it for after payment
-      String? placeImageUrl; // Will remain null until after payment
-      if (widget.customization?['placeImage'] != null) {
-        debugPrint(
-          '📸 [CHECKOUT] Place image found, will upload after payment',
-        );
-      } else {
-        debugPrint('ℹ️ [CHECKOUT] No place image to upload');
-      }
-
-      debugPrint('📅 [CHECKOUT] Determining booking date and time');
       // Determine booking date and time based on theater data if available
       DateTime bookingDate;
       String? selectedDateStr;
       String? selectedTimeSlotStr;
 
       if (widget.selectedTimeSlot != null && widget.selectedDate != null) {
-        debugPrint('🎭 [CHECKOUT] Theater booking detected');
         // Use theater-specific date
         bookingDate = DateTime.parse(widget.selectedDate!);
         selectedDateStr = widget.selectedDate;
         selectedTimeSlotStr =
             '${widget.selectedTimeSlot!.startTime} - ${widget.selectedTimeSlot!.endTime}';
-        debugPrint(
-          '✅ [CHECKOUT] Theater date: $selectedDateStr, time: $selectedTimeSlotStr',
-        );
       } else {
-        debugPrint('🛠️ [CHECKOUT] Regular service booking');
-
         // Extract date from customization data first
         if (widget.customization != null &&
             widget.customization!['date'] != null) {
@@ -3972,14 +4111,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   int.parse(parts[0]), // day
                 );
                 selectedDateStr = customDate;
-                debugPrint(
-                  '✅ [CHECKOUT] Using selected date from customization: $selectedDateStr',
-                );
               } else {
                 throw FormatException('Invalid date format');
               }
             } catch (e) {
-              debugPrint('❌ [CHECKOUT] Error parsing selected date: $e');
               // Fallback to tomorrow
               bookingDate = DateTime.now().add(const Duration(days: 1));
               selectedDateStr =
@@ -4004,43 +4139,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           final selectedTime = widget.customization!['time'] as String;
           if (selectedTime != 'Select Time' && selectedTime.isNotEmpty) {
             selectedTimeSlotStr = selectedTime;
-            debugPrint(
-              '✅ [CHECKOUT] Using selected time from customization: $selectedTimeSlotStr',
-            );
           } else {
             selectedTimeSlotStr = 'TBD';
           }
         } else {
           selectedTimeSlotStr = 'TBD';
         }
-
-        debugPrint(
-          '✅ [CHECKOUT] Regular service date: $selectedDateStr, time: $selectedTimeSlotStr',
-        );
       }
-
-      debugPrint('🚀 [CHECKOUT] Starting order creation process');
 
       // Determine if this is a theater booking or regular service booking
       if (widget.selectedTimeSlot != null) {
-        debugPrint('❌ [CHECKOUT] Theater bookings should use different flow');
-        // This is a theater booking - should go to private_theater_bookings table
-        // For now, we'll still use the order creation but add a comment for future implementation
-        // TODO: Implement theater booking creation for private_theater_bookings table
         throw Exception(
           'Theater bookings should be handled through theater booking flow, not service orders',
         );
       }
-
-      debugPrint(
-        '📊 [CHECKOUT] Preparing order data for regular service booking',
-      );
-      debugPrint('📊 [CHECKOUT] Service ID: ${widget.service.id}');
-      debugPrint('📊 [CHECKOUT] Service Name: ${widget.service.name}');
-      debugPrint('📊 [CHECKOUT] Vendor ID: ${widget.service.vendorId}');
-      debugPrint('📊 [CHECKOUT] Address ID: $selectedAddressId');
-      debugPrint('📊 [CHECKOUT] Total Amount: $totalAmount');
-      debugPrint('📊 [CHECKOUT] Place Image URL: $placeImageUrl');
 
       // Calculate payment amounts based on UI logic
       final payableAmount = advancePaymentData != null
@@ -4049,9 +4161,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final remainingAmount = advancePaymentData != null
           ? _safeToDouble(advancePaymentData!['remaining_payment'])
           : totalAmount * 0.4; // 40% if no RPC data
-
-      debugPrint('📊 [CHECKOUT] Payable Amount (advance): $payableAmount');
-      debugPrint('📊 [CHECKOUT] Remaining Amount: $remainingAmount');
 
       // Extract customer details from customization data
       final customization = widget.customization ?? <String, dynamic>{};
@@ -4063,91 +4172,152 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           currentUser.email ??
           'Guest User';
 
-      debugPrint('👤 [CHECKOUT] Customer details from customization:');
-      debugPrint('👤 [CHECKOUT]   Name: $orderCustomerName');
-      debugPrint('👤 [CHECKOUT]   Age: $customerAge');
-      debugPrint('👤 [CHECKOUT]   Occasion: $occasion');
+      // PAYMENT FIRST APPROACH: Initialize Razorpay and process payment BEFORE creating order
+      debugPrint('💳 Initiating payment: ₹$payableAmount');
 
-      // This is a regular decoration service booking - goes to orders table
-      debugPrint('🏗️ [CHECKOUT] Calling orderCreationNotifier.createOrder()');
-      final order = await orderCreationNotifier.createOrder(
+      // Initialize Razorpay service
+      final paymentRepository = ref.read(paymentRepositoryProvider);
+      final orderRepository = ref.read(orderRepositoryProvider);
+      final razorpayService = RazorpayService(
+        paymentRepository,
+        orderRepository,
+      );
+
+      // Create a temporary booking reference ID for payment tracking
+      final tempBookingRef = 'TEMP_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Process payment WITHOUT an order ID (will create order after payment success)
+      final paymentResult = await razorpayService.processPaymentWithCallback(
         userId: currentUser.id,
         vendorId: widget.service.vendorId ?? '',
+        amount: payableAmount,
         customerName: orderCustomerName,
-        serviceListingId: widget.service.id,
-        serviceTitle: widget.service.name,
-        bookingDate: bookingDate,
-        totalAmount: totalAmount,
-        advanceAmount: payableAmount,
-        remainingAmount: remainingAmount,
-        customerPhone: currentUser.userMetadata?['phone'] ?? currentUser.phone,
-        customerEmail: currentUser.email,
-        serviceDescription: widget.service.description,
-        bookingTime: selectedTimeSlotStr, // Pass the selected time slot
-        specialRequirements: null,
-        addressId: selectedAddressId,
-        placeImageUrl: placeImageUrl,
-        age: customerAge,
-        occasion: occasion,
-      );
+        customerEmail: currentUser.email ?? '',
+        customerPhone:
+            currentUser.userMetadata?['phone'] ?? currentUser.phone ?? '',
+        metadata: {
+          'temp_booking_ref': tempBookingRef,
+          'service_id': widget.service.id,
+          'service_name': widget.service.name,
+          'total_amount': totalAmount,
+          'advance_amount': payableAmount,
+          'remaining_amount': remainingAmount,
+          'booking_date': selectedDateStr,
+          'booking_time': selectedTimeSlotStr,
+          'address_id': selectedAddressId,
+          'coupon_code': isCouponApplied ? couponCode : null,
+          'coupon_discount': couponDiscount,
+          'place_image': widget.customization?['placeImage'] != null
+              ? 'pending_upload'
+              : null,
+          'selected_addons': editableAddOns,
+          'customer_age': customerAge,
+          'occasion': occasion,
+        },
+        onPaymentSuccess: (paymentTransactionId, razorpayPaymentId) async {
+          // Payment succeeded! Now create the order
+          debugPrint('✅ Payment completed: $razorpayPaymentId');
 
-      debugPrint(
-        '✅ [CHECKOUT] Order created successfully! Order ID: ${order.id}',
-      );
+          try {
+            // Get order creation notifier
+            final orderCreationNotifier = ref.read(orderCreationProvider.notifier);
 
-      if (mounted) {
-        debugPrint(
-          '✅ [CHECKOUT] Order created successfully! Order ID: ${order.id}',
-        );
-        debugPrint('💳 [CHECKOUT] Opening Razorpay payment directly...');
+            // Upload place image if provided
+            String? placeImageUrl;
+            if (widget.customization?['placeImage'] != null) {
+              // TODO: Upload image to Supabase storage
+              // placeImageUrl = await _uploadPlaceImage(widget.customization!['placeImage']);
+            }
 
-        // Initialize Razorpay service
-        final paymentRepository = ref.read(paymentRepositoryProvider);
-        final orderRepository = ref.read(orderRepositoryProvider);
-        final razorpayService = RazorpayService(
-          paymentRepository,
-          orderRepository,
-        );
+            // Create the order NOW that payment is confirmed
+            final order = await orderCreationNotifier.createOrder(
+              userId: currentUser.id,
+              vendorId: widget.service.vendorId ?? '',
+              customerName: orderCustomerName,
+              serviceListingId: widget.service.id,
+              serviceTitle: widget.service.name,
+              bookingDate: bookingDate,
+              totalAmount: totalAmount,
+              advanceAmount: payableAmount,
+              remainingAmount: remainingAmount,
+              customerPhone: currentUser.userMetadata?['phone'] ?? currentUser.phone,
+              customerEmail: currentUser.email,
+              serviceDescription: widget.service.description,
+              bookingTime: selectedTimeSlotStr,
+              specialRequirements: null,
+              addressId: selectedAddressId,
+              placeImageUrl: placeImageUrl,
+              age: customerAge,
+              occasion: occasion,
+            );
 
-        // Process payment directly with Razorpay
-        final paymentResult = await razorpayService.processPayment(
-          orderId: order.id,
-          userId: currentUser.id,
-          vendorId: widget.service.vendorId ?? '',
-          amount: payableAmount,
-          customerName: orderCustomerName,
-          customerEmail: currentUser.email ?? '',
-          customerPhone:
-              currentUser.userMetadata?['phone'] ?? currentUser.phone ?? '',
-          metadata: {
-            'service_id': widget.service.id,
-            'service_name': widget.service.name,
-            'total_amount': totalAmount,
-            'advance_amount': payableAmount,
-            'remaining_amount': remainingAmount,
-            'booking_date': selectedDateStr,
-            'booking_time': selectedTimeSlotStr,
-            'coupon_code': isCouponApplied ? couponCode : null,
-            'coupon_discount': couponDiscount,
-            'place_image': widget.customization?['placeImage'] != null
-                ? 'pending_upload'
-                : null,
-            'selected_addons': editableAddOns,
-          },
-        );
+            debugPrint('✅ Order created: ${order.id}');
 
-        setState(() {
-          isProcessing = false;
-        });
+            // Link payment transaction to the created order
+            final paymentRepository = ref.read(paymentRepositoryProvider);
+            await paymentRepository.updatePaymentStatus(
+              paymentId: paymentTransactionId,
+              status: 'completed', // Already completed, just adding order ID
+              orderId: order.id,
+            );
 
-        if (!paymentResult.isSuccess) {
-          debugPrint(
-            '❌ [CHECKOUT] Failed to initiate Razorpay: ${paymentResult.message}',
-          );
+            // Update order payment status
+            final orderRepository = ref.read(orderRepositoryProvider);
+            await orderRepository.updateOrderPayment(
+              orderId: order.id,
+              paymentStatus: 'advance_paid',
+            );
+
+            // Navigate to booking confirmation or success screen
+            if (mounted) {
+              context.go(
+                '/booking-success/${order.id}',
+                extra: {
+                  'service': widget.service,
+                  'advanceAmount': order.advanceAmount,
+                  'remainingAmount': order.remainingAmount,
+                  'orderId': order.id,
+                  'selectedDate': widget.selectedDate,
+                  'selectedTimeSlot': widget.selectedTimeSlot != null
+                      ? '${widget.selectedTimeSlot!.startTime} - ${widget.selectedTimeSlot!.endTime}'
+                      : null,
+                },
+              );
+            }
+          } catch (e) {
+            debugPrint('❌ Error creating order: $e');
+            // Payment succeeded but order creation failed - this needs manual intervention
+            // Show error to user and log for admin review
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'Payment successful but order creation failed. Please contact support with payment ID.',
+                  ),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 10),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              );
+            }
+          }
+        },
+        onPaymentFailure: (error) {
+          // Payment failed - no order created
+          debugPrint('❌ Payment failed: $error');
+
+          // Reset processing state
           if (mounted) {
+            setState(() {
+              isProcessing = false;
+            });
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Payment failed: ${paymentResult.message}'),
+                content: Text('Payment failed: $error'),
                 backgroundColor: Colors.red,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -4156,12 +4326,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             );
           }
-        } else {
-          debugPrint('✅ [CHECKOUT] Razorpay payment opened successfully');
+        },
+      );
+
+      // NOTE: Do NOT set isProcessing to false here!
+      // Payment is async - it will be handled by callbacks
+      // isProcessing will be set to false in the callbacks
+
+      if (!paymentResult.isSuccess) {
+        // Only set to false if payment failed to initiate
+        setState(() {
+          isProcessing = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to initiate payment: ${paymentResult.message}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
         }
+      } else {
+        debugPrint('💳 Razorpay payment gateway opened - waiting for user action');
       }
     } catch (e) {
-      debugPrint('❌ [CHECKOUT] ERROR: Failed to create order');
+      debugPrint('❌ [CHECKOUT] ERROR: Failed to initiate payment');
       debugPrint('❌ [CHECKOUT] Error type: ${e.runtimeType}');
       debugPrint('❌ [CHECKOUT] Error message: $e');
       debugPrint('❌ [CHECKOUT] Full error details: ${e.toString()}');
@@ -4173,7 +4367,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create order: $e'),
+            content: Text('Failed to initiate payment: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -4327,28 +4521,197 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               fontFamily: 'Okra',
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Free cancellation up to 24 hours before service. Cancellations within 24 hours will incur a 20% charge. No refund for no-shows.',
-            style: TextStyle(
-              fontSize: 11,
-              color: AppTheme.textSecondaryColor,
-              fontFamily: 'Okra',
-              height: 1.3,
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => _showCancellationPolicyDialog(context),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              alignment: Alignment.centerLeft,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'In case of any issues, contact our support team within 2 hours of service completion for assistance.',
-            style: TextStyle(
-              fontSize: 11,
-              color: AppTheme.textSecondaryColor,
-              fontFamily: 'Okra',
-              height: 1.3,
+            child: Text(
+              'View Cancellation & Refund Policy',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
+                fontFamily: 'Okra',
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showCancellationPolicyDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Cancellation & Refund Policy',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Okra',
+              fontSize: 18,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Refunds are subject to the time of cancellation before the scheduled service:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildRefundTable(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Additional Terms:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildRefundTerms(),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontFamily: 'Okra',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRefundTable() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Time Before Service',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Refund Amount',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildTableRow('More than 24 Hours', '50%'),
+          _buildTableRow('24 to 12 Hours', '30%'),
+          _buildTableRow('12 to 6 Hours', '17%'),
+          _buildTableRow('Less than 6 Hours', 'No Refund'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableRow(String time, String refundAmount) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              time,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              refundAmount,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRefundTerms() {
+    const terms = [
+      '• Refunds will be processed within 5-7 working days.',
+      '• Refund will be credited to the original payment method used during booking.',
+      '• Service charges and transaction fees are non-refundable.',
+      '• In case of any disputes, the decision of Sylonow management will be final.',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: terms
+          .map(
+            (term) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                term,
+                style: const TextStyle(
+                  fontFamily: 'Okra',
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 

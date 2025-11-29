@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sylonow_user/core/providers/core_providers.dart';
+import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/add_edit_address_screen.dart';
 
@@ -101,7 +102,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                   decoration: InputDecoration(
                     hintText: 'Search for area, street name...',
                     hintStyle: TextStyle(color: Colors.grey[600]),
-                    prefixIcon: Icon(Icons.search, color: Colors.pink[400]),
+                    prefixIcon: Icon(Icons.search, color:AppTheme.primaryColor),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -136,7 +137,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                         children: [
                           Icon(
                             Icons.location_searching,
-                            color: Colors.pink[400],
+                            color: AppTheme.primaryColor,
                             size: 24,
                           ),
                           const SizedBox(width: 12),
@@ -147,7 +148,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                                 Text(
                                   'Device location not enabled',
                                   style: TextStyle(
-                                    color: Colors.pink[400],
+                                    color: AppTheme.primaryColor,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -170,7 +171,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                             child: Text(
                               'Enable',
                               style: TextStyle(
-                                color: Colors.pink[400],
+                                color: AppTheme.primaryColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -186,14 +187,15 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                         children: [
                           Icon(
                             Icons.add_circle_outline,
-                            color: Colors.pink[400],
+                            color: AppTheme.primaryColor,
+                           
                             size: 24,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             'Add Address',
                             style: TextStyle(
-                              color: Colors.pink[400],
+                              color: AppTheme.primaryColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -251,7 +253,7 @@ class _ManageAddressScreenState extends ConsumerState<ManageAddressScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: isSelected
-                            ? Border.all(color: Colors.pink[400]!, width: 2)
+                            ? Border.all(color: AppTheme.primaryColor, width: 2)
                             : null,
                         boxShadow: [
                           BoxShadow(

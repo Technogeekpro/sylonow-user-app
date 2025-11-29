@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/providers/auth_providers.dart';
+import '../../../../core/providers/welcome_providers.dart';
 
 /// New welcome overlay that shows user's celebration plan from user_profiles table
 class UserCelebrationOverlay extends ConsumerStatefulWidget {
@@ -67,9 +68,34 @@ class _UserCelebrationOverlayState extends ConsumerState<UserCelebrationOverlay>
           .single();
 
       if (mounted) {
+        final celebrationDateStr = response['celebration_date'] as String?;
+
+        // Save celebration date to SharedPreferences for booking screen
+        if (celebrationDateStr != null) {
+          try {
+            final celebrationDate = DateTime.parse(celebrationDateStr);
+            final welcomeService = ref.read(welcomePreferencesServiceProvider);
+
+            // Save the celebration date and wait for it to complete
+            await welcomeService.saveCelebrationPreferences(
+              celebrationDate: celebrationDate,
+            );
+
+            // Verify the save was successful
+            final savedDate = await welcomeService.getCelebrationDate();
+            if (savedDate != null) {
+              debugPrint('✅ Celebration date saved and verified: $celebrationDateStr');
+            } else {
+              debugPrint('⚠️ Celebration date save verification failed');
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error saving celebration date to preferences: $e');
+          }
+        }
+
         setState(() {
           _fullName = response['full_name'] as String?;
-          _celebrationDate = response['celebration_date'] as String?;
+          _celebrationDate = celebrationDateStr;
           _occasionName = response['categories']?['name'] as String?;
           _isLoading = false;
         });

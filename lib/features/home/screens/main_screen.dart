@@ -212,7 +212,7 @@ class _CustomBottomNavigationBarState extends State<_CustomBottomNavigationBar>
           Row(
             children: [
               _buildNavItem(0, 'assets/svgs/home.svg', 'Home', isIcon: false),
-              _buildNavItem(1, 'assets/svgs/inside.svg', 'Inside', isIcon: false),
+              _buildNavItem(1, 'assets/svgs/inside.svg', 'Decor', isIcon: false),
               _buildNavItem(2, 'assets/svgs/outside.svg', 'Outside', isIcon: false),
               _buildNavItem(3, 'assets/svgs/profile.svg', 'Profile', isIcon: false),
             ],

@@ -29,6 +29,11 @@ class TimeSlotModel {
     final endTime = json['end_time'] as String? ?? '00:00';
     final generatedSlotName = '$startTime - $endTime';
 
+    // Use RAW prices from database (without tax)
+    // Tax calculation will be done by the advance payment formula
+    final rawBasePrice = (json['base_price'] as num?)?.toDouble() ?? 0.0;
+    final rawDiscountedPrice = (json['discounted_price'] as num?)?.toDouble() ?? 0.0;
+
     return TimeSlotModel(
       id: json['id'] as String,
       theaterId: json['theater_id'] as String,
@@ -36,8 +41,8 @@ class TimeSlotModel {
       slotName: generatedSlotName,
       startTime: startTime,
       endTime: endTime,
-      basePrice: (json['base_price'] as num?)?.toDouble() ?? 0.0,
-      discountedPrice: (json['discounted_price'] as num?)?.toDouble() ?? 0.0,
+      basePrice: rawBasePrice,
+      discountedPrice: rawDiscountedPrice,
       isActive: json['is_active'] as bool? ?? true,
       isBooked: json['is_booked'] as bool? ?? false,
     );

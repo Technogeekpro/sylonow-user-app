@@ -177,7 +177,8 @@ class OptimizedExploreCategoriesSection extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: GestureDetector(
         onTap: () {
-          context.push('/category/${category.name}');
+          // Navigate to category services screen with location filtering
+          context.push('/category/${Uri.encodeComponent(category.name)}');
         },
         child: Container(
           decoration: BoxDecoration(

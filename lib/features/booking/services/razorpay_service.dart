@@ -34,6 +34,152 @@ class RazorpayService {
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
   }
 
+  // Callback for payment success with order creation
+  Function(String paymentTransactionId, String razorpayPaymentId)? _onOrderCreation;
+  Function(String error)? _onPaymentFailed;
+
+  /// Create a Razorpay order and initiate payment with callbacks for payment-first flow
+  Future<RazorpayPaymentResult> processPaymentWithCallback({
+    required String userId,
+    required String vendorId,
+    required double amount,
+    required String customerName,
+    required String customerEmail,
+    required String customerPhone,
+    required Map<String, dynamic> metadata,
+    required Future<void> Function(String paymentTransactionId, String razorpayPaymentId) onPaymentSuccess,
+    required void Function(String error) onPaymentFailure,
+  }) async {
+    try {
+      // Store callbacks for later use
+      _onOrderCreation = onPaymentSuccess;
+      _onPaymentFailed = onPaymentFailure;
+
+      // Create payment transaction record WITHOUT order/booking ID (payment-first approach)
+      final paymentTransaction = await _paymentRepository
+          .createPaymentTransaction(
+            userId: userId,
+            vendorId: vendorId,
+            paymentMethod: 'razorpay',
+            amount: amount,
+            metadata: metadata,
+          );
+
+      // Create Razorpay order
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final receiptId = 'P_$timestamp'; // P for Payment-first
+
+      debugPrint('📝 [RAZORPAY] Creating Razorpay order for amount: $amount INR');
+      debugPrint('📝 [RAZORPAY] Payment transaction ID: ${paymentTransaction.id}');
+
+      final razorpayOrderId = await _createRazorpayOrder(
+        amount: amount,
+        currency: 'INR',
+        receipt: receiptId,
+        notes: {
+          'user_id': userId,
+          'vendor_id': vendorId,
+          'payment_transaction_id': paymentTransaction.id,
+          'payment_first': 'true', // Flag to indicate payment-first flow
+        },
+      );
+
+      if (razorpayOrderId == null) {
+        debugPrint('❌ [RAZORPAY] Failed to create Razorpay order');
+        await _paymentRepository.updatePaymentStatus(
+          paymentId: paymentTransaction.id,
+          status: 'failed',
+          failureReason: 'Failed to create Razorpay order',
+        );
+        _onPaymentFailed?.call('Failed to create payment order');
+        return RazorpayPaymentResult.error('Failed to create payment order');
+      }
+
+      debugPrint('✅ [RAZORPAY] Razorpay order created successfully: $razorpayOrderId');
+
+      // Update payment transaction with order ID
+      await _paymentRepository.updatePaymentStatus(
+        paymentId: paymentTransaction.id,
+        status: 'processing',
+        processedAt: DateTime.now(),
+      );
+
+      // Configure payment options
+      final options = {
+        'key': _keyId,
+        'amount': (amount * 100).toInt(), // Amount in paise
+        'currency': 'INR',
+        'order_id': razorpayOrderId,
+        'name': 'Sylonow',
+        'description': 'Booking Payment (60%)',
+        'timeout': 300, // 5 minutes
+        'prefill': {
+          'contact': customerPhone,
+          'email': customerEmail,
+          'name': customerName,
+        },
+        'theme': {
+          'color': '#FF0080', // Sylonow brand color
+        },
+        'notes': {
+          'payment_type': 'razorpay_60_percent',
+          'payment_transaction_id': paymentTransaction.id,
+          'payment_first': 'true',
+        },
+      };
+
+      // Set up callbacks for this specific payment
+      _setupPaymentCallbacksWithOrderCreation(paymentTransaction.id);
+
+      debugPrint('🚀 [RAZORPAY] Opening Razorpay checkout with options: ${options.keys}');
+      debugPrint('🚀 [RAZORPAY] Payment amount: ${options['amount']} paise');
+      debugPrint('🚀 [RAZORPAY] Order ID: ${options['order_id']}');
+      debugPrint('🚀 [RAZORPAY] Razorpay instance hashCode: ${_razorpay.hashCode}');
+      final prefillData = options['prefill'] as Map<String, dynamic>?;
+      debugPrint('🚀 [RAZORPAY] Prefill contact: ${prefillData?['contact']}');
+      debugPrint('🚀 [RAZORPAY] Prefill email: ${prefillData?['email']}');
+      debugPrint('🚀 [RAZORPAY] Prefill name: ${prefillData?['name']}');
+
+      // Add a small delay to ensure database transaction is committed
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Open Razorpay checkout
+      try {
+        debugPrint('🔧 [RAZORPAY] Calling _razorpay.open() with options...');
+        debugPrint('🔧 [RAZORPAY] Options map: $options');
+        _razorpay.open(options);
+        debugPrint('✅ [RAZORPAY] Razorpay.open() called successfully');
+        debugPrint('⏳ [RAZORPAY] Waiting for payment UI to appear...');
+        debugPrint('⏳ [RAZORPAY] If UI does not appear, check:');
+        debugPrint('   1. App is in foreground');
+        debugPrint('   2. CheckoutActivity is declared in AndroidManifest.xml');
+        debugPrint('   3. Full app rebuild was done (not hot reload)');
+      } catch (e, stackTrace) {
+        debugPrint('❌ [RAZORPAY] Error calling _razorpay.open(): $e');
+        debugPrint('❌ [RAZORPAY] Stack trace: $stackTrace');
+
+        await _paymentRepository.updatePaymentStatus(
+          paymentId: paymentTransaction.id,
+          status: 'failed',
+          failureReason: 'Failed to open Razorpay: $e',
+        );
+        _onPaymentFailed?.call('Failed to open payment gateway: $e');
+        throw Exception('Failed to open Razorpay checkout: $e');
+      }
+
+      return RazorpayPaymentResult.processing(
+        paymentTransaction.id,
+        razorpayOrderId,
+      );
+    } catch (e) {
+      debugPrint('Error processing Razorpay payment: $e');
+      _onPaymentFailed?.call('Failed to process payment: ${e.toString()}');
+      return RazorpayPaymentResult.error(
+        'Failed to process payment: ${e.toString()}',
+      );
+    }
+  }
+
   /// Create a Razorpay order and initiate payment
   Future<RazorpayPaymentResult> processPayment({
     String? bookingId,
@@ -199,6 +345,16 @@ class RazorpayService {
         _handleSpecificExternalWallet(response, paymentTransactionId);
   }
 
+  /// Set up payment callbacks for payment-first flow with order creation
+  void _setupPaymentCallbacksWithOrderCreation(String paymentTransactionId) {
+    _onPaymentSuccess = (response) =>
+        _handlePaymentSuccessWithOrderCreation(response, paymentTransactionId);
+    _onPaymentError = (response) =>
+        _handlePaymentErrorWithFailureCallback(response, paymentTransactionId);
+    _onExternalWallet = (response) =>
+        _handleSpecificExternalWallet(response, paymentTransactionId);
+  }
+
   /// Handle payment success
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     if (_onPaymentSuccess != null) {
@@ -315,6 +471,80 @@ class RazorpayService {
       );
     } catch (e) {
       debugPrint('Error handling external wallet: $e');
+    }
+  }
+
+  /// Handle payment success for payment-first flow (triggers order creation)
+  Future<void> _handlePaymentSuccessWithOrderCreation(
+    PaymentSuccessResponse response,
+    String paymentTransactionId,
+  ) async {
+    try {
+      // Verify payment signature
+      final isSignatureValid = _verifyPaymentSignature(
+        orderId: response.orderId ?? '',
+        paymentId: response.paymentId ?? '',
+        signature: response.signature ?? '',
+      );
+
+      if (!isSignatureValid) {
+        await _paymentRepository.updatePaymentStatus(
+          paymentId: paymentTransactionId,
+          status: 'failed',
+          failureReason: 'Invalid payment signature',
+        );
+        _onPaymentFailed?.call('Invalid payment signature');
+        return;
+      }
+
+      // Update payment transaction as completed
+      await _paymentRepository.updatePaymentStatus(
+        paymentId: paymentTransactionId,
+        status: 'completed',
+        razorpayPaymentId: response.paymentId,
+        razorpaySignature: response.signature,
+        processedAt: DateTime.now(),
+      );
+
+      debugPrint('✅ Razorpay payment successful: ${response.paymentId}');
+      debugPrint('✅ Now triggering order creation callback...');
+
+      // Trigger the order creation callback
+      if (_onOrderCreation != null) {
+        await _onOrderCreation!(paymentTransactionId, response.paymentId ?? '');
+      }
+    } catch (e) {
+      debugPrint('❌ Error handling payment success: $e');
+      await _paymentRepository.updatePaymentStatus(
+        paymentId: paymentTransactionId,
+        status: 'failed',
+        failureReason: 'Error processing successful payment',
+      );
+      _onPaymentFailed?.call('Error processing payment: ${e.toString()}');
+    }
+  }
+
+  /// Handle payment error for payment-first flow (triggers failure callback)
+  Future<void> _handlePaymentErrorWithFailureCallback(
+    PaymentFailureResponse response,
+    String paymentTransactionId,
+  ) async {
+    try {
+      await _paymentRepository.updatePaymentStatus(
+        paymentId: paymentTransactionId,
+        status: 'failed',
+        failureReason: '${response.code}: ${response.message}',
+      );
+
+      debugPrint(
+        '❌ Razorpay payment failed: ${response.code} - ${response.message}',
+      );
+
+      // Trigger the failure callback
+      _onPaymentFailed?.call('${response.code}: ${response.message}');
+    } catch (e) {
+      debugPrint('Error handling payment failure: $e');
+      _onPaymentFailed?.call('Payment failed: ${e.toString()}');
     }
   }
 

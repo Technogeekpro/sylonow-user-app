@@ -150,9 +150,12 @@ class TheaterBookingService {
     required String bookingStatus,
     required String paymentStatus,
     String? paymentId,
+    double? userAdvancePayment,
+    double? pendingAmount,
+    double? adminPayout,
   }) async {
     try {
-      final updateData = {
+      final updateData = <String, dynamic>{
         'booking_status': bookingStatus,
         'payment_status': paymentStatus,
         'updated_at': DateTime.now().toIso8601String(),
@@ -160,6 +163,18 @@ class TheaterBookingService {
 
       if (paymentId != null) {
         updateData['payment_id'] = paymentId;
+      }
+
+      if (userAdvancePayment != null) {
+        updateData['user_advance_payment'] = userAdvancePayment;
+      }
+
+      if (pendingAmount != null) {
+        updateData['pending_amount'] = pendingAmount;
+      }
+
+      if (adminPayout != null) {
+        updateData['admin_payout'] = adminPayout;
       }
 
       await _supabase

@@ -62,7 +62,18 @@
       "Bash(sudo softwareupdate:*)",
       "Bash(brew list:*)",
       "Bash(brew install:*)",
-      "Bash(idevice_id:*)"
+      "Bash(idevice_id:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(open:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(xcode-select:*)",
+      "Bash(killall:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(for line in 457 498 537 585 617 754 833 882 953 1015 1069)",
+      "Bash(do echo \"=== Line $line ===\")",
+      "Bash(done)"
     ],
     "deny": []
   },

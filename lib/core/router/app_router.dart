@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sylonow_user/features/address/screens/add_edit_address_screen.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
+import 'package:sylonow_user/features/address/screens/location_picker_screen.dart';
 
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/otp_verification_screen.dart';
@@ -34,6 +35,7 @@ import '../../features/categories/screens/all_categories_screen.dart';
 import '../../features/categories/screens/category_services_screen.dart';
 import '../../features/booking/screens/checkout_screen.dart';
 import '../../features/booking/screens/service_booking_screen.dart';
+import '../../features/booking/screens/booking_details_screen.dart';
 import '../../features/booking/screens/payment_screen.dart';
 import '../../features/home/models/service_listing_model.dart';
 import '../../features/theater/screens/theater_detail_screen_new.dart';
@@ -209,6 +211,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddEditAddressScreen(),
       ),
       GoRoute(
+        path: LocationPickerScreen.routeName,
+        builder: (context, state) => const LocationPickerScreen(),
+      ),
+      GoRoute(
         path: '/profile/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
@@ -240,6 +246,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             price: extra?['price'],
             rating: extra?['rating'],
             reviewCount: extra?['reviewCount'],
+            service: extra?['service'] as ServiceListingModel?, // Pass the pre-calculated service
           );
         },
       ),
@@ -270,6 +277,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return ServiceBookingScreen(
             service: service,
             addedAddons: extra['addedAddons'] as Map<String, Map<String, dynamic>>? ?? {},
+          );
+        },
+      ),
+      // Booking details route
+      GoRoute(
+        path: BookingDetailsScreen.routeName,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) {
+            throw Exception('BookingDetailsScreen requires data in navigation extra');
+          }
+
+          // Handle service data
+          late ServiceListingModel service;
+          final serviceData = extra['service'];
+
+          if (serviceData is ServiceListingModel) {
+            service = serviceData;
+          } else if (serviceData is Map<String, dynamic>) {
+            service = ServiceListingModel.fromJson(serviceData);
+          } else {
+            throw Exception('Invalid service data type: ${serviceData.runtimeType}');
+          }
+
+          return BookingDetailsScreen(
+            service: service,
+            customizationData: extra['customizationData'] as Map<String, dynamic>,
+            selectedAddOns: extra['selectedAddOns'] as Map<String, Map<String, dynamic>>?,
           );
         },
       ),
@@ -345,7 +380,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return PaymentScreen(bookingData: bookingData);
         },
       ),
-      // Booking Success route
+      // Booking Success route (with extra data)
       GoRoute(
         path: BookingSuccessScreen.routeName,
         builder: (context, state) {
@@ -356,6 +391,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return BookingSuccessScreen(
             bookingData: extra['bookingData'] as Map<String, dynamic>,
             paymentMethod: extra['paymentMethod'] as String,
+          );
+        },
+      ),
+      // Booking Success route (with orderId parameter)
+      GoRoute(
+        path: '/booking-success/:orderId',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+
+          // Create booking data from orderId
+          final bookingData = {
+            'orderId': orderId,
+            ...?extra,
+          };
+
+          return BookingSuccessScreen(
+            bookingData: bookingData,
+            paymentMethod: extra?['paymentMethod'] as String? ?? 'razorpay',
           );
         },
       ),

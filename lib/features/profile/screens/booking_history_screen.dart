@@ -397,6 +397,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -422,14 +423,14 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: Color(0xff8cecd6),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: Color(0xff8cecd6)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.payment, size: 16, color: Colors.orange.shade700),
+                  Icon(Icons.payment, size: 16, color: Colors.black),
                   const SizedBox(width: 4),
                   Text(
                     'Remaining: ₹${_formatAmount(order.remainingAmount)}',
@@ -437,7 +438,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Okra',
-                      color: Colors.orange.shade700,
+                      color: Colors.black,
                     ),
                   ),
                 ],
@@ -457,28 +458,28 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
 
     switch (paymentStatus.toLowerCase()) {
       case 'pending':
-        backgroundColor = Colors.blue.shade50;
-        textColor = Colors.blue.shade700;
+        backgroundColor = Color.fromARGB(255, 247, 225, 138);
+        textColor = Colors.black;
         break;
       case 'advance_paid':
-        backgroundColor = Colors.orange.shade50;
-        textColor = Colors.orange.shade700;
+        backgroundColor = Color(0xff741eff);
+        textColor = Colors.black;
         break;
       case 'completed':
-        backgroundColor = Colors.green.shade50;
-        textColor = Colors.green.shade700;
+        backgroundColor = Color(0xffff4f81);
+        textColor = Colors.black;
         break;
       case 'failed':
-        backgroundColor = Colors.red.shade50;
-        textColor = Colors.red.shade700;
+        backgroundColor = Color(0xffff3b30);
+        textColor = Colors.black;
         break;
       case 'refunded':
-        backgroundColor = Colors.purple.shade50;
-        textColor = Colors.purple.shade700;
+        backgroundColor = Color(0xff4e6b1);
+        textColor = Colors.black;
         break;
       default:
         backgroundColor = Colors.grey.shade50;
-        textColor = Colors.grey.shade700;
+        textColor = Colors.black;
     }
 
     return Container(
@@ -819,7 +820,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () => context.push('/home'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,

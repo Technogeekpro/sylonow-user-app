@@ -40,6 +40,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   bool _isLocationEnabled = false;
   bool _isLocationLoading = true;
   bool _isLocationServiceDisabled = false;
+  bool _isRefreshing = false;
 
   // Global keys for UI elements
   static final GlobalKey locationKey = GlobalKey();
@@ -413,9 +414,16 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
               : 'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}',
           area: placemark?.subLocality ?? placemark?.locality ?? 'Unknown Area',
           name: 'Current Location',
+          // Save coordinates for location-based features
+          latitude: position.latitude,
+          longitude: position.longitude,
+          // Save state and city for regional filtering
+          state: placemark?.administrativeArea, // State (e.g., Maharashtra, Karnataka)
+          city: placemark?.locality, // City (e.g., Mumbai, Bangalore)
         );
 
         debugPrint('🔍 Setting address: ${currentAddress.address}');
+        debugPrint('🔍 With coordinates: (${currentAddress.latitude}, ${currentAddress.longitude})');
         ref.read(selectedAddressProvider.notifier).state = currentAddress;
 
         setState(() {
@@ -432,6 +440,109 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
           _isLocationLoading = false;
         });
         debugPrint('🔍 ✅ Location setup completed with geocoding error (using coordinates)');
+      }
+    }
+  }
+
+  /// Build empty state when no services are found nearby
+  Widget _buildNoServicesState(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return SizedBox(
+      // Make it full screen height to center properly
+      height: screenHeight,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_searching,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'We\'re not in your area yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                  fontFamily: 'Okra',
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'We haven\'t launched our services in your location yet, but we\'re expanding soon!',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[600],
+                  fontFamily: 'Okra',
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Check back later or try a different location.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                  fontFamily: 'Okra',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handle pull-to-refresh action
+  Future<void> _handleRefresh() async {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      debugPrint('🔄 Starting refresh...');
+
+      // Invalidate all providers to trigger refresh
+      ref.invalidate(featuredServicesProvider);
+      ref.invalidate(popularNearbyServicesProvider);
+      ref.invalidate(categoriesProvider);
+      ref.invalidate(privateTheaterServicesProvider);
+
+      // Wait for a moment to allow providers to refresh
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // DON'T refresh current location - preserve user's selected address
+      // The nearby services will use the selected address coordinates
+      // Only update GPS if no address is selected
+
+      debugPrint('🔄 ✅ Refresh completed successfully!');
+    } catch (e) {
+      debugPrint('🔄 ❌ Refresh error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to refresh. Please try again.'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade600,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
       }
     }
   }
@@ -457,60 +568,169 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
         extendBodyBehindAppBar: true,
         body: Stack(
           children: [
-            // Main scrollable content
-            CustomScrollView(
-              controller: _scrollController,
-              // Performance optimization: Use const widgets where possible
-              slivers: [
-                const SliverToBoxAdapter(child: AdvertisementSection()),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: Container(
-                    key: categoriesKey,
-                    child: const OptimizedExploreCategoriesSection(),
+            // Main scrollable content with pull-to-refresh
+            RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: Colors.pink,
+              backgroundColor: Colors.white,
+              displacement: 80, // Offset to account for custom app bar
+              child: CustomScrollView(
+                controller: _scrollController,
+                // Performance optimization: Use const widgets where possible
+                slivers: [
+                  // Conditionally show advertisement section only if services are available
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isNotEmpty) {
+                            return const SliverToBoxAdapter(child: AdvertisementSection());
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => const SliverToBoxAdapter(child: AdvertisementSection()),
+                        error: (_, __) => const SliverToBoxAdapter(child: AdvertisementSection()),
+                      );
+                    },
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                // Conditionally show featured section
-                Consumer(
-                  builder: (context, ref, child) {
-                    final featuredState = ref.watch(featuredServicesProvider);
-                    // Only show if there are services or still loading (hasMore = true)
-                    if (featuredState.services.isNotEmpty || featuredState.hasMore) {
-                      return const SliverToBoxAdapter(child: FeaturedSection());
-                    }
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  },
-                ),
-                // Conditionally show spacing only if featured section is shown
-                Consumer(
-                  builder: (context, ref, child) {
-                    final featuredState = ref.watch(featuredServicesProvider);
-                    if (featuredState.services.isNotEmpty || featuredState.hasMore) {
-                      return const SliverToBoxAdapter(child: SizedBox(height: 24));
-                    }
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  },
-                ),
-                SliverToBoxAdapter(
-                  child: Container(
-                    key: theaterKey,
-                    child: const TheaterSection(),
+                  // Conditionally show spacing only if advertisement is shown
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isNotEmpty) {
+                            return const SliverToBoxAdapter(child: SizedBox(height: 24));
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        error: (_, __) => const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      );
+                    },
                   ),
-                ),
-                // Conditionally show image collage section
-                Consumer(
-                  builder: (context, ref, child) {
-                    final featuredState = ref.watch(featuredServicesProvider);
-                    // Only show if there are services available
-                    if (featuredState.services.isNotEmpty) {
-                      return const SliverToBoxAdapter(child: ImageCollageSection());
-                    }
-                    return const SliverToBoxAdapter(child: SizedBox.shrink());
-                  },
-                ),
-                const SliverToBoxAdapter(child: PopularNearbySection()),
-              ],
+                  // Conditionally show explore categories section only if services are available
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isNotEmpty) {
+                            return SliverToBoxAdapter(
+                              child: Container(
+                                key: categoriesKey,
+                                child: const OptimizedExploreCategoriesSection(),
+                              ),
+                            );
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => SliverToBoxAdapter(
+                          child: Container(
+                            key: categoriesKey,
+                            child: const OptimizedExploreCategoriesSection(),
+                          ),
+                        ),
+                        error: (_, __) => SliverToBoxAdapter(
+                          child: Container(
+                            key: categoriesKey,
+                            child: const OptimizedExploreCategoriesSection(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Conditionally show spacing only if categories section is shown
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isNotEmpty) {
+                            return const SliverToBoxAdapter(child: SizedBox(height: 24));
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        error: (_, __) => const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      );
+                    },
+                  ),
+                  // Show nice empty state message when no services are found
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: _buildNoServicesState(context),
+                            );
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+                        error: (_, __) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+                      );
+                    },
+                  ),
+                  // Conditionally show featured section
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final featuredState = ref.watch(featuredServicesProvider);
+                      // Only show if there are services or still loading (hasMore = true)
+                      if (featuredState.services.isNotEmpty || featuredState.hasMore) {
+                        return const SliverToBoxAdapter(child: FeaturedSection());
+                      }
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    },
+                  ),
+                  // Conditionally show spacing only if featured section is shown
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final featuredState = ref.watch(featuredServicesProvider);
+                      if (featuredState.services.isNotEmpty || featuredState.hasMore) {
+                        return const SliverToBoxAdapter(child: SizedBox(height: 24));
+                      }
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    },
+                  ),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      key: theaterKey,
+                      child: const TheaterSection(),
+                    ),
+                  ),
+                  // Conditionally show image collage section
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final featuredState = ref.watch(featuredServicesProvider);
+                      // Only show if there are services available
+                      if (featuredState.services.isNotEmpty) {
+                        return const SliverToBoxAdapter(child: ImageCollageSection());
+                      }
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    },
+                  ),
+                  // Conditionally show popular nearby section only if services are available
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final nearbyState = ref.watch(popularNearbyServicesProvider);
+                      return nearbyState.when(
+                        data: (services) {
+                          if (services.isNotEmpty) {
+                            return const SliverToBoxAdapter(child: PopularNearbySection());
+                          }
+                          return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        },
+                        loading: () => const SliverToBoxAdapter(child: PopularNearbySection()),
+                        error: (_, __) => const SliverToBoxAdapter(child: PopularNearbySection()),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
             // Custom App Bar as an overlay
             ValueListenableBuilder<double>(
@@ -532,7 +752,7 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
               ),
           ],
         ),
-      
+
     );
   }
 

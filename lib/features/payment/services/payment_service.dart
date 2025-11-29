@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/payment_method_model.dart';
 
 class PaymentService {
-  static const String _razorpayKey = 'rzp_test_your_key_here'; // Replace with actual key
+  static const String _razorpayKey = 'rzp_live_RSUaC7MqY7BfsZ'; // Razorpay LIVE key
   static const String _apiUrl = 'https://api.razorpay.com/v1';
 
   /// Get available payment methods

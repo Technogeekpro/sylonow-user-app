@@ -15,6 +15,7 @@ class UserProfileModel {
   final String? postalCode;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
+  final String? alternatePhone;
   final DateTime? celebrationDate;
   final String? celebrationTime;
   final String? fcmToken;
@@ -38,6 +39,7 @@ class UserProfileModel {
     this.postalCode,
     this.emergencyContactName,
     this.emergencyContactPhone,
+    this.alternatePhone,
     this.celebrationDate,
     this.celebrationTime,
     this.fcmToken,
@@ -65,7 +67,8 @@ class UserProfileModel {
       postalCode: json['postal_code'] as String?,
       emergencyContactName: json['emergency_contact_name'] as String?,
       emergencyContactPhone: json['emergency_contact_phone'] as String?,
-      celebrationDate: json['celebration_date'] != null 
+      alternatePhone: json['alternate_phone'] as String?,
+      celebrationDate: json['celebration_date'] != null
           ? DateTime.parse(json['celebration_date'] as String)
           : null,
       celebrationTime: json['celebration_time'] as String?,
@@ -97,6 +100,7 @@ class UserProfileModel {
       'postal_code': postalCode,
       'emergency_contact_name': emergencyContactName,
       'emergency_contact_phone': emergencyContactPhone,
+      'alternate_phone': alternatePhone,
       'celebration_date': celebrationDate?.toIso8601String(),
       'celebration_time': celebrationTime,
       'fcm_token': fcmToken,
@@ -122,6 +126,7 @@ class UserProfileModel {
     String? postalCode,
     String? emergencyContactName,
     String? emergencyContactPhone,
+    String? alternatePhone,
     DateTime? celebrationDate,
     String? celebrationTime,
     String? fcmToken,
@@ -145,6 +150,7 @@ class UserProfileModel {
       postalCode: postalCode ?? this.postalCode,
       emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
+      alternatePhone: alternatePhone ?? this.alternatePhone,
       celebrationDate: celebrationDate ?? this.celebrationDate,
       celebrationTime: celebrationTime ?? this.celebrationTime,
       fcmToken: fcmToken ?? this.fcmToken,
@@ -174,6 +180,7 @@ class UserProfileModel {
             other.postalCode == postalCode &&
             other.emergencyContactName == emergencyContactName &&
             other.emergencyContactPhone == emergencyContactPhone &&
+            other.alternatePhone == alternatePhone &&
             other.celebrationDate == celebrationDate &&
             other.celebrationTime == celebrationTime &&
             other.fcmToken == fcmToken &&
@@ -203,12 +210,12 @@ class UserProfileModel {
         postalCode,
         emergencyContactName,
         emergencyContactPhone,
+        alternatePhone,
         celebrationDate,
         celebrationTime,
         fcmToken,
-        createdAt,
       ),
-      updatedAt,
+      Object.hash(createdAt, updatedAt),
     );
   }
 

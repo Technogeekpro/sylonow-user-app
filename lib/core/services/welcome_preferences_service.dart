@@ -29,42 +29,57 @@ class WelcomePreferencesService {
     TimeOfDay? celebrationTime,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (celebrationDate != null) {
       await prefs.setString(_celebrationDateKey, celebrationDate.toIso8601String());
       debugPrint('✅ Celebration date saved: ${DateFormat('dd MMM yyyy').format(celebrationDate)}');
     }
-    
+
     if (celebrationTime != null) {
       final timeString = '${celebrationTime.hour}:${celebrationTime.minute}';
       await prefs.setString(_celebrationTimeKey, timeString);
       debugPrint('✅ Celebration time saved: $timeString');
     }
+
+    // Force reload to ensure changes are committed and available immediately
+    await prefs.reload();
+    debugPrint('🔄 SharedPreferences reloaded after save');
   }
 
   /// Get saved celebration date
   Future<DateTime?> getCelebrationDate() async {
     final prefs = await SharedPreferences.getInstance();
+    // Reload to ensure we get the latest saved values
+    await prefs.reload();
+    debugPrint('🔄 SharedPreferences reloaded before reading celebration date');
+
     final dateString = prefs.getString(_celebrationDateKey);
     if (dateString != null) {
       try {
+        debugPrint('📅 Retrieved celebration date string: $dateString');
         return DateTime.parse(dateString);
       } catch (e) {
         debugPrint('Error parsing celebration date: $e');
         return null;
       }
     }
+    debugPrint('⚠️ No celebration date found in SharedPreferences');
     return null;
   }
 
   /// Get saved celebration time
   Future<TimeOfDay?> getCelebrationTime() async {
     final prefs = await SharedPreferences.getInstance();
+    // Reload to ensure we get the latest saved values
+    await prefs.reload();
+    debugPrint('🔄 SharedPreferences reloaded before reading celebration time');
+
     final timeString = prefs.getString(_celebrationTimeKey);
     if (timeString != null) {
       try {
         final parts = timeString.split(':');
         if (parts.length == 2) {
+          debugPrint('⏰ Retrieved celebration time string: $timeString');
           return TimeOfDay(
             hour: int.parse(parts[0]),
             minute: int.parse(parts[1]),
@@ -75,6 +90,7 @@ class WelcomePreferencesService {
         return null;
       }
     }
+    debugPrint('⚠️ No celebration time found in SharedPreferences');
     return null;
   }
 

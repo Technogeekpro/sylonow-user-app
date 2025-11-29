@@ -84,9 +84,17 @@ mixin _$ServiceListingModel {
   double? get latitude => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get longitude =>
-      throw _privateConstructorUsedError; // Calculated fields (not from database)
-  @JsonKey(includeFromJson: false, includeToJson: false)
+      throw _privateConstructorUsedError; // Distance-based pricing fields (from database)
+  @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+  double? get freeServiceKm => throw _privateConstructorUsedError;
+  @JsonKey(name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+  double? get extraChargesPerKm =>
+      throw _privateConstructorUsedError; // Calculated fields (from RPC function or client-side calculation)
+  @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
   double? get distanceKm => throw _privateConstructorUsedError;
+  @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+  double? get calculatedPrice =>
+      throw _privateConstructorUsedError; // Legacy calculated fields (kept for backward compatibility)
   @JsonKey(includeFromJson: false, includeToJson: false)
   double? get adjustedOfferPrice => throw _privateConstructorUsedError;
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -142,7 +150,15 @@ abstract class $ServiceListingModelCopyWith<$Res> {
       @JsonKey(name: 'banner_text') String? bannerText,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
-      @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
+      @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+      double? freeServiceKm,
+      @JsonKey(
+          name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+      double? extraChargesPerKm,
+      @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
+      double? distanceKm,
+      @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+      double? calculatedPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
       double? adjustedOfferPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
@@ -199,7 +215,10 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
     Object? bannerText = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
+    Object? freeServiceKm = freezed,
+    Object? extraChargesPerKm = freezed,
     Object? distanceKm = freezed,
+    Object? calculatedPrice = freezed,
     Object? adjustedOfferPrice = freezed,
     Object? adjustedOriginalPrice = freezed,
     Object? isPriceAdjusted = freezed,
@@ -337,9 +356,21 @@ class _$ServiceListingModelCopyWithImpl<$Res, $Val extends ServiceListingModel>
           ? _value.longitude
           : longitude // ignore: cast_nullable_to_non_nullable
               as double?,
+      freeServiceKm: freezed == freeServiceKm
+          ? _value.freeServiceKm
+          : freeServiceKm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      extraChargesPerKm: freezed == extraChargesPerKm
+          ? _value.extraChargesPerKm
+          : extraChargesPerKm // ignore: cast_nullable_to_non_nullable
+              as double?,
       distanceKm: freezed == distanceKm
           ? _value.distanceKm
           : distanceKm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      calculatedPrice: freezed == calculatedPrice
+          ? _value.calculatedPrice
+          : calculatedPrice // ignore: cast_nullable_to_non_nullable
               as double?,
       adjustedOfferPrice: freezed == adjustedOfferPrice
           ? _value.adjustedOfferPrice
@@ -413,7 +444,15 @@ abstract class _$$ServiceListingModelImplCopyWith<$Res>
       @JsonKey(name: 'banner_text') String? bannerText,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
-      @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
+      @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+      double? freeServiceKm,
+      @JsonKey(
+          name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+      double? extraChargesPerKm,
+      @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
+      double? distanceKm,
+      @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+      double? calculatedPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
       double? adjustedOfferPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
@@ -469,7 +508,10 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
     Object? bannerText = freezed,
     Object? latitude = freezed,
     Object? longitude = freezed,
+    Object? freeServiceKm = freezed,
+    Object? extraChargesPerKm = freezed,
     Object? distanceKm = freezed,
+    Object? calculatedPrice = freezed,
     Object? adjustedOfferPrice = freezed,
     Object? adjustedOriginalPrice = freezed,
     Object? isPriceAdjusted = freezed,
@@ -607,9 +649,21 @@ class __$$ServiceListingModelImplCopyWithImpl<$Res>
           ? _value.longitude
           : longitude // ignore: cast_nullable_to_non_nullable
               as double?,
+      freeServiceKm: freezed == freeServiceKm
+          ? _value.freeServiceKm
+          : freeServiceKm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      extraChargesPerKm: freezed == extraChargesPerKm
+          ? _value.extraChargesPerKm
+          : extraChargesPerKm // ignore: cast_nullable_to_non_nullable
+              as double?,
       distanceKm: freezed == distanceKm
           ? _value.distanceKm
           : distanceKm // ignore: cast_nullable_to_non_nullable
+              as double?,
+      calculatedPrice: freezed == calculatedPrice
+          ? _value.calculatedPrice
+          : calculatedPrice // ignore: cast_nullable_to_non_nullable
               as double?,
       adjustedOfferPrice: freezed == adjustedOfferPrice
           ? _value.adjustedOfferPrice
@@ -667,7 +721,15 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
       @JsonKey(name: 'banner_text') this.bannerText,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) this.latitude,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) this.longitude,
-      @JsonKey(includeFromJson: false, includeToJson: false) this.distanceKm,
+      @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+      this.freeServiceKm,
+      @JsonKey(
+          name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+      this.extraChargesPerKm,
+      @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
+      this.distanceKm,
+      @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+      this.calculatedPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
       this.adjustedOfferPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
@@ -841,10 +903,21 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
   @override
   @JsonKey(fromJson: _safeNullableDoubleFromJson)
   final double? longitude;
-// Calculated fields (not from database)
+// Distance-based pricing fields (from database)
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+  final double? freeServiceKm;
+  @override
+  @JsonKey(name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+  final double? extraChargesPerKm;
+// Calculated fields (from RPC function or client-side calculation)
+  @override
+  @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
   final double? distanceKm;
+  @override
+  @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+  final double? calculatedPrice;
+// Legacy calculated fields (kept for backward compatibility)
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   final double? adjustedOfferPrice;
@@ -857,7 +930,7 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
 
   @override
   String toString() {
-    return 'ServiceListingModel(id: $id, vendorId: $vendorId, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, exclusions: $exclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl, decorationType: $decorationType, providesBanner: $providesBanner, bannerText: $bannerText, latitude: $latitude, longitude: $longitude, distanceKm: $distanceKm, adjustedOfferPrice: $adjustedOfferPrice, adjustedOriginalPrice: $adjustedOriginalPrice, isPriceAdjusted: $isPriceAdjusted)';
+    return 'ServiceListingModel(id: $id, vendorId: $vendorId, name: $name, image: $image, description: $description, rating: $rating, reviewsCount: $reviewsCount, offersCount: $offersCount, vendor: $vendor, promotionalTag: $promotionalTag, inclusions: $inclusions, exclusions: $exclusions, originalPrice: $originalPrice, offerPrice: $offerPrice, isFeatured: $isFeatured, createdAt: $createdAt, isActive: $isActive, photos: $photos, category: $category, venueTypes: $venueTypes, themeTags: $themeTags, addOns: $addOns, setupTime: $setupTime, bookingNotice: $bookingNotice, customizationAvailable: $customizationAvailable, customizationNote: $customizationNote, serviceEnvironment: $serviceEnvironment, videoUrl: $videoUrl, decorationType: $decorationType, providesBanner: $providesBanner, bannerText: $bannerText, latitude: $latitude, longitude: $longitude, freeServiceKm: $freeServiceKm, extraChargesPerKm: $extraChargesPerKm, distanceKm: $distanceKm, calculatedPrice: $calculatedPrice, adjustedOfferPrice: $adjustedOfferPrice, adjustedOriginalPrice: $adjustedOriginalPrice, isPriceAdjusted: $isPriceAdjusted)';
   }
 
   @override
@@ -924,8 +997,14 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
                 other.latitude == latitude) &&
             (identical(other.longitude, longitude) ||
                 other.longitude == longitude) &&
+            (identical(other.freeServiceKm, freeServiceKm) ||
+                other.freeServiceKm == freeServiceKm) &&
+            (identical(other.extraChargesPerKm, extraChargesPerKm) ||
+                other.extraChargesPerKm == extraChargesPerKm) &&
             (identical(other.distanceKm, distanceKm) ||
                 other.distanceKm == distanceKm) &&
+            (identical(other.calculatedPrice, calculatedPrice) ||
+                other.calculatedPrice == calculatedPrice) &&
             (identical(other.adjustedOfferPrice, adjustedOfferPrice) ||
                 other.adjustedOfferPrice == adjustedOfferPrice) &&
             (identical(other.adjustedOriginalPrice, adjustedOriginalPrice) ||
@@ -971,7 +1050,10 @@ class _$ServiceListingModelImpl implements _ServiceListingModel {
         bannerText,
         latitude,
         longitude,
+        freeServiceKm,
+        extraChargesPerKm,
         distanceKm,
+        calculatedPrice,
         adjustedOfferPrice,
         adjustedOriginalPrice,
         isPriceAdjusted
@@ -1031,8 +1113,15 @@ abstract class _ServiceListingModel implements ServiceListingModel {
       @JsonKey(name: 'banner_text') final String? bannerText,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) final double? latitude,
       @JsonKey(fromJson: _safeNullableDoubleFromJson) final double? longitude,
-      @JsonKey(includeFromJson: false, includeToJson: false)
+      @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+      final double? freeServiceKm,
+      @JsonKey(
+          name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+      final double? extraChargesPerKm,
+      @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
       final double? distanceKm,
+      @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+      final double? calculatedPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
       final double? adjustedOfferPrice,
       @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1136,10 +1225,19 @@ abstract class _ServiceListingModel implements ServiceListingModel {
   @override
   @JsonKey(fromJson: _safeNullableDoubleFromJson)
   double? get longitude;
-  @override // Calculated fields (not from database)
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override // Distance-based pricing fields (from database)
+  @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson)
+  double? get freeServiceKm;
+  @override
+  @JsonKey(name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson)
+  double? get extraChargesPerKm;
+  @override // Calculated fields (from RPC function or client-side calculation)
+  @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson)
   double? get distanceKm;
   @override
+  @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson)
+  double? get calculatedPrice;
+  @override // Legacy calculated fields (kept for backward compatibility)
   @JsonKey(includeFromJson: false, includeToJson: false)
   double? get adjustedOfferPrice;
   @override

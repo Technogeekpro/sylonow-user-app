@@ -159,7 +159,7 @@ class _TheaterBookingHistoryScreenState extends ConsumerState<TheaterBookingHist
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.go('/theater'),
+            onPressed: () => context.push('/outside-theaters'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,

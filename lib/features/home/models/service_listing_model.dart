@@ -56,8 +56,13 @@ class ServiceListingModel with _$ServiceListingModel {
     // Location fields
     @JsonKey(fromJson: _safeNullableDoubleFromJson) double? latitude,
     @JsonKey(fromJson: _safeNullableDoubleFromJson) double? longitude,
-    // Calculated fields (not from database)
-    @JsonKey(includeFromJson: false, includeToJson: false) double? distanceKm,
+    // Distance-based pricing fields (from database)
+    @JsonKey(name: 'free_service_km', fromJson: _safeNullableDoubleFromJson) double? freeServiceKm,
+    @JsonKey(name: 'extra_charges_per_km', fromJson: _safeNullableDoubleFromJson) double? extraChargesPerKm,
+    // Calculated fields (from RPC function or client-side calculation)
+    @JsonKey(name: 'distance_km', fromJson: _safeNullableDoubleFromJson) double? distanceKm,
+    @JsonKey(name: 'calculated_price', fromJson: _safeNullableDoubleFromJson) double? calculatedPrice,
+    // Legacy calculated fields (kept for backward compatibility)
     @JsonKey(includeFromJson: false, includeToJson: false) double? adjustedOfferPrice,
     @JsonKey(includeFromJson: false, includeToJson: false) double? adjustedOriginalPrice,
     @JsonKey(includeFromJson: false, includeToJson: false) bool? isPriceAdjusted,
@@ -78,9 +83,9 @@ extension ServiceListingModelExtensions on ServiceListingModel {
            lng >= -180.0 && lng <= 180.0;
   }
 
-  /// Get display price (adjusted if available, otherwise original/offer price)
+  /// Get display price (calculated from RPC if available, otherwise adjusted/offer price)
   double? get displayOfferPrice {
-    return adjustedOfferPrice ?? offerPrice;
+    return calculatedPrice ?? adjustedOfferPrice ?? offerPrice;
   }
 
   /// Get display original price (adjusted if available, otherwise original price)
@@ -114,15 +119,25 @@ extension ServiceListingModelExtensions on ServiceListingModel {
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     final distance = earthRadius * c;
 
-    // Calculate adjusted prices if distance > 10km
-    final shouldAdjustPrice = distance > 10.0;
-    final priceIncrease = shouldAdjustPrice ? 100.0 : 0.0;
+    // Calculate dynamic price based on distance using the same formula as RPC
+    // Formula: base_price + MAX(0, (distance - free_service_km) × extra_charges_per_km)
+    double? dynamicPrice;
+    if (offerPrice != null && freeServiceKm != null && extraChargesPerKm != null) {
+      final extraDistance = math.max(0.0, distance - (freeServiceKm ?? 0.0));
+      final extraCharges = extraDistance * (extraChargesPerKm ?? 0.0);
+      dynamicPrice = (offerPrice ?? 0.0) + extraCharges;
+    } else if (originalPrice != null && freeServiceKm != null && extraChargesPerKm != null) {
+      final extraDistance = math.max(0.0, distance - (freeServiceKm ?? 0.0));
+      final extraCharges = extraDistance * (extraChargesPerKm ?? 0.0);
+      dynamicPrice = (originalPrice ?? 0.0) + extraCharges;
+    }
 
     return copyWith(
       distanceKm: double.parse(distance.toStringAsFixed(2)),
-      adjustedOfferPrice: offerPrice != null ? (offerPrice ?? 0.0) + priceIncrease : null,
-      adjustedOriginalPrice: originalPrice != null ? (originalPrice ?? 0.0) + priceIncrease : null,
-      isPriceAdjusted: shouldAdjustPrice,
+      calculatedPrice: dynamicPrice,
+      adjustedOfferPrice: dynamicPrice,
+      adjustedOriginalPrice: originalPrice,
+      isPriceAdjusted: dynamicPrice != null && dynamicPrice > (offerPrice ?? originalPrice ?? 0.0),
     );
   }
 
@@ -161,7 +176,10 @@ extension ServiceListingModelExtensions on ServiceListingModel {
     String? bannerText,
     double? latitude,
     double? longitude,
+    double? freeServiceKm,
+    double? extraChargesPerKm,
     double? distanceKm,
+    double? calculatedPrice,
     double? adjustedOfferPrice,
     double? adjustedOriginalPrice,
     bool? isPriceAdjusted,
@@ -200,7 +218,10 @@ extension ServiceListingModelExtensions on ServiceListingModel {
       bannerText: bannerText ?? this.bannerText,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      freeServiceKm: freeServiceKm ?? this.freeServiceKm,
+      extraChargesPerKm: extraChargesPerKm ?? this.extraChargesPerKm,
       distanceKm: distanceKm ?? this.distanceKm,
+      calculatedPrice: calculatedPrice ?? this.calculatedPrice,
       adjustedOfferPrice: adjustedOfferPrice ?? this.adjustedOfferPrice,
       adjustedOriginalPrice: adjustedOriginalPrice ?? this.adjustedOriginalPrice,
       isPriceAdjusted: isPriceAdjusted ?? this.isPriceAdjusted,

@@ -17,6 +17,12 @@ class Address with _$Address {
     String? name,
     String? floor,
     @JsonKey(name: 'phone_number') String? phoneNumber,
+    // Coordinates for location-based features
+    double? latitude,
+    double? longitude,
+    // State and city for regional service filtering
+    String? state,
+    String? city,
   }) = _Address;
 
   factory Address.fromJson(Map<String, dynamic> json) => _$AddressFromJson(json);

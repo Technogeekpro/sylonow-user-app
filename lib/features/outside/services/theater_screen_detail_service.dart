@@ -19,7 +19,7 @@ class TheaterScreenDetailService {
       final theaterId = screenResponse['theater_id'] as String;
       print('Found theater ID: $theaterId');
 
-      // Step 2: Get time slots for this theater
+      // Step 2: Get time slots for this theater (using raw prices without tax)
       final timeSlotsResponse = await _supabase
           .from('theater_time_slots')
           .select('''

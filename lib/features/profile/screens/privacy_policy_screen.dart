@@ -227,7 +227,7 @@ class PrivacyPolicyScreen extends ConsumerWidget {
               _buildBulletPoint('Sylonow Vision Private Limited'),
               _buildBulletPoint('Address: Bengaluru, Karnataka, India'),
               _buildBulletPoint('Email: info@sylonow.com'),
-              _buildBulletPoint('Helpline: 9741338102 / 8867266638'),
+              _buildBulletPoint('Helpline: 9735954661 '),
             ],
           ),
         ],

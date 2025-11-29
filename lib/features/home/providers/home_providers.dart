@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sylonow_user/features/home/repositories/home_repository.dart';
@@ -7,6 +8,7 @@ import 'package:sylonow_user/features/home/models/vendor_model.dart';
 import 'package:sylonow_user/features/home/models/service_type_model.dart';
 import 'package:sylonow_user/features/home/models/service_listing_model.dart';
 import 'package:sylonow_user/features/home/models/category_model.dart';
+import 'package:sylonow_user/features/address/providers/address_providers.dart';
 
 /// Provider for Supabase client
 final supabaseProvider = Provider<SupabaseClient>((ref) {
@@ -124,9 +126,31 @@ final privateTheaterServicesProvider = FutureProvider<List<ServiceListingModel>>
 });
 
 /// Provider for popular nearby services
-final popularNearbyServicesProvider = FutureProvider<List<ServiceListingModel>>((ref) async {
+/// Automatically filters by 20km radius from selected address coordinates
+/// This provider automatically refreshes when the selected address changes
+final popularNearbyServicesProvider = FutureProvider.autoDispose<List<ServiceListingModel>>((ref) async {
+  // Keep the provider alive for 5 seconds after last use to prevent rapid disposal/recreation
+  ref.keepAlive();
+
   final repository = ref.watch(homeRepositoryProvider);
-  return repository.getPopularNearbyServices();
+
+  // Watch selected address - provider will refresh when address changes
+  final selectedAddress = ref.watch(selectedAddressProvider);
+  final userLat = selectedAddress?.latitude;
+  final userLon = selectedAddress?.longitude;
+
+  // Log location change for debugging
+  debugPrint('📍 Popular Nearby Services: Fetching for location ($userLat, $userLon)');
+  debugPrint('📍 Selected address: ${selectedAddress?.address}');
+
+  final services = await repository.getPopularNearbyServices(
+    userLat: userLat,
+    userLon: userLon,
+    radiusKm: 20.0, // 20km radius
+  );
+
+  debugPrint('📍 Found ${services.length} services for location');
+  return services;
 });
 
 /// Provider for all home screen data

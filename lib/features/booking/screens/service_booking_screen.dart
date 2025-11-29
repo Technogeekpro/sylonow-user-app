@@ -14,7 +14,7 @@ import '../../home/models/service_listing_model.dart';
 import '../../home/models/vendor_model.dart';
 import '../../home/providers/home_providers.dart';
 import '../../profile/providers/profile_providers.dart';
-import 'checkout_screen.dart';
+import 'booking_details_screen.dart';
 
 class ServiceBookingScreen extends ConsumerStatefulWidget {
   final ServiceListingModel service;
@@ -40,11 +40,6 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
   String selectedEnvironment = 'Option';
   List<String> selectedAddOns = [];
   final TextEditingController commentsController = TextEditingController();
-
-  // Customer info controllers
-  final TextEditingController customerNameController = TextEditingController();
-  final TextEditingController customerAgeController = TextEditingController();
-  final TextEditingController occasionController = TextEditingController();
 
   // Image upload related state
   XFile? selectedPlaceImage;
@@ -72,41 +67,50 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
   void initState() {
     super.initState();
     _initializeOptionsFromService();
-    _loadUserProfileAndSetDate()
-        .then((_) {
-          return _loadWelcomePreferences();
-        })
-        .then((_) {
-          // Ensure selected values are valid after loading preferences
-          _validateSelectedValues();
-        });
-    _loadVendorAndBuildTimeSlots();
+    _initializeBookingData();
   }
 
-  void _validateSelectedValues() async {
+  Future<void> _initializeBookingData() async {
+    // Load vendor data first (needed for date/time validation)
+    await _loadVendorAndBuildTimeSlots();
+
+    // Then load user profile and welcome preferences
+    await _loadUserProfileAndSetDate();
+    await _loadWelcomePreferences();
+
+    // Finally validate the selected values
+    await _validateSelectedValues();
+  }
+
+  Future<void> _validateSelectedValues() async {
     try {
       final availableDates = await _getAvailableDatesWithVendorBlocking();
 
-      // Validate selected date
-      if (!availableDates.contains(selectedDate)) {
+      // Validate selected date - but DON'T override if it's a valid date that was loaded from preferences
+      if (selectedDate != 'Select Date' && !availableDates.contains(selectedDate)) {
+        // Only reset if the loaded date is truly unavailable
+        debugPrint('⚠️ Selected date $selectedDate is not available in vendor dates');
         setState(() {
-          // If current selected date is not available, auto-select the first available date
           selectedDate = availableDates.isNotEmpty
               ? availableDates.first
               : 'Select Date';
-          debugPrint('📅 Auto-selected new date: $selectedDate');
+          debugPrint('📅 Reset to first available date: $selectedDate');
         });
 
         // Rebuild time slots for the new selected date
         if (selectedDate != 'Select Date') {
           _rebuildTimeSlotsForSelectedDate();
         }
+      } else if (selectedDate != 'Select Date') {
+        // Date is valid and available, just rebuild time slots
+        debugPrint('✅ Selected date $selectedDate is valid and available');
+        _rebuildTimeSlotsForSelectedDate();
       }
     } catch (e) {
       debugPrint('❌ Error validating selected values: $e');
       // Fallback to basic validation if async fails
       final fallbackDates = _getAvailableDates();
-      if (!fallbackDates.contains(selectedDate)) {
+      if (selectedDate != 'Select Date' && !fallbackDates.contains(selectedDate)) {
         setState(() {
           selectedDate = fallbackDates.isNotEmpty
               ? fallbackDates.first
@@ -542,27 +546,38 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
 
   Future<void> _loadWelcomePreferences() async {
     try {
+      debugPrint('🎯 _loadWelcomePreferences started');
       final welcomeService = ref.read(welcomePreferencesServiceProvider);
 
       // Load saved celebration date and time (only if not already set from user profile)
       if (selectedDate == 'Select Date') {
+        debugPrint('🎯 Selected date is default, attempting to load from preferences');
         final savedDate = await welcomeService.getCelebrationDate();
+        debugPrint('🎯 Retrieved saved date from preferences: $savedDate');
+
         if (savedDate != null && mounted) {
           final formattedSavedDate = DateFormat('dd/MM/yyyy').format(savedDate);
+          debugPrint('🎯 Formatted saved date: $formattedSavedDate');
+
           final availableDates = await _getAvailableDatesWithVendorBlocking();
+          debugPrint('🎯 Available dates: $availableDates');
 
           // Only set the saved date if it exists in the available dates
           if (availableDates.contains(formattedSavedDate)) {
             setState(() {
               selectedDate = formattedSavedDate;
             });
-            debugPrint('🎯 Loaded saved celebration date: $selectedDate');
+            debugPrint('🎯 ✅ Loaded saved celebration date: $selectedDate');
           } else {
             debugPrint(
-              '🎯 Saved date $formattedSavedDate not in available dates, keeping default',
+              '🎯 ⚠️ Saved date $formattedSavedDate not in available dates, keeping default',
             );
           }
+        } else {
+          debugPrint('🎯 No saved date found in preferences or widget not mounted');
         }
+      } else {
+        debugPrint('🎯 Selected date already set to: $selectedDate, skipping preferences load');
       }
 
       if (selectedTime.isEmpty) {
@@ -601,9 +616,6 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
   void dispose() {
     commentsController.dispose();
     bannerTextController.dispose();
-    customerNameController.dispose();
-    customerAgeController.dispose();
-    occasionController.dispose();
     super.dispose();
   }
 
@@ -715,12 +727,6 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
               _buildBannerSection(),
               const SizedBox(height: 24),
             ],
-
-            // Customer Info Section
-            _buildSectionTitle('Booking Details'),
-            const SizedBox(height: 12),
-            _buildCustomerInfoSection(),
-            const SizedBox(height: 24),
 
             // Place Image Upload Section
             _buildSectionTitle('Upload place image (optional)'),
@@ -1439,124 +1445,6 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
     );
   }
 
-  Widget _buildCustomerInfoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Name Field
-        Text(
-          'Name *',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Okra',
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: customerNameController,
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Okra'),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primaryColor),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-          ),
-          style: const TextStyle(fontFamily: 'Okra', fontSize: 14),
-        ),
-        const SizedBox(height: 16),
-
-        // Age Field
-        Text(
-          'Age *',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Okra',
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: customerAgeController,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: 'Enter your age',
-            hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Okra'),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primaryColor),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-          ),
-          style: const TextStyle(fontFamily: 'Okra', fontSize: 14),
-        ),
-        const SizedBox(height: 16),
-
-        // Occasion Field
-        Text(
-          'Occasion *',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Okra',
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: occasionController,
-          decoration: InputDecoration(
-            hintText: 'e.g., Birthday, Anniversary, Wedding',
-            hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Okra'),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primaryColor),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-          ),
-          style: const TextStyle(fontFamily: 'Okra', fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'This helps us prepare the perfect setup for your celebration',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-            fontFamily: 'Okra',
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -1798,11 +1686,9 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
   }
 
   Widget _buildImageUploadSection() {
-    return Container(
-      child: selectedPlaceImage != null
-          ? _buildSelectedImageWidget()
-          : _buildImageSelectionWidget(),
-    );
+    return selectedPlaceImage != null
+        ? _buildSelectedImageWidget()
+        : _buildImageSelectionWidget();
   }
 
   Widget _buildImageSelectionWidget() {
@@ -2052,11 +1938,9 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          child: selectedBannerImage != null
-              ? _buildSelectedBannerImageWidget()
-              : _buildBannerImageSelectionWidget(),
-        ),
+        selectedBannerImage != null
+            ? _buildSelectedBannerImageWidget()
+            : _buildBannerImageSelectionWidget(),
         const SizedBox(height: 16),
 
         // Banner Text Input
@@ -2273,27 +2157,6 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
       }
     }
 
-    // Validate customer info fields
-    if (customerNameController.text.trim().isEmpty) {
-      _showError('Please enter your name');
-      return;
-    }
-    if (customerAgeController.text.trim().isEmpty) {
-      _showError('Please enter your age');
-      return;
-    }
-    if (occasionController.text.trim().isEmpty) {
-      _showError('Please enter the occasion');
-      return;
-    }
-
-    // Validate age is a valid number
-    final age = int.tryParse(customerAgeController.text.trim());
-    if (age == null || age <= 0 || age > 120) {
-      _showError('Please enter a valid age');
-      return;
-    }
-
     // Validate service essential fields
     if (widget.service.id.isEmpty) {
       debugPrint('❌ Service ID is empty');
@@ -2328,13 +2191,9 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
       'placeImage': selectedPlaceImage, // Add the selected image
       'bannerImage': selectedBannerImage, // Add the selected banner image
       'bannerText': bannerTextController.text.trim(), // Add the banner text
-      // Customer info
-      'customerName': customerNameController.text.trim(),
-      'customerAge': int.tryParse(customerAgeController.text.trim()) ?? 0,
-      'occasion': occasionController.text.trim(),
     };
 
-    debugPrint('✅ Navigating to checkout with enhanced data:');
+    debugPrint('✅ Navigating to booking details:');
     debugPrint('  - Service: ${widget.service.name} (${widget.service.id})');
     debugPrint('  - Venue: $selectedVenueType');
     debugPrint('  - Environment: $selectedEnvironment');
@@ -2353,12 +2212,9 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
     debugPrint(
       '  - Banner Text: ${bannerTextController.text.isNotEmpty ? "\"${bannerTextController.text.trim()}\"" : "None"}',
     );
-    debugPrint('  - Customer Name: ${customerNameController.text.trim()}');
-    debugPrint('  - Customer Age: ${customerAgeController.text.trim()}');
-    debugPrint('  - Occasion: ${occasionController.text.trim()}');
 
     try {
-      // Combine both types of add-ons for checkout
+      // Combine both types of add-ons
       final combinedAddOns = <String, Map<String, dynamic>>{};
 
       // Add complex customizable add-ons from main screen
@@ -2389,28 +2245,20 @@ class _ServiceBookingScreenState extends ConsumerState<ServiceBookingScreen> {
         };
       }
 
-      debugPrint(
-        '  - Combined Add-ons for checkout: ${combinedAddOns.keys.toList()}',
-      );
       debugPrint('  - Total add-ons count: ${combinedAddOns.length}');
 
-      // Navigate to checkout with enhanced data including separate date and time parameters
+      // Navigate to booking details screen
       context.push(
-        CheckoutScreen.routeName,
+        BookingDetailsScreen.routeName,
         extra: {
           'service': widget.service,
-          'customization': customizationData,
-          'selectedDate': selectedDate,
-          'selectedTimeSlot':
-              null, // Theater time slots not used for regular services
-          'selectedScreen': null,
-          'selectedAddressId': null,
+          'customizationData': customizationData,
           'selectedAddOns': combinedAddOns.isNotEmpty ? combinedAddOns : null,
         },
       );
     } catch (e) {
       debugPrint('❌ Navigation error: $e');
-      _showError('Unable to proceed to checkout. Please try again.');
+      _showError('Unable to proceed. Please try again.');
     }
   }
 

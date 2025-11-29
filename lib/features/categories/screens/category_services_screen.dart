@@ -5,7 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_widget.dart';
 import '../../../core/utils/user_location_helper.dart';
-import '../../home/providers/home_providers.dart';
+import '../../../core/utils/price_calculator.dart';
+import '../providers/category_services_providers.dart';
 import '../../home/models/service_listing_model.dart';
 
 class CategoryServicesScreen extends ConsumerStatefulWidget {
@@ -108,44 +109,14 @@ class _CategoryServicesScreenState
 
   Widget _buildServicesContent(Map<String, dynamic>? locationParams, Color primaryColor) {
     print('🔍 CategoryServicesScreen: _buildServicesContent called with locationParams: $locationParams, decorationType: ${widget.decorationType}');
-    
-    // Use location-enhanced provider if location is available
-    if (locationParams != null && widget.decorationType != null) {
-      final providerParams = {
-        'category': widget.categoryName,
-        'decorationType': widget.decorationType!,
-        'userLat': locationParams['userLat'],
-        'userLon': locationParams['userLon'],
-        'radiusKm': locationParams['radiusKm'],
-      };
-      print('🔍 CategoryServicesScreen: Using location provider with params: $providerParams');
-      
-      final servicesAsync = ref.watch(
-        servicesByCategoryAndDecorationTypeWithLocationProvider(providerParams),
-      );
-      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: true);
-    }
-    
-    // Fallback to basic provider
-    if (widget.decorationType != null) {
-      final providerParams = {
-        'category': widget.categoryName,
-        'decorationType': widget.decorationType!,
-      };
-      print('🔍 CategoryServicesScreen: Using basic combined provider with params: $providerParams');
-      
-      final servicesAsync = ref.watch(
-        servicesByCategoryAndDecorationTypeProvider(providerParams),
-      );
-      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: false);
-    } else {
-      print('🔍 CategoryServicesScreen: Using category-only provider with category: ${widget.categoryName}');
-      
-      final servicesAsync = ref.watch(
-        servicesByCategoryProvider(widget.categoryName),
-      );
-      return _buildServicesView(servicesAsync, primaryColor, isLocationBased: false);
-    }
+
+    // Always use the new category providers (they handle location internally)
+    print('🔍 CategoryServicesScreen: Using categoryServicesProvider with category: ${widget.categoryName}');
+
+    final servicesAsync = ref.watch(
+      categoryServicesProvider(widget.categoryName),
+    );
+    return _buildServicesView(servicesAsync, primaryColor, isLocationBased: locationParams != null);
   }
 
   Widget _buildServicesView(
@@ -417,7 +388,10 @@ class _CategoryServicesScreenState
   Widget _buildServiceCard(BuildContext context, ServiceListingModel service, bool isLocationBased) {
     return GestureDetector(
       onTap: () {
-        context.push('/service/${service.id}');
+        // Pass the service with all calculated price data to detail screen
+        context.push('/service/${service.id}', extra: {
+          'service': service,
+        });
       },
       child: Container(
         decoration: BoxDecoration(
@@ -510,7 +484,11 @@ class _CategoryServicesScreenState
                           children: [
                             if (service.displayOfferPrice != null) ...[
                               Text(
-                                '₹${service.displayOfferPrice!.toInt()}',
+                                PriceCalculator.formatPriceAsInt(
+                                  PriceCalculator.calculateTotalPriceWithTaxes(
+                                    service.displayOfferPrice!,
+                                  ),
+                                ),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -522,7 +500,11 @@ class _CategoryServicesScreenState
                               if (service.displayOriginalPrice != null &&
                                   service.displayOriginalPrice! > service.displayOfferPrice!)
                                 Text(
-                                  '₹${service.displayOriginalPrice!.toInt()}',
+                                  PriceCalculator.formatPriceAsInt(
+                                    PriceCalculator.calculateTotalPriceWithTaxes(
+                                      service.displayOriginalPrice!,
+                                    ),
+                                  ),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.black.withOpacity(0.45),
@@ -532,7 +514,11 @@ class _CategoryServicesScreenState
                                 ),
                             ] else if (service.displayOriginalPrice != null) ...[
                               Text(
-                                '₹${service.displayOriginalPrice!.toInt()}',
+                                PriceCalculator.formatPriceAsInt(
+                                  PriceCalculator.calculateTotalPriceWithTaxes(
+                                    service.displayOriginalPrice!,
+                                  ),
+                                ),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,

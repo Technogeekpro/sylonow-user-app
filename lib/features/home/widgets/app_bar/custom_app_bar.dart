@@ -8,6 +8,7 @@ import 'package:lottie/lottie.dart';
 import 'package:sylonow_user/core/widgets/gredient_elevated_button.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
+import 'package:sylonow_user/features/home/providers/home_providers.dart';
 
 import 'celebration_date_container.dart';
 
@@ -109,6 +110,18 @@ class LocationContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedAddress = ref.watch(selectedAddressProvider);
 
+    // Watch nearby services to determine text color
+    final nearbyState = ref.watch(popularNearbyServicesProvider);
+    final hasServices = nearbyState.maybeWhen(
+      data: (services) => services.isNotEmpty,
+      orElse: () => true, // Default to true during loading/error (show white)
+    );
+
+    // Dynamic colors based on service availability
+    final iconColor = hasServices ? Colors.white : Colors.black87;
+    final textColor = hasServices ? Colors.white : Colors.black87;
+    final subtextColor = hasServices ? Colors.white.withValues(alpha: 0.8) : Colors.black54;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -146,29 +159,31 @@ class LocationContent extends ConsumerWidget {
                       children: [
                         Transform.rotate(
                           angle: 1,
-                          child: const Icon(
+                          child: Icon(
                             Icons.navigation,
-                            color: Colors.white,
+                            color: iconColor,
                             size: 20,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          selectedAddress?.area ?? 'Accurate location detected',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Okra',
+                        Flexible(
+                          child: Text(
+                            selectedAddress?.area ?? 'Accurate location detected',
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Okra',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(width: 8),
                         if (isLocationEnabled && selectedAddress != null)
-                          const Icon(
+                          Icon(
                             Icons.keyboard_arrow_down,
-                            color: Colors.white,
+                            color: iconColor,
                             size: 20,
                           ),
                       ],
@@ -177,7 +192,7 @@ class LocationContent extends ConsumerWidget {
                     Text(
                       selectedAddress?.address ?? 'Current Location',
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.8),
+                        color: subtextColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

@@ -59,6 +59,11 @@ _$ServiceListingModelImpl _$$ServiceListingModelImplFromJson(
       bannerText: json['banner_text'] as String?,
       latitude: _safeNullableDoubleFromJson(json['latitude']),
       longitude: _safeNullableDoubleFromJson(json['longitude']),
+      freeServiceKm: _safeNullableDoubleFromJson(json['free_service_km']),
+      extraChargesPerKm:
+          _safeNullableDoubleFromJson(json['extra_charges_per_km']),
+      distanceKm: _safeNullableDoubleFromJson(json['distance_km']),
+      calculatedPrice: _safeNullableDoubleFromJson(json['calculated_price']),
     );
 
 Map<String, dynamic> _$$ServiceListingModelImplToJson(
@@ -97,4 +102,8 @@ Map<String, dynamic> _$$ServiceListingModelImplToJson(
       'banner_text': instance.bannerText,
       'latitude': instance.latitude,
       'longitude': instance.longitude,
+      'free_service_km': instance.freeServiceKm,
+      'extra_charges_per_km': instance.extraChargesPerKm,
+      'distance_km': instance.distanceKm,
+      'calculated_price': instance.calculatedPrice,
     };

@@ -7,46 +7,63 @@ import '../services/logger.dart';
 /// Helper class to get user location coordinates for location-based features
 class UserLocationHelper {
   /// Get user coordinates from selectedAddressProvider or current location
-  /// 
+  ///
+  /// Priority:
+  /// 1. Selected address coordinates (if available)
+  /// 2. Current GPS location (if no address selected or address has no coordinates)
+  ///
   /// Returns a map with 'latitude' and 'longitude' keys, or null if location unavailable
   static Future<Map<String, double>?> getUserCoordinates(WidgetRef ref) async {
     try {
       Logger.debug('getUserCoordinates: Starting...', tag: 'UserLocationHelper');
-      
-      // First try to get coordinates from selectedAddress if it has them
+
+      // First, try to get coordinates from selected address
       final selectedAddress = ref.read(selectedAddressProvider);
-      Logger.debug('getUserCoordinates: selectedAddress = $selectedAddress', tag: 'UserLocationHelper');
-      
-      // For now, we'll get current location using the location service
-      // In the future, you might want to store coordinates in the address model
+      Logger.debug('getUserCoordinates: selectedAddress = ${selectedAddress?.address}', tag: 'UserLocationHelper');
+
+      // Check if selected address has coordinates
+      if (selectedAddress != null &&
+          selectedAddress.latitude != null &&
+          selectedAddress.longitude != null) {
+        final coordinates = {
+          'latitude': selectedAddress.latitude!,
+          'longitude': selectedAddress.longitude!,
+        };
+        Logger.success('getUserCoordinates: Using selected address coordinates = $coordinates', tag: 'UserLocationHelper');
+        return coordinates;
+      }
+
+      Logger.debug('getUserCoordinates: No coordinates in selected address, falling back to GPS location', tag: 'UserLocationHelper');
+
+      // Fallback to current GPS location
       final locationService = ref.read(locationServiceProvider);
       Logger.debug('getUserCoordinates: locationService obtained', tag: 'UserLocationHelper');
-      
+
       // Check if we have permission
       Logger.debug('getUserCoordinates: Checking permissions...', tag: 'UserLocationHelper');
       final permission = await locationService.getPermissionStatus();
       Logger.debug('getUserCoordinates: Permission status = $permission', tag: 'UserLocationHelper');
-      
-      if (permission != LocationPermission.whileInUse && 
+
+      if (permission != LocationPermission.whileInUse &&
           permission != LocationPermission.always) {
         Logger.warning('getUserCoordinates: Insufficient permissions, returning null', tag: 'UserLocationHelper');
         return null;
       }
-      
+
       // Get current position
       Logger.debug('getUserCoordinates: Getting current location...', tag: 'UserLocationHelper');
       final position = await locationService.getCurrentLocation();
       Logger.debug('getUserCoordinates: Position = $position', tag: 'UserLocationHelper');
-      
+
       if (position != null) {
         final coordinates = {
           'latitude': position.latitude,
           'longitude': position.longitude,
         };
-        Logger.success('getUserCoordinates: Returning coordinates = $coordinates', tag: 'UserLocationHelper');
+        Logger.success('getUserCoordinates: Returning GPS coordinates = $coordinates', tag: 'UserLocationHelper');
         return coordinates;
       }
-      
+
       Logger.warning('getUserCoordinates: Position is null, returning null', tag: 'UserLocationHelper');
       return null;
     } catch (e) {

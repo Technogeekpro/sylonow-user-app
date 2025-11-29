@@ -57,7 +57,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _isProcessingPayment = false;
   late RazorpayPaymentService _razorpayService;
 
-  // Advance payment calculation (60% upfront, 40% after service)
+  // Advance payment calculation using backend formula
   Map<String, dynamic>? advancePaymentData;
   bool isLoadingAdvancePayment = false;
 
@@ -420,6 +420,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         setState(() {
                           _peopleCount--;
                         });
+                        // Recalculate advance payment when people count changes
+                        _calculateAdvancePayment();
                       }
                     : null,
                 icon: Icon(
@@ -450,6 +452,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         setState(() {
                           _peopleCount++;
                         });
+                        // Recalculate advance payment when people count changes
+                        _calculateAdvancePayment();
                       }
                     : null,
                 icon: Icon(
@@ -743,6 +747,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           _extraPersonCharges;
     final grandTotal = basePrice + totalExtraPrice;
 
+    // Get the actual total price user sees (with taxes) from advance payment data
+    final totalPriceUserSees = advancePaymentData != null
+        ? (advancePaymentData!['total_price_user_sees'] as num).toDouble()
+        : grandTotal;
+
+    // Calculate convenience fee (₹28 fixed tax) - we show it as "saved"
+    const convenienceFee = 28.0;
+    final itemTotal = totalPriceUserSees + convenienceFee;
+
+    // Calculate advance payment
+    final advanceAmount = advancePaymentData != null
+        ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
+        : 0.0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -759,87 +777,269 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Order Summary',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Okra',
-              color: Color(0xFF111827),
-              letterSpacing: -0.5,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              const Text(
+                'Order Summary',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Okra',
+                  color: Color(0xFF111827),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '(Incl. all taxes)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Okra',
+                  color: Colors.grey[600],
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Item Total with strikethrough
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Item Total',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                    color: Colors.grey[700],
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      '₹${_formatPrice(itemTotal)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Okra',
+                        color: Colors.grey[500],
+                        decoration: TextDecoration.lineThrough,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '₹${_formatPrice(totalPriceUserSees)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Okra',
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 18),
 
-          // Base price
-          _buildSummaryRow('Time Slot Base Price', '₹${basePrice.round()}'),
-
-          if (widget.selectedAddons.isNotEmpty)
-            _buildSummaryRow('Add-ons (${widget.selectedAddons.length})', '₹${widget.totalAddonPrice.round()}'),
-
-          if (widget.selectedExtraSpecials.isNotEmpty)
-            _buildSummaryRow('Extra Special (${widget.selectedExtraSpecials.length})', '₹${widget.totalExtraSpecialPrice.round()}'),
-
-          if (widget.selectedSpecialServices.isNotEmpty)
-            _buildSummaryRow('Special Services (${widget.selectedSpecialServices.length})', '₹${widget.totalSpecialServicesPrice.round()}'),
-
-          if (_selectedCakes.isNotEmpty)
-            _buildSummaryRow('Cakes (${_selectedCakes.length})', '₹${_totalCakePrice.round()}'),
-
-          if (_extraPersonCharges > 0)
-            _buildSummaryRow(
-              'Extra Person Charges (${_peopleCount - (widget.screen.allowedCapacity ?? 0)} ${(_peopleCount - (widget.screen.allowedCapacity ?? 0)) == 1 ? 'person' : 'people'})',
-              '₹${_extraPersonCharges.round()}',
+          // Convenience Fee (shown as free/saved)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Convenience Fee',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Okra',
+                    color: Colors.grey[700],
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      '₹${convenienceFee.round()}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Okra',
+                        color: Colors.grey[500],
+                        decoration: TextDecoration.lineThrough,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '₹0',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Okra',
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-
-          _buildSummaryRow('People Count', '$_peopleCount', showPrice: false),
+          ),
 
           const Divider(height: 24),
 
-          _buildSummaryRow('Total', '₹${grandTotal.round()}', isTotal: true),
-
-          // Advance payment section
-          if (advancePaymentData != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withOpacity(0.2)),
-              ),
-              child: Column(
+          // To Pay - Advance
+          if (advancePaymentData != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Payment Split',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
-                            fontFamily: 'Okra',
-                          ),
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'To Pay - Advance',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Okra',
+                      color: Color(0xFF111827),
+                      letterSpacing: -0.3,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  _buildSummaryRow(
-                    'Advance (60%)',
-                    '₹${(advancePaymentData!['user_advance_payment'] as num).round()}',
-                  ),
-                  _buildSummaryRow(
-                    'After Service (40%)',
-                    '₹${((grandTotal - (advancePaymentData!['user_advance_payment'] as num))).round()}',
+                  Text(
+                    '₹${_formatPrice(advanceAmount)}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Okra',
+                      color: AppTheme.primaryColor,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+
+          // Pending amount after service
+          if (advancePaymentData != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Pending (After Service)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Okra',
+                      color: Colors.grey[700],
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  Text(
+                    '₹${_formatPrice((advancePaymentData!['remaining_payment'] as num).toDouble())}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Okra',
+                      color: Colors.grey[800],
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Total Savings
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.green.withOpacity(0.2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.savings_outlined, size: 18, color: Colors.green[700]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Total Savings',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Okra',
+                        color: Colors.green[700],
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '₹${convenienceFee.round()}',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Okra',
+                    color: Colors.green[700],
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Cancellation Policy
+          TextButton(
+            onPressed: () {
+              _showCancellationPolicyDialog();
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: AppTheme.primaryColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Cancellation Policy',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Okra',
+                    color: AppTheme.primaryColor,
+                    letterSpacing: -0.2,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
           if (isLoadingAdvancePayment)
             const Padding(
@@ -889,17 +1089,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildBottomPaymentBar() {
-    final grandTotal = widget.timeSlot.effectivePrice +
-                      widget.totalAddonPrice +
-                      widget.totalExtraSpecialPrice +
-                      widget.totalSpecialServicesPrice +
-                      _totalCakePrice +
-                      _extraPersonCharges;
+    // Get the actual total price user sees (with taxes)
+    final totalPriceUserSees = advancePaymentData != null
+        ? (advancePaymentData!['total_price_user_sees'] as num).toDouble()
+        : 0.0;
 
-    // Get advance payment amount (60% of total)
+    // Get advance payment amount from calculation
     final advanceAmount = advancePaymentData != null
         ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
-        : grandTotal * 0.6; // Fallback to 60% if RPC fails
+        : 0.0; // Will show 0 if calculation hasn't completed yet
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -922,7 +1120,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pay Now (60%)',
+                    'Pay Now (Advance)',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -933,7 +1131,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '₹${advanceAmount.round()}',
+                    '₹${_formatPrice(advanceAmount)}',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
@@ -944,7 +1142,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                   Text(
-                    'Total: ₹${grandTotal.round()}',
+                    'Total: ₹${_formatPrice(totalPriceUserSees)}',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.grey[600],
@@ -1017,15 +1215,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         _totalCakePrice +
                         _extraPersonCharges;
 
-      // Calculate advance payment (60% of total)
-      final advanceAmount = advancePaymentData != null
-          ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
-          : grandTotal * 0.6; // Fallback to 60% if RPC fails
+      // Get calculated advance payment amount
+      if (advancePaymentData == null) {
+        throw Exception('Payment calculation not completed. Please wait...');
+      }
+
+      final advanceAmount = (advancePaymentData!['user_advance_payment'] as num).toDouble();
+      final totalPriceUserSees = (advancePaymentData!['total_price_user_sees'] as num).toDouble();
+      final remainingPayment = (advancePaymentData!['remaining_payment'] as num).toDouble();
 
       print('📊 Payment Details:');
-      print('  Grand Total: ₹${grandTotal.round()}');
-      print('  Advance (60%): ₹${advanceAmount.round()}');
-      print('  Remaining (40%): ₹${(grandTotal - advanceAmount).round()}');
+      print('  Total Price (with taxes): ₹${_formatPrice(totalPriceUserSees)}');
+      print('  Advance Payment: ₹${_formatPrice(advanceAmount)}');
+      print('  Remaining Payment: ₹${_formatPrice(remainingPayment)}');
 
       // For testing without backend, we'll skip order creation
       final orderId = 'test_order_${DateTime.now().millisecondsSinceEpoch}';
@@ -1059,7 +1261,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       // Initiate Razorpay payment with advance amount
       print('💳 Initiating payment for ₹${advanceAmount.round()}...');
       await _razorpayService.initiatePayment(
-        amount: advanceAmount, // Pay only 60% upfront
+        amount: advanceAmount, // Pay calculated advance amount
         orderId: orderId,
         customerName: user.email?.split('@').first ?? user.phone ?? 'User',
         customerEmail: user.email ?? 'user@example.com',
@@ -1097,16 +1299,37 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       print('✅ Payment successful! Payment ID: ${response.paymentId}');
 
-      // Update booking with payment details
-      // Note: payment_status stays 'pending' for remaining 40% (allowed: pending, paid, failed, refunded)
-      // We keep it as 'pending' to indicate the remaining 40% is still due
+      // Get payment calculation values
+      final userAdvancePayment = advancePaymentData != null
+          ? (advancePaymentData!['user_advance_payment'] as num).toDouble()
+          : advanceAmount;
+
+      final remainingPayment = advancePaymentData != null
+          ? (advancePaymentData!['remaining_payment'] as num).toDouble()
+          : grandTotal - advanceAmount;
+
+      final totalVendorPayout = advancePaymentData != null
+          ? (advancePaymentData!['total_vendor_payout'] as num).toDouble()
+          : grandTotal * 0.95; // Fallback: 95% of total (5% commission)
+
+      print('📊 Payment Breakdown:');
+      print('  User Advance Payment: ₹${userAdvancePayment.toStringAsFixed(2)}');
+      print('  Remaining Payment: ₹${remainingPayment.toStringAsFixed(2)}');
+      print('  Admin Payout (to vendor): ₹${totalVendorPayout.toStringAsFixed(2)}');
+
+      // Update booking with payment details and calculated amounts
+      // Note: payment_status stays 'pending' for remaining payment (allowed: pending, paid, failed, refunded)
+      // We keep it as 'pending' to indicate the remaining payment is still due
       await bookingService.updateBookingStatus(
         bookingId: bookingId,
         bookingStatus: 'confirmed',
-        paymentStatus: 'pending', // Keep as pending since 40% is still due (no 'partial' option)
+        paymentStatus: 'pending', // Keep as pending since remaining payment is still due (no 'partial' option)
         paymentId: response.paymentId,
+        userAdvancePayment: userAdvancePayment,
+        pendingAmount: remainingPayment,
+        adminPayout: totalVendorPayout,
       );
-      print('✅ Booking status updated to confirmed with partial payment');
+      print('✅ Booking status updated to confirmed with advance payment details');
 
       // Mark time slot as booked
       await bookingService.markTimeSlotAsBooked(
@@ -1163,7 +1386,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _showSuccessDialog(double grandTotal, double advanceAmount) {
-    final remainingAmount = grandTotal - advanceAmount;
+    final remainingAmount = advancePaymentData != null
+        ? (advancePaymentData!['remaining_payment'] as num).toDouble()
+        : grandTotal - advanceAmount;
 
     showDialog(
       context: context,
@@ -1218,7 +1443,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Paid Now (60%):',
+                        'Paid Now (Advance):',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -1227,7 +1452,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                       ),
                       Text(
-                        '₹${advanceAmount.round()}',
+                        '₹${_formatPrice(advanceAmount)}',
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -1242,7 +1467,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'After Service (40%):',
+                        'After Service:',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -1251,7 +1476,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ),
                       ),
                       Text(
-                        '₹${remainingAmount.round()}',
+                        '₹${_formatPrice(remainingAmount)}',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -1386,7 +1611,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   /// Calculate advance payment using Supabase RPC
-  /// This calls the calculate_advance_payment RPC function that calculates 60% advance
+  /// This calls the calculate_advance_payment RPC function with the correct formula
   Future<void> _calculateAdvancePayment() async {
     setState(() {
       isLoadingAdvancePayment = true;
@@ -1397,11 +1622,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final addonsTotal = widget.totalAddonPrice +
                           widget.totalExtraSpecialPrice +
                           widget.totalSpecialServicesPrice +
-                          _totalCakePrice;
+                          _totalCakePrice +
+                          _extraPersonCharges;
 
       print('🧮 Calculating advance payment...');
       print('  Base Price: ₹${basePrice.round()}');
-      print('  Add-ons Total: ₹${addonsTotal.round()}');
+      print('  Add-ons Total (including extra person charges): ₹${addonsTotal.round()}');
 
       // Get theater owner's vendor_id
       final theaterResponse = await Supabase.instance.client
@@ -1427,17 +1653,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           .maybeSingle();
 
       if (profileResponse == null) {
-        // If no profile found, use a fallback calculation
-        print('⚠️ No vendor profile found, using 60% fallback');
-        final grandTotal = basePrice + addonsTotal;
-        final advanceAmount = grandTotal * 0.6;
+        // If no profile found, calculate with default values
+        print('⚠️ No vendor profile found, using default calculation');
+        final result = _calculateWithDefaultFormula(basePrice, addonsTotal);
 
         if (mounted) {
           setState(() {
-            advancePaymentData = {
-              'user_advance_payment': advanceAmount,
-              'vendor_advance_payment': advanceAmount, // Same as user for theater bookings
-            };
+            advancePaymentData = result;
             isLoadingAdvancePayment = false;
           });
         }
@@ -1463,29 +1685,256 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           isLoadingAdvancePayment = false;
         });
         print('✅ Advance payment calculated:');
-        print('  User pays: ₹${(response as Map<String, dynamic>)['user_advance_payment']}');
-        print('  Vendor receives: ₹${response['vendor_advance_payment']}');
+        print('  Service with taxes: ₹${(response as Map<String, dynamic>)['service_with_all_taxes']}');
+        print('  Addons with taxes: ₹${response['addons_with_all_taxes']}');
+        print('  Total price user sees: ₹${response['total_price_user_sees']}');
+        print('  Commission: ₹${response['commission']}');
+        print('  Total commission (incl GST): ₹${response['total_commission']}');
+        print('  Total vendor payout: ₹${response['total_vendor_payout']}');
+        print('  User advance payment: ₹${response['user_advance_payment']}');
+        print('  Remaining payment: ₹${response['remaining_payment']}');
       }
     } catch (e) {
       print('⚠️ Error calculating advance payment: $e');
-      // Fallback to simple 60% calculation
+      // Fallback to formula with default values
       final basePrice = widget.timeSlot.effectivePrice;
       final addonsTotal = widget.totalAddonPrice +
                           widget.totalExtraSpecialPrice +
                           widget.totalSpecialServicesPrice +
-                          _totalCakePrice;
-      final grandTotal = basePrice + addonsTotal;
-      final advanceAmount = grandTotal * 0.6;
+                          _totalCakePrice +
+                          _extraPersonCharges;
+
+      final result = _calculateWithDefaultFormula(basePrice, addonsTotal);
 
       if (mounted) {
         setState(() {
-          advancePaymentData = {
-            'user_advance_payment': advanceAmount,
-            'vendor_advance_payment': advanceAmount,
-          };
+          advancePaymentData = result;
           isLoadingAdvancePayment = false;
         });
       }
     }
+  }
+
+  /// Calculate advance payment with default formula values
+  /// This replicates the backend formula with default constants
+  Map<String, dynamic> _calculateWithDefaultFormula(double servicePrice, double addonsPrice) {
+    // Constants from the backend formula
+    const fixedTax = 28.00;
+    const percentTax = 3.54;
+    const commissionPercent = 5.00;
+    const commissionGstPercent = 18.00;
+    const advanceFactor = 40.00;
+
+    // Step 1: Service with all taxes
+    final serviceWithTax = servicePrice + fixedTax + (servicePrice * percentTax / 100);
+
+    // Step 2: Add-ons with all taxes
+    final addonsWithTax = addonsPrice + (addonsPrice * percentTax / 100);
+
+    // Step 3: Commission
+    final commission = (servicePrice + addonsPrice) * (commissionPercent / 100);
+
+    // Step 4: Total commission (commission + GST on commission)
+    final totalCommission = commission * (1 + commissionGstPercent / 100);
+
+    // Step 5: Total vendor payout
+    final totalVendorPayout = (servicePrice + addonsPrice) - totalCommission;
+
+    // Step 6: Total price user sees
+    final totalPriceUserSees = serviceWithTax + addonsWithTax;
+
+    // Step 7: User advance payment
+    final userAdvancePayment = totalPriceUserSees - (totalVendorPayout * advanceFactor / 100);
+
+    return {
+      'service_with_all_taxes': serviceWithTax,
+      'addons_with_all_taxes': addonsWithTax,
+      'commission': commission,
+      'total_commission': totalCommission,
+      'total_vendor_payout': totalVendorPayout,
+      'total_price_user_sees': totalPriceUserSees,
+      'user_advance_payment': userAdvancePayment,
+      'remaining_payment': totalPriceUserSees - userAdvancePayment,
+    };
+  }
+
+  /// Smart rounding: Round up if decimal > 0.49, otherwise keep decimal
+  String _formatPrice(double price) {
+    final decimal = price - price.floor();
+    if (decimal > 0.49) {
+      return price.ceil().toString();
+    } else {
+      return price.toStringAsFixed(2);
+    }
+  }
+
+  /// Show cancellation policy dialog
+  void _showCancellationPolicyDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Cancellation Policy',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Okra',
+              fontSize: 18,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Refunds are subject to the time of cancellation before the scheduled service:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildRefundTable(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Additional Terms:',
+                  style: TextStyle(
+                    fontFamily: 'Okra',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildRefundTerms(),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontFamily: 'Okra',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRefundTable() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Time Before Service',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Refund Amount',
+                    style: TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildTableRow('More than 24 Hours', '50%'),
+          _buildTableRow('24 to 12 Hours', '30%'),
+          _buildTableRow('12 to 6 Hours', '17%'),
+          _buildTableRow('Less than 6 Hours', 'No Refund'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableRow(String time, String refundAmount) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              time,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              refundAmount,
+              style: const TextStyle(fontFamily: 'Okra', fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRefundTerms() {
+    const terms = [
+      '• Refunds will be processed within 5-7 working days.',
+      '• Refund will be credited to the original payment method used during booking.',
+      '• Service charges and transaction fees are non-refundable.',
+      '• In case of any disputes, the decision of Sylonow management will be final.',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: terms
+          .map(
+            (term) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                term,
+                style: const TextStyle(
+                  fontFamily: 'Okra',
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
   }
 }

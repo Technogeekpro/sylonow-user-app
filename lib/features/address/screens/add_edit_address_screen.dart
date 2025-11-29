@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sylonow_user/core/providers/core_providers.dart';
 import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/features/address/models/address_model.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
+import 'package:sylonow_user/features/address/screens/location_picker_screen.dart';
 import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:uuid/uuid.dart';
 
@@ -33,6 +33,13 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
   Address? _existingAddress;
   bool get _isEditing => widget.addressId != null;
 
+  // Store coordinates from location picker
+  double? _selectedLatitude;
+  double? _selectedLongitude;
+  // Store state and city for regional filtering
+  String? _selectedState;
+  String? _selectedCity;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +66,12 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
       _floorController.text = _existingAddress?.floor ?? '';
       _phoneController.text = _existingAddress?.phoneNumber ?? '';
       _addressType = _existingAddress?.addressFor ?? AddressType.home;
+      // Load existing coordinates
+      _selectedLatitude = _existingAddress?.latitude;
+      _selectedLongitude = _existingAddress?.longitude;
+      // Load existing state and city
+      _selectedState = _existingAddress?.state;
+      _selectedCity = _existingAddress?.city;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -84,29 +97,59 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchCurrentLocation() async {
-    setState(() => _isLoading = true);
-    try {
-      final locationService = ref.read(locationServiceProvider);
-      final position = await locationService.getCurrentLocation();
-      if (position != null) {
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-        if (placemarks.isNotEmpty) {
-          final p = placemarks.first;
-          _addressController.text = '${p.street}, ${p.subLocality}';
-          _areaController.text = p.locality ?? '';
-          _nearbyController.text = p.subAdministrativeArea ?? '';
+  Future<void> _openLocationPicker() async {
+    // Navigate to location picker screen and wait for result
+    final result = await context.push(LocationPickerScreen.routeName);
+
+    if (result != null && result is Map<String, dynamic>) {
+      final latitude = result['latitude'] as double?;
+      final longitude = result['longitude'] as double?;
+      final address = result['address'] as String?;
+
+      if (latitude != null && longitude != null && address != null) {
+        // Store coordinates for saving later
+        _selectedLatitude = latitude;
+        _selectedLongitude = longitude;
+
+        // Parse the address and populate fields
+        try {
+          final placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+          if (placemarks.isNotEmpty) {
+            final place = placemarks.first;
+
+            // Build street address
+            final streetParts = <String>[];
+            if (place.street != null && place.street!.isNotEmpty) {
+              streetParts.add(place.street!);
+            }
+            if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+              streetParts.add(place.subLocality!);
+            }
+
+            setState(() {
+              _addressController.text = streetParts.isNotEmpty
+                  ? streetParts.join(', ')
+                  : address;
+              _areaController.text = place.locality ?? '';
+              _nearbyController.text = place.subAdministrativeArea ?? '';
+              // Extract state and city for regional filtering
+              _selectedState = place.administrativeArea; // State (e.g., Maharashtra, Karnataka)
+              _selectedCity = place.locality; // City (e.g., Mumbai, Bangalore)
+            });
+          } else {
+            // If no placemark found, just use the address from picker
+            setState(() {
+              _addressController.text = address;
+            });
+          }
+        } catch (e) {
+          // If geocoding fails, just use the address from picker
+          setState(() {
+            _addressController.text = address;
+          });
         }
       }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error fetching location: $e')));
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -129,6 +172,12 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
           floor: _floorController.text,
           phoneNumber: _phoneController.text,
           addressFor: _addressType,
+          // Save coordinates from location picker
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          // Save state and city for regional filtering
+          state: _selectedState,
+          city: _selectedCity,
         );
 
         if (_isEditing) {
@@ -354,9 +403,9 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         ),
         elevation: 0,
       ),
-      onPressed: _fetchCurrentLocation,
-      icon: const Icon(Icons.my_location),
-      label: const Text('Use Current Location'),
+      onPressed: _openLocationPicker,
+      icon: const Icon(Icons.location_on),
+      label: const Text('Select Location on Map'),
     );
   }
 
@@ -367,7 +416,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),

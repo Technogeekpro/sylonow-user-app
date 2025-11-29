@@ -17,6 +17,10 @@ _$AddressImpl _$$AddressImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String?,
       floor: json['floor'] as String?,
       phoneNumber: json['phone_number'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      state: json['state'] as String?,
+      city: json['city'] as String?,
     );
 
 Map<String, dynamic> _$$AddressImplToJson(_$AddressImpl instance) =>
@@ -30,6 +34,10 @@ Map<String, dynamic> _$$AddressImplToJson(_$AddressImpl instance) =>
       'name': instance.name,
       'floor': instance.floor,
       'phone_number': instance.phoneNumber,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'state': instance.state,
+      'city': instance.city,
     };
 
 const _$AddressTypeEnumMap = {

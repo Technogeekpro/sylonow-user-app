@@ -23,10 +23,8 @@ class PaymentRepository {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      // Validate that either bookingId or orderId is provided
-      if (bookingId == null && orderId == null) {
-        throw Exception('Either bookingId or orderId must be provided');
-      }
+      // Allow creating payment transactions without booking/order ID for payment-first flow
+      // Validate that both are not provided simultaneously
       if (bookingId != null && orderId != null) {
         throw Exception('Cannot provide both bookingId and orderId');
       }
@@ -74,6 +72,8 @@ class PaymentRepository {
     String? razorpaySignature,
     String? failureReason,
     DateTime? processedAt,
+    String? orderId,
+    String? bookingId,
   }) async {
     try {
       final updateData = <String, dynamic>{
@@ -92,6 +92,12 @@ class PaymentRepository {
       }
       if (processedAt != null) {
         updateData['processed_at'] = processedAt.toIso8601String();
+      }
+      if (orderId != null) {
+        updateData['order_id'] = orderId;
+      }
+      if (bookingId != null) {
+        updateData['booking_id'] = bookingId;
       }
 
       final response = await _supabase

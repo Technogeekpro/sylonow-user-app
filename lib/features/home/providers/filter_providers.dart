@@ -2,14 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/filter_model.dart';
 import '../models/service_listing_model.dart';
 import 'home_providers.dart';
+import '../../../core/utils/location_utils.dart';
+import '../../address/providers/address_providers.dart';
 
 // Filter state provider for inside decoration services
 final insideFilterProvider = StateProvider<ServiceFilter>((ref) {
   return const ServiceFilter();
 });
 
-// Filter state provider for outside decoration services  
+// Filter state provider for outside decoration services
 final outsideFilterProvider = StateProvider<ServiceFilter>((ref) {
+  return const ServiceFilter();
+});
+
+// Filter state provider for all services
+final allServicesFilterProvider = StateProvider<ServiceFilter>((ref) {
   return const ServiceFilter();
 });
 
@@ -23,7 +30,7 @@ final filteredInsideServicesProvider = FutureProvider<List<ServiceListingModel>>
 
     print('🔍 FILTER_PROVIDER: Inside services received - count: ${baseServices.length}');
 
-    var filteredServices = _applyFilters(baseServices, filter);
+    var filteredServices = _applyFilters(baseServices, filter, ref);
 
     // Apply search filter
     if (searchQuery.isNotEmpty) {
@@ -52,7 +59,7 @@ final filteredOutsideServicesProvider = FutureProvider<List<ServiceListingModel>
     print('🐛 FILTER_PROVIDER: baseServices type: ${baseServices.runtimeType}');
 
     print('🐛 FILTER_PROVIDER: About to call _applyFilters with ${baseServices.length} services');
-    var filteredServices = _applyFilters(baseServices, filter);
+    var filteredServices = _applyFilters(baseServices, filter, ref);
 
     // Apply search filter
     if (searchQuery.isNotEmpty) {
@@ -68,8 +75,38 @@ final filteredOutsideServicesProvider = FutureProvider<List<ServiceListingModel>
   }
 });
 
+// Filtered services provider for all services (not filtered by decoration type)
+final filteredAllServicesProvider = FutureProvider<List<ServiceListingModel>>((ref) async {
+  try {
+    print('🔍 FILTER_PROVIDER: filteredAllServicesProvider - Starting all services fetch');
+
+    // Fetch all services without decoration type filter
+    final repository = ref.watch(homeRepositoryProvider);
+    final baseServices = await repository.getFeaturedServices(limit: 100, offset: 0);
+
+    final filter = ref.watch(allServicesFilterProvider);
+    final searchQuery = ref.watch(allServicesSearchQueryProvider);
+
+    print('🔍 FILTER_PROVIDER: All services received - count: ${baseServices.length}');
+
+    var filteredServices = _applyFilters(baseServices, filter, ref);
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      filteredServices = _applySearchFilter(filteredServices, searchQuery);
+    }
+
+    print('🔍 FILTER_PROVIDER: All services after filtering - count: ${filteredServices.length}');
+    return filteredServices;
+  } catch (e, stackTrace) {
+    print('🔍 FILTER_PROVIDER: Error in filteredAllServicesProvider: $e');
+    print('🔍 FILTER_PROVIDER: Stack trace: $stackTrace');
+    return <ServiceListingModel>[];
+  }
+});
+
 // Helper function to apply filters to services
-List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, ServiceFilter filter) {
+List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, ServiceFilter filter, Ref ref) {
   try {
     print('🐛 FILTER_PROVIDER: _applyFilters - Line 68: Starting filter application');
     print('🐛 Services count: ${services.length}');
@@ -173,13 +210,40 @@ List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, Serv
     }).toList();
   }
   
-  // Apply distance filter (if location data is available)
+  // Apply distance filter using coordinate-based calculation (if location data is available)
   if (filter.maxDistanceKm < 40) {
-    filteredServices = filteredServices.where((service) {
-      final distance = service.distanceKm;
-      if (distance == null) return true; // Include services without distance data
-      return distance <= filter.maxDistanceKm;
-    }).toList();
+    // Get user coordinates from selected address
+    final selectedAddress = ref.watch(selectedAddressProvider);
+    final userLat = selectedAddress?.latitude;
+    final userLon = selectedAddress?.longitude;
+
+    if (userLat != null && userLon != null) {
+      print('🔍 FILTER_PROVIDER: Applying distance filter - ${filter.maxDistanceKm}km from ($userLat, $userLon)');
+
+      filteredServices = filteredServices.where((service) {
+        final serviceLat = service.latitude;
+        final serviceLon = service.longitude;
+
+        // Include services without coordinates (fallback)
+        if (serviceLat == null || serviceLon == null) {
+          return true;
+        }
+
+        // Calculate actual distance using Haversine formula
+        final distance = LocationUtils.calculateDistance(
+          lat1: userLat,
+          lon1: userLon,
+          lat2: serviceLat,
+          lon2: serviceLon,
+        );
+
+        return distance <= filter.maxDistanceKm;
+      }).toList();
+
+      print('🔍 FILTER_PROVIDER: After distance filter: ${filteredServices.length} services within ${filter.maxDistanceKm}km');
+    } else {
+      print('🔍 FILTER_PROVIDER: No user coordinates available, skipping distance filter');
+    }
   }
   
   // Apply sorting
@@ -227,11 +291,47 @@ List<ServiceListingModel> _applyFilters(List<ServiceListingModel> services, Serv
       });
       break;
     case SortOption.nearestFirst:
-      filteredServices.sort((a, b) {
-        final distanceA = a.distanceKm ?? 999.0;
-        final distanceB = b.distanceKm ?? 999.0;
-        return distanceA.compareTo(distanceB);
-      });
+      // Get user coordinates from selected address
+      final selectedAddress = ref.watch(selectedAddressProvider);
+      final userLat = selectedAddress?.latitude;
+      final userLon = selectedAddress?.longitude;
+
+      if (userLat != null && userLon != null) {
+        // Sort by real-time calculated distance using coordinates
+        filteredServices.sort((a, b) {
+          final aLat = a.latitude;
+          final aLon = a.longitude;
+          final bLat = b.latitude;
+          final bLon = b.longitude;
+
+          // Services without coordinates go to the end
+          if (aLat == null || aLon == null) return 1;
+          if (bLat == null || bLon == null) return -1;
+
+          // Calculate distances using Haversine formula
+          final distanceA = LocationUtils.calculateDistance(
+            lat1: userLat,
+            lon1: userLon,
+            lat2: aLat,
+            lon2: aLon,
+          );
+          final distanceB = LocationUtils.calculateDistance(
+            lat1: userLat,
+            lon1: userLon,
+            lat2: bLat,
+            lon2: bLon,
+          );
+
+          return distanceA.compareTo(distanceB);
+        });
+      } else {
+        // Fallback to pre-calculated distance if no user coordinates
+        filteredServices.sort((a, b) {
+          final distanceA = a.distanceKm ?? 999.0;
+          final distanceB = b.distanceKm ?? 999.0;
+          return distanceA.compareTo(distanceB);
+        });
+      }
       break;
     case SortOption.relevance:
     default:
@@ -261,6 +361,12 @@ final insideActiveFiltersCountProvider = Provider<int>((ref) {
 // Active filters count provider for outside services
 final outsideActiveFiltersCountProvider = Provider<int>((ref) {
   final filter = ref.watch(outsideFilterProvider);
+  return _countActiveFilters(filter);
+});
+
+// Active filters count provider for all services
+final allServicesActiveFiltersCountProvider = Provider<int>((ref) {
+  final filter = ref.watch(allServicesFilterProvider);
   return _countActiveFilters(filter);
 });
 
@@ -314,6 +420,9 @@ final insideSearchQueryProvider = StateProvider<String>((ref) => '');
 
 // Search query provider for outside screen
 final outsideSearchQueryProvider = StateProvider<String>((ref) => '');
+
+// Search query provider for all services screen
+final allServicesSearchQueryProvider = StateProvider<String>((ref) => '');
 
 // Helper function to apply search filtering
 List<ServiceListingModel> _applySearchFilter(List<ServiceListingModel> services, String query) {

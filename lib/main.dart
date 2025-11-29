@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/app_update_service.dart';
 import 'firebase_options.dart';
 
 /// Handle background messages when app is terminated or in background
@@ -69,7 +70,52 @@ class MainApp extends ConsumerStatefulWidget {
 
 class _MainAppState extends ConsumerState<MainApp> {
   DateTime? _lastPressedAt;
-  
+  final _appUpdateService = AppUpdateService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for app updates after the first frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Add a small delay to ensure context is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _checkForUpdates();
+        }
+      });
+    });
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      if (kDebugMode) {
+        debugPrint('🔄 Checking for app updates...');
+      }
+
+      final updateInfo = await _appUpdateService.checkForUpdate();
+
+      if (kDebugMode) {
+        debugPrint('🔄 Update check result: ${updateInfo != null ? "Update available!" : "No update needed"}');
+        if (updateInfo != null) {
+          debugPrint('🔄 Current version: ${updateInfo['current_version']}');
+          debugPrint('🔄 Latest version: ${updateInfo['latest_version']}');
+          debugPrint('🔄 Force update: ${updateInfo['force_update']}');
+        }
+      }
+
+      if (updateInfo != null && mounted) {
+        if (kDebugMode) {
+          debugPrint('🔄 Showing update dialog...');
+        }
+        await _appUpdateService.showUpdateDialog(context, updateInfo);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('🔄 ❌ Error checking for updates: $e');
+      }
+    }
+  }
+
   Future<bool> _showExitDialog() async {
     final shouldExit = await showDialog<bool>(
       context: context,

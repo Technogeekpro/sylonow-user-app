@@ -81,12 +81,12 @@ class VendorModel with _$VendorModel {
     
     /// Timestamp when vendor was last online
     @JsonKey(name: 'last_online_at') DateTime? lastOnlineAt,
-    
+
     /// Timestamp when created
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    
+    @JsonKey(name: 'created_at') DateTime? createdAt,
+
     /// Timestamp when last updated
-    @JsonKey(name: 'updated_at') required DateTime updatedAt,
+    @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _VendorModel;
 
   /// Creates a VendorModel from JSON
