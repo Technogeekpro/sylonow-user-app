@@ -19,6 +19,7 @@ import 'package:sylonow_user/features/auth/providers/auth_providers.dart';
 import 'package:sylonow_user/features/profile/providers/profile_providers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sylonow_user/core/services/app_update_service.dart';
 
 /// Optimized home screen with performance improvements
 class OptimizedHomeScreen extends ConsumerStatefulWidget {
@@ -52,6 +53,10 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
   // Welcome overlay state
   bool _showWelcomeOverlay = false;
 
+  // App update service
+  final _appUpdateService = AppUpdateService();
+  var _hasCheckedForUpdate = false;
+
   // Memoized search texts - only create once
   static const List<String> _searchTexts = [
     'Birthday Decoration',
@@ -78,7 +83,34 @@ class _OptimizedHomeScreenState extends ConsumerState<OptimizedHomeScreen>
       _checkLocationPermissionAsync();
       _checkAndShowWelcomeOverlay();
       _initializeFCMToken();
+      _checkForAppUpdates();
     });
+  }
+
+  /// Check for app updates
+  Future<void> _checkForAppUpdates() async {
+    if (_hasCheckedForUpdate) return; // Only check once per session
+
+    try {
+      // Wait for screen to be fully built
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      if (!mounted) return;
+
+      debugPrint('🔄 Checking for app updates on home screen...');
+
+      final updateInfo = await _appUpdateService.checkForUpdate();
+
+      if (updateInfo != null && mounted) {
+        debugPrint('🔄 Update available! Showing dialog...');
+        _hasCheckedForUpdate = true;
+        await _appUpdateService.showUpdateDialog(context, updateInfo);
+      } else {
+        debugPrint('🔄 No update needed');
+      }
+    } catch (e) {
+      debugPrint('🔄 ❌ Error checking for updates: $e');
+    }
   }
 
   Future<void> _checkAndShowWelcomeOverlay() async {

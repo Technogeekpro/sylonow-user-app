@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Commented out - not needed without social sign-in
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -23,16 +23,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAppleSignInAvailability();
+    // _checkAppleSignInAvailability(); // Commented out - Apple sign-in disabled
   }
 
-  Future<void> _checkAppleSignInAvailability() async {
-    final authService = ref.read(authServiceProvider);
-    final isAvailable = await authService.isAppleSignInAvailable();
-    setState(() {
-      _isAppleSignInAvailable = isAvailable;
-    });
-  }
+  // Commented out - Apple sign-in disabled
+  // Future<void> _checkAppleSignInAvailability() async {
+  //   final authService = ref.read(authServiceProvider);
+  //   final isAvailable = await authService.isAppleSignInAvailable();
+  //   setState(() {
+  //     _isAppleSignInAvailable = isAvailable;
+  //   });
+  // }
 
   void _continueWithPhone() {
     if (!_acceptTerms) {
@@ -52,110 +53,112 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Future<void> _continueWithApple() async {
-    if (!_acceptTerms) {
-      _showTermsError();
-      return;
-    }
+  // Commented out - Apple sign-in disabled
+  // Future<void> _continueWithApple() async {
+  //   if (!_acceptTerms) {
+  //     _showTermsError();
+  //     return;
+  //   }
 
-    setState(() {
-      _isLoading = true;
-    });
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    try {
-      final authService = ref.read(authServiceProvider);
+  //   try {
+  //     final authService = ref.read(authServiceProvider);
 
-      // Sign in with Apple
-      final response = await authService.signInWithApple();
+  //     // Sign in with Apple
+  //     final response = await authService.signInWithApple();
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
 
-        if (response != null && response.user != null) {
-          // Invalidate auth providers to trigger updates
-          ref.invalidate(isAuthenticatedProvider);
-          ref.invalidate(currentUserProvider);
-          ref.invalidate(isOnboardingCompletedProvider);
+  //       if (response != null && response.user != null) {
+  //         // Invalidate auth providers to trigger updates
+  //         ref.invalidate(isAuthenticatedProvider);
+  //         ref.invalidate(currentUserProvider);
+  //         ref.invalidate(isOnboardingCompletedProvider);
 
-          // Wait a moment for providers to update
-          await Future.delayed(const Duration(milliseconds: 100));
+  //         // Wait a moment for providers to update
+  //         await Future.delayed(const Duration(milliseconds: 100));
 
-          if (mounted) {
-            // Navigate to splash screen which will handle the routing based on auth state
-            context.go(AppConstants.splashRoute);
-          }
-        }
-        // If response is null, user canceled - no need to show a message
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple sign in failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
+  //         if (mounted) {
+  //           // Navigate to splash screen which will handle the routing based on auth state
+  //           context.go(AppConstants.splashRoute);
+  //         }
+  //       }
+  //       // If response is null, user canceled - no need to show a message
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Apple sign in failed: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
-  Future<void> _continueWithGoogle() async {
-    if (!_acceptTerms) {
-      _showTermsError();
-      return;
-    }
+  // Commented out - Google sign-in disabled
+  // Future<void> _continueWithGoogle() async {
+  //   if (!_acceptTerms) {
+  //     _showTermsError();
+  //     return;
+  //   }
 
-    setState(() {
-      _isLoading = true;
-    });
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    try {
-      final authService = ref.read(authServiceProvider);
+  //   try {
+  //     final authService = ref.read(authServiceProvider);
 
-      // Sign in with Google
-      final response = await authService.signInWithGoogle();
+  //     // Sign in with Google
+  //     final response = await authService.signInWithGoogle();
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
 
-        if (response != null && response.user != null) {
-          // Invalidate auth providers to trigger updates
-          ref.invalidate(isAuthenticatedProvider);
-          ref.invalidate(currentUserProvider);
-          ref.invalidate(isOnboardingCompletedProvider);
+  //       if (response != null && response.user != null) {
+  //         // Invalidate auth providers to trigger updates
+  //         ref.invalidate(isAuthenticatedProvider);
+  //         ref.invalidate(currentUserProvider);
+  //         ref.invalidate(isOnboardingCompletedProvider);
 
-          // Wait a moment for providers to update
-          await Future.delayed(const Duration(milliseconds: 100));
+  //         // Wait a moment for providers to update
+  //         await Future.delayed(const Duration(milliseconds: 100));
 
-          if (mounted) {
-            // Navigate to splash screen which will handle the routing based on auth state
-            context.go(AppConstants.splashRoute);
-          }
-        } else {
-          // User canceled the sign-in
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Sign in was canceled')));
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google sign in failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
+  //         if (mounted) {
+  //           // Navigate to splash screen which will handle the routing based on auth state
+  //           context.go(AppConstants.splashRoute);
+  //         }
+  //       } else {
+  //         // User canceled the sign-in
+  //         ScaffoldMessenger.of(
+  //           context,
+  //         ).showSnackBar(const SnackBar(content: Text('Sign in was canceled')));
+  //       }
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Google sign in failed: ${e.toString()}')),
+  //       );
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -224,118 +227,119 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    // Commented out: Google and Apple sign-in buttons temporarily disabled
+                    // const SizedBox(height: 16),
 
-                    // OR Divider
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Okra',
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
-                        ),
-                      ],
-                    ),
+                    // // OR Divider
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
+                    //     ),
+                    //     Padding(
+                    //       padding: const EdgeInsets.symmetric(horizontal: 16),
+                    //       child: Text(
+                    //         'OR',
+                    //         style: TextStyle(
+                    //           color: Colors.white,
+                    //           fontSize: 14,
+                    //           fontFamily: 'Okra',
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     Expanded(
+                    //       child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2)),
+                    //     ),
+                    //   ],
+                    // ),
 
-                    const SizedBox(height: 16),
+                    // const SizedBox(height: 16),
 
-                    // Continue with Google Button
-                    SizedBox(
-                      height: 56,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading || !_acceptTerms ? null : _continueWithGoogle,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black87,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(56),
-                            side: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black54,
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(FontAwesomeIcons.google, size: 24),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Continue with Google',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Okra',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
+                    // // Continue with Google Button
+                    // SizedBox(
+                    //   height: 56,
+                    //   width: double.infinity,
+                    //   child: ElevatedButton(
+                    //     onPressed: _isLoading || !_acceptTerms ? null : _continueWithGoogle,
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: Colors.white,
+                    //       foregroundColor: Colors.black87,
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(56),
+                    //         side: BorderSide(color: Colors.grey[300]!),
+                    //       ),
+                    //       elevation: 2,
+                    //     ),
+                    //     child: _isLoading
+                    //         ? const SizedBox(
+                    //             width: 24,
+                    //             height: 24,
+                    //             child: CircularProgressIndicator(
+                    //               strokeWidth: 2,
+                    //               color: Colors.black54,
+                    //             ),
+                    //           )
+                    //         : Row(
+                    //             mainAxisAlignment: MainAxisAlignment.center,
+                    //             children: [
+                    //               const Icon(FontAwesomeIcons.google, size: 24),
+                    //               const SizedBox(width: 12),
+                    //               const Text(
+                    //                 'Continue with Google',
+                    //                 style: TextStyle(
+                    //                   fontSize: 16,
+                    //                   fontWeight: FontWeight.w600,
+                    //                   fontFamily: 'Okra',
+                    //                 ),
+                    //               ),
+                    //             ],
+                    //           ),
+                    //   ),
+                    // ),
 
-                    // Continue with Apple Button (only shown on iOS)
-                    if (_isAppleSignInAvailable) ...[
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 56,
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading || !_acceptTerms ? null : _continueWithApple,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(56),
-                            ),
-                            elevation: 2,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(FontAwesomeIcons.apple, size: 24),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Continue with Apple',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Okra',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                    ],
+                    // // Continue with Apple Button (only shown on iOS)
+                    // if (_isAppleSignInAvailable) ...[
+                    //   const SizedBox(height: 16),
+                    //   SizedBox(
+                    //     height: 56,
+                    //     width: double.infinity,
+                    //     child: ElevatedButton(
+                    //       onPressed: _isLoading || !_acceptTerms ? null : _continueWithApple,
+                    //       style: ElevatedButton.styleFrom(
+                    //         backgroundColor: Colors.black,
+                    //         foregroundColor: Colors.white,
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(56),
+                    //         ),
+                    //         elevation: 2,
+                    //       ),
+                    //       child: _isLoading
+                    //           ? const SizedBox(
+                    //               width: 24,
+                    //               height: 24,
+                    //               child: CircularProgressIndicator(
+                    //                 strokeWidth: 2,
+                    //                 color: Colors.white,
+                    //               ),
+                    //             )
+                    //           : Row(
+                    //               mainAxisAlignment: MainAxisAlignment.center,
+                    //               children: [
+                    //                 const Icon(FontAwesomeIcons.apple, size: 24),
+                    //                 const SizedBox(width: 12),
+                    //                 const Text(
+                    //                   'Continue with Apple',
+                    //                   style: TextStyle(
+                    //                     fontSize: 16,
+                    //                     fontWeight: FontWeight.w600,
+                    //                     fontFamily: 'Okra',
+                    //                   ),
+                    //                 ),
+                    //               ],
+                    //             ),
+                    //     ),
+                    //   ),
+                    // ],
 
                     const SizedBox(height: 24),
 

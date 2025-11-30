@@ -92,7 +92,7 @@ class AppUpdateService {
     }
   }
 
-  /// Show update dialog
+  /// Show update bottom sheet with beautiful UI
   Future<void> showUpdateDialog(
     BuildContext context,
     Map<String, dynamic> updateInfo,
@@ -100,117 +100,240 @@ class AppUpdateService {
     final isForceUpdate = updateInfo['force_update'] as bool;
     final updateMessage = updateInfo['update_message'] as String;
     final storeUrl = updateInfo['store_url'] as String?;
+    final latestVersion = updateInfo['latest_version'] as String;
 
-    await showDialog(
+    await showModalBottomSheet(
       context: context,
-      barrierDismissible: !isForceUpdate,
+      isDismissible: !isForceUpdate,
+      enableDrag: !isForceUpdate,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => PopScope(
         canPop: !isForceUpdate,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
           ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.system_update,
-                color: Colors.orange[700],
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Update Available',
-                style: TextStyle(
-                  fontFamily: 'Okra',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                updateMessage,
-                style: const TextStyle(
-                  fontFamily: 'Okra',
-                  fontSize: 15,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Version ${updateInfo['latest_version']} is now available',
-                        style: TextStyle(
-                          fontFamily: 'Okra',
-                          fontSize: 13,
-                          color: Colors.orange[900],
-                          fontWeight: FontWeight.w600,
-                        ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag indicator (only if not force update)
+                  if (!isForceUpdate)
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            if (!isForceUpdate)
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                child: const Text(
-                  'Later',
-                  style: TextStyle(
-                    fontFamily: 'Okra',
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
-                    fontSize: 16,
+
+                  // Update Icon with gradient background
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.orange[400]!,
+                          Colors.deepOrange[600]!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.system_update_alt,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
-                ),
-              ),
-            ElevatedButton(
-              onPressed: () async {
-                if (storeUrl != null) {
-                  final uri = Uri.parse(storeUrl);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                backgroundColor: Colors.orange[700],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Update Now',
-                style: TextStyle(
-                  fontFamily: 'Okra',
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+
+                  const SizedBox(height: 24),
+
+                  // Title
+                  Text(
+                    isForceUpdate ? 'Update Required' : 'Update Available',
+                    style: const TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Version badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.orange[50]!,
+                          Colors.orange[100]!,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.orange[200]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.new_releases,
+                          color: Colors.orange[700],
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Version $latestVersion',
+                          style: TextStyle(
+                            fontFamily: 'Okra',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.orange[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Update message
+                  Text(
+                    updateMessage,
+                    style: const TextStyle(
+                      fontFamily: 'Okra',
+                      fontSize: 15,
+                      height: 1.6,
+                      color: Color(0xFF6B7280),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      // Later button (only if not force update)
+                      if (!isForceUpdate)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Later',
+                              style: TextStyle(
+                                fontFamily: 'Okra',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      if (!isForceUpdate) const SizedBox(width: 12),
+
+                      // Update Now button
+                      Expanded(
+                        flex: isForceUpdate ? 1 : 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.orange[400]!,
+                                Colors.deepOrange[600]!,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.orange.withValues(alpha: 0.4),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (storeUrl != null) {
+                                final uri = Uri.parse(storeUrl);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'Update Now',
+                                  style: TextStyle(
+                                    fontFamily: 'Okra',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
