@@ -16,7 +16,7 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
 });
 
 // Theater screens provider with location-based filtering
-final theaterScreensProvider = FutureProvider.autoDispose<List<TheaterScreen>>((ref) async {
+final theaterScreensProvider = FutureProvider<List<TheaterScreen>>((ref) async {
   final service = ref.read(theaterServiceProvider);
   final selectedAddress = ref.watch(selectedAddressProvider);
 

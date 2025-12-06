@@ -175,7 +175,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             else
               Padding(
                 padding: const EdgeInsets.only(right: 12),
-                child: Icon(Icons.search, color: Colors.grey[600], size: 22),
+                child: Icon(Icons.search, color: Colors.blue, size: 22),
               ),
           ],
         ),

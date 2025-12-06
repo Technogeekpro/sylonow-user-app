@@ -235,9 +235,14 @@ class _TheaterSectionState extends ConsumerState<TheaterSection>
                       child: GestureDetector(
                         onTap: () {
                           _handleUserInteraction();
-                          context.push('/outside-theaters');
+                          // Navigate directly to theater screen detail screen
+                          context.push(
+                            '/theater-screen-detail',
+                            extra: {
+                              'screen': screens[index],
+                            },
+                          );
                         },
-                        onHorizontalDragStart: (_) => _handleUserInteraction(),
                         child: ClipRRect(
                           borderRadius: const BorderRadius.only(
                             topRight: Radius.circular(24),
@@ -332,7 +337,7 @@ class _TheaterSectionState extends ConsumerState<TheaterSection>
                 child: hasImages && currentImage != null
                     ? CachedNetworkImage(
                         imageUrl: currentImage,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.fill,
                         // Optimized caching configuration
                         memCacheWidth: 800, // Limit memory cache size
                         memCacheHeight: 400,

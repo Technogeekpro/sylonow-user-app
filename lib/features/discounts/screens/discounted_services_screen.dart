@@ -16,6 +16,20 @@ class DiscountedServicesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final featuredServicesState = ref.watch(featuredServicesProvider);
 
+    // Debug logging
+    print('🔍 Discounted Services Screen - Build called');
+    print('🔍 Services count: ${featuredServicesState.services.length}');
+    print('🔍 Has more: ${featuredServicesState.hasMore}');
+    print('🔍 Current page: ${featuredServicesState.page}');
+
+    // Log each service
+    for (var i = 0; i < featuredServicesState.services.length; i++) {
+      final service = featuredServicesState.services[i];
+      print('🔍 Service $i: ${service.name}');
+      print('   - Original: ${service.displayOriginalPrice}');
+      print('   - Offer: ${service.displayOfferPrice}');
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -42,7 +56,7 @@ class DiscountedServicesScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
-              '50%+ OFF',
+              'DEALS',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -87,12 +101,29 @@ class DiscountedServicesScreen extends ConsumerWidget {
   }
 
   Widget _buildDiscountedServicesList(List<ServiceListingModel> allServices) {
-    // Filter services with 50% or more discount
+    print('🔍 _buildDiscountedServicesList called with ${allServices.length} services');
+
+    // Filter services with ANY discount (not just 50%+)
     final discountedServices = allServices.where((service) {
-      return _hasSignificantDiscount(service);
+      print('🔍 Checking service: ${service.name}');
+      print('   - displayOfferPrice: ${service.displayOfferPrice}');
+      print('   - displayOriginalPrice: ${service.displayOriginalPrice}');
+
+      if (service.displayOfferPrice == null || service.displayOriginalPrice == null) {
+        print('   ❌ Skipped - missing price data');
+        return false;
+      }
+      final discountPercentage = _calculateDiscountPercentage(service);
+      print('   - Discount: ${discountPercentage.toStringAsFixed(1)}%');
+      final hasDiscount = discountPercentage > 0;
+      print('   ${hasDiscount ? "✅" : "❌"} Include: $hasDiscount');
+      return hasDiscount; // Show any service with discount
     }).toList();
 
+    print('🔍 Filtered to ${discountedServices.length} discounted services');
+
     if (discountedServices.isEmpty) {
+      print('🔍 No discounted services - showing empty state');
       return _buildEmptyState();
     }
 
@@ -118,7 +149,7 @@ class DiscountedServicesScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Limited time offers with 50% or more savings',
+                'Limited time offers with amazing discounts',
                 style: TextStyle(
                   fontSize: 14,
                   fontFamily: 'Okra',
@@ -398,7 +429,7 @@ class DiscountedServicesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Super Deals Available',
+              'No Deals Available',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -408,7 +439,7 @@ class DiscountedServicesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check back later for amazing discounts\nof 50% or more!',
+              'Check back later for amazing discounts!',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -420,16 +451,6 @@ class DiscountedServicesScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  /// Check if service has significant discount (50% or more)
-  bool _hasSignificantDiscount(ServiceListingModel service) {
-    if (service.displayOfferPrice == null || service.displayOriginalPrice == null) {
-      return false;
-    }
-    
-    final discountPercentage = _calculateDiscountPercentage(service);
-    return discountPercentage >= 50.0;
   }
 
   /// Calculate discount percentage

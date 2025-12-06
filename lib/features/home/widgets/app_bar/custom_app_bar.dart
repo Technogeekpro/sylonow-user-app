@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:sylonow_user/core/theme/app_theme.dart';
 import 'package:sylonow_user/core/widgets/gredient_elevated_button.dart';
 import 'package:sylonow_user/features/address/providers/address_providers.dart';
 import 'package:sylonow_user/features/address/screens/manage_address_screen.dart';
@@ -282,7 +283,7 @@ class SearchSection extends StatelessWidget {
             children: [
               const Padding(
                 padding: EdgeInsets.only(left: 16, right: 8),
-                child: Icon(Icons.search, color: Color(0xFFF34E5F), size: 20),
+                child: Icon(Icons.search, color: Colors.blue, size: 20),
               ),
               Expanded(
                 child: Container(
